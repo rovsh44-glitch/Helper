@@ -1,0 +1,66 @@
+name: Apply as blind reviewer
+description: Volunteer for blinded evaluation review once the public program is open.
+title: "[Reviewer] "
+labels:
+  - reviewer:intake
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include private personal data beyond what is necessary for routing.
+  - type: input
+    id: public_handle
+    attributes:
+      label: Public handle
+      description: GitHub handle or other public name.
+    validations:
+      required: true
+  - type: input
+    id: contact_email
+    attributes:
+      label: Contact email
+      description: Use an address suitable for reviewer coordination.
+    validations:
+      required: true
+  - type: checkboxes
+    id: independence
+    attributes:
+      label: Independence and conduct
+      options:
+        - label: I can review blinded response pairs without requesting hidden labels.
+          required: true
+        - label: I will not publish other reviewers' materials during an active blind round.
+          required: true
+  - type: textarea
+    id: languages
+    attributes:
+      label: Working languages
+      description: List the languages you can review confidently.
+    validations:
+      required: true
+  - type: textarea
+    id: domains
+    attributes:
+      label: Domain familiarity
+      description: List relevant areas such as medicine, law, software, education, or finance.
+    validations:
+      required: true
+  - type: input
+    id: timezone
+    attributes:
+      label: Timezone
+      description: Example: UTC+05:00
+    validations:
+      required: true
+  - type: textarea
+    id: conflicts
+    attributes:
+      label: Conflicts of interest
+      description: State any relationship that could affect reviewer independence.
+    validations:
+      required: true
+  - type: textarea
+    id: availability
+    attributes:
+      label: Availability
+      description: Describe when you could participate in a review window.

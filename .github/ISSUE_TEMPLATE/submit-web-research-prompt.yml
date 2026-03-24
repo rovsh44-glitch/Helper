@@ -1,0 +1,64 @@
+name: Submit a web-research prompt
+description: Suggest a real prompt for the blinded web-research evaluation corpus.
+title: "[Prompt] "
+labels:
+  - blind-corpus:intake
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form only for prompts that genuinely need web research or current external verification.
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Submission safety
+      options:
+        - label: My prompt contains no credentials, private URLs, private documents, or personal data.
+          required: true
+        - label: I understand this prompt may be published in a blinded evaluation corpus.
+          required: true
+  - type: dropdown
+    id: task_family
+    attributes:
+      label: Task family
+      options:
+        - latest or freshness-sensitive
+        - comparison or choice
+        - contradiction or reconciliation
+        - regulation or compliance
+        - local-first research
+        - sports or finance
+        - follow-up or longitudinal
+    validations:
+      required: true
+  - type: dropdown
+    id: language
+    attributes:
+      label: Prompt language
+      options:
+        - Russian
+        - English
+        - Mixed
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: prompt_text
+    attributes:
+      label: Prompt text
+      description: Paste the exact prompt.
+      placeholder: Ask a real question that would require research, comparison, or current verification.
+    validations:
+      required: true
+  - type: textarea
+    id: why_web
+    attributes:
+      label: Why does this need web research?
+      description: Explain why local knowledge alone would be insufficient.
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Optional context
+      description: Add non-sensitive background or evaluation notes.
