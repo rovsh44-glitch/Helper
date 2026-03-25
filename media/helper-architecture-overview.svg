@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#08111f"/>
+      <stop offset="100%" stop-color="#0f1d36"/>
+    </linearGradient>
+    <style>
+      .title { fill:#eaf2ff; font:700 42px 'Segoe UI', Arial, sans-serif; }
+      .sub { fill:#9fb2d4; font:400 20px 'Segoe UI', Arial, sans-serif; }
+      .boxTitle { fill:#eaf2ff; font:700 24px 'Segoe UI', Arial, sans-serif; }
+      .boxText { fill:#a8bddf; font:400 18px 'Segoe UI', Arial, sans-serif; }
+      .label { fill:#8ee5cf; font:700 16px 'Segoe UI', Arial, sans-serif; letter-spacing:1px; }
+    </style>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L12,6 L0,12 z" fill="#58b7ff" />
+    </marker>
+  </defs>
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <text x="80" y="86" class="title">HELPER Architecture Overview</text>
+  <text x="80" y="122" class="sub">Public showcase, private core boundary, and the main runtime layers that make the product shape intelligible.</text>
+
+  <rect x="80" y="190" width="260" height="130" rx="18" fill="#10203a" stroke="#304766"/>
+  <text x="110" y="230" class="boxTitle">Browser UI</text>
+  <text x="110" y="262" class="boxText">React-based operator surfaces</text>
+  <text x="110" y="290" class="boxText">Tabs, forms, outputs, review</text>
+
+  <rect x="400" y="190" width="260" height="130" rx="18" fill="#10203a" stroke="#304766"/>
+  <text x="430" y="230" class="boxTitle">Gemini.Api</text>
+  <text x="430" y="262" class="boxText">Browser-facing boundary</text>
+  <text x="430" y="290" class="boxText">Auth, readiness, routing</text>
+
+  <rect x="720" y="190" width="300" height="130" rx="18" fill="#10203a" stroke="#304766"/>
+  <text x="750" y="230" class="boxTitle">Gemini.Genesis</text>
+  <text x="750" y="262" class="boxText">Runtime services and product logic</text>
+  <text x="750" y="290" class="boxText">Planning, generation, telemetry</text>
+
+  <rect x="1080" y="190" width="440" height="130" rx="18" fill="#10203a" stroke="#304766"/>
+  <text x="1110" y="230" class="boxTitle">HELPER_DATA_ROOT</text>
+  <text x="1110" y="262" class="boxText">Projects, logs, templates, library, and runtime state live outside the repo</text>
+  <text x="1110" y="290" class="boxText">Private by design</text>
+
+  <path d="M340 255 L400 255" stroke="#58b7ff" stroke-width="4" fill="none" marker-end="url(#arrow)"/>
+  <path d="M660 255 L720 255" stroke="#58b7ff" stroke-width="4" fill="none" marker-end="url(#arrow)"/>
+  <path d="M1020 255 L1080 255" stroke="#58b7ff" stroke-width="4" fill="none" marker-end="url(#arrow)"/>
+
+  <rect x="80" y="390" width="420" height="160" rx="18" fill="#0f1b31" stroke="#2f4664"/>
+  <text x="110" y="430" class="label">PRIMARY FLOWS</text>
+  <text x="110" y="468" class="boxText">Research, planning, generation, review, and workspace lifecycle</text>
+  <text x="110" y="504" class="boxText">The operator stays in the loop and can inspect results directly</text>
+
+  <rect x="560" y="390" width="420" height="160" rx="18" fill="#0f1b31" stroke="#2f4664"/>
+  <text x="590" y="430" class="label">PUBLIC EVIDENCE</text>
+  <text x="590" y="468" class="boxText">Screenshots, docs, issue forms, and media assets</text>
+  <text x="590" y="504" class="boxText">Used to demonstrate product shape without exposing private core</text>
+
+  <rect x="1040" y="390" width="440" height="160" rx="18" fill="#0f1b31" stroke="#2f4664"/>
+  <text x="1070" y="430" class="label">PRIVATE CORE</text>
+  <text x="1070" y="468" class="boxText">Runtime details, internal scripts, and operational state</text>
+  <text x="1070" y="504" class="boxText">Intentionally excluded from the public showcase repository</text>
+
+  <rect x="80" y="620" width="1400" height="170" rx="18" fill="#0d1729" stroke="#2f4664"/>
+  <text x="110" y="664" class="boxTitle">What The Architecture Is Optimized For</text>
+  <text x="110" y="704" class="boxText">local-first operation, explicit runtime boundaries, traceable claims, and reviewable outputs</text>
+  <text x="110" y="742" class="boxText">The public repo communicates the shape of the system. The private core carries the operational implementation.</text>
+</svg>

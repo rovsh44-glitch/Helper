@@ -1,20 +1,24 @@
 # HELPER One-Pager
 
-## What It Is
+## Positioning
 
-HELPER is a local-first product shell for research, planning, generation, and operator-guided execution. It combines:
+HELPER is a local-first operator shell for research, planning, generation, and runtime-guided execution. The public repository is a curated showcase that explains the product shape, the trust boundary, and the current honest status.
+
+## What It Combines
 
 - a React UI
 - the `Gemini.Api` backend boundary
 - the `Gemini.Genesis` runtime
+- a runtime/data split through `HELPER_DATA_ROOT`
+- public docs, issue forms, and media assets
 
-## What It Already Has
+## What Exists Today
 
-- passing release-baseline evidence
 - a governed UI/API boundary
-- local-first runtime separation through `HELPER_DATA_ROOT`
-- evaluation and certification tooling
-- parity-evidence scaffolding and traceability workflows
+- local-first runtime separation
+- evaluation and certification scaffolding
+- public-facing packaging and trust files
+- real generated desktop artifacts captured from local demo runs
 
 ## What It Does Not Yet Prove
 
@@ -32,4 +36,6 @@ The project is designed to keep runtime state and secrets out of the repository,
 - certification: `GREEN_ANCHOR_PENDING`
 - parity claim: `not proven`
 
-Use `doc/CURRENT_STATE.md` for the current canonical snapshot.
+## Repository Scope
+
+The public repository is a showcase package, not the private core. Use `docs/README.md` as the hub for the broader public reading path.

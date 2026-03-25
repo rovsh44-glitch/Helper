@@ -25,13 +25,28 @@ Main flow:
 - strategic planning and architecture workflow
 - generation and workspace lifecycle
 - runtime telemetry and operator review
+- library indexing and knowledge ingestion
+
+## Product Surfaces
+
+- `Genesis Core`
+- `Runtime Console`
+- `Strategic Map`
+- `Objectives`
+- `Architecture`
+- `Evolution`
+- `Live Builder`
+- `Library Indexing`
+- `Settings`
 
 ## Data Boundary
 
 Code and canonical docs stay in the repository. Runtime data, auth material, logs, projects, templates, and library roots are expected outside the repository.
 
-## Canonical Technical References
+## Visual Reference
 
-- `doc/architecture/SYSTEM_OVERVIEW.md`
-- `doc/architecture/RUNTIME_SURFACES.md`
-- `doc/security/REPO_HYGIENE_AND_RUNTIME_ARTIFACT_GOVERNANCE.md`
+- [Architecture diagram](../media/helper-architecture-overview.svg)
+
+## Public Boundary Note
+
+The private-core technical references are intentionally not published in this showcase repository. The public repo is meant to communicate the architecture shape, not disclose the entire implementation corpus.

@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="800" viewBox="0 0 1600 800">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#07111f"/>
+      <stop offset="50%" stop-color="#0a1730"/>
+      <stop offset="100%" stop-color="#111f3b"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#44d7b6"/>
+      <stop offset="100%" stop-color="#4fa3ff"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="800" fill="url(#bg)"/>
+  <circle cx="1320" cy="170" r="180" fill="#1c3f67" opacity="0.28"/>
+  <circle cx="240" cy="640" r="220" fill="#17304f" opacity="0.34"/>
+  <rect x="112" y="112" width="1380" height="576" rx="28" fill="#0b1222" opacity="0.72" stroke="#2c3d59" stroke-width="2"/>
+  <text x="160" y="250" fill="#eaf2ff" font-family="Segoe UI, Arial, sans-serif" font-size="88" font-weight="700">HELPER</text>
+  <text x="160" y="318" fill="#8ea4c7" font-family="Segoe UI, Arial, sans-serif" font-size="34">Local-first operator shell for research, planning, generation, and runtime-guided execution.</text>
+  <rect x="160" y="390" width="190" height="46" rx="23" fill="url(#accent)"/>
+  <text x="205" y="421" fill="#04111f" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="700">Public showcase</text>
+  <rect x="160" y="476" width="260" height="120" rx="18" fill="#101b32" stroke="#2d4060"/>
+  <text x="186" y="518" fill="#cfe4ff" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="700">Trust</text>
+  <text x="186" y="553" fill="#8ea4c7" font-family="Segoe UI, Arial, sans-serif" font-size="18">Honest status</text>
+  <text x="186" y="581" fill="#8ea4c7" font-family="Segoe UI, Arial, sans-serif" font-size="18">Public docs</text>
+  <rect x="450" y="476" width="260" height="120" rx="18" fill="#101b32" stroke="#2d4060"/>
+  <text x="476" y="518" fill="#cfe4ff" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="700">Product</text>
+  <text x="476" y="553" fill="#8ea4c7" font-family="Segoe UI, Arial, sans-serif" font-size="18">Real screenshots</text>
+  <text x="476" y="581" fill="#8ea4c7" font-family="Segoe UI, Arial, sans-serif" font-size="18">Generated artifacts</text>
+  <rect x="740" y="476" width="260" height="120" rx="18" fill="#101b32" stroke="#2d4060"/>
+  <text x="766" y="518" fill="#cfe4ff" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="700">Boundary</text>
+  <text x="766" y="553" fill="#8ea4c7" font-family="Segoe UI, Arial, sans-serif" font-size="18">Private core separate</text>
+  <text x="766" y="581" fill="#8ea4c7" font-family="Segoe UI, Arial, sans-serif" font-size="18">No overclaiming</text>
+  <rect x="1030" y="476" width="300" height="120" rx="18" fill="#101b32" stroke="#2d4060"/>
+  <text x="1056" y="518" fill="#cfe4ff" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="700">Contact</text>
+  <text x="1056" y="553" fill="#8ea4c7" font-family="Segoe UI, Arial, sans-serif" font-size="18">Demo / partner / diligence</text>
+  <text x="1056" y="581" fill="#8ea4c7" font-family="Segoe UI, Arial, sans-serif" font-size="18">Public intake surfaces</text>
+</svg>

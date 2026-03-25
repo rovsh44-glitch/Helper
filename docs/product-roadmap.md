@@ -4,15 +4,17 @@ This roadmap is intentionally honest. It lists the next meaningful work, not a m
 
 ## Now
 
-- complete GitHub-showcase packaging
-- perform disclosure review and define a public-safe allowlist
-- keep release-baseline truth current
+- keep the public showcase current and honest
+- maintain the docs, media, and deck pack
+- keep the release-baseline truth current
+- preserve the public/private boundary
 
 ## Next
 
-- publish a curated public showcase or sanitized mirror
-- open prompt-intake and reviewer-application surfaces
+- deepen demo and diligence materials
+- expand generated artifact coverage
 - collect a real blinded reviewer corpus
+- open more structured partner and reviewer conversations
 
 ## After That
 

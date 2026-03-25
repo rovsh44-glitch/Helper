@@ -1,0 +1,33 @@
+# Due Diligence Readiness
+
+The public showcase repo is structured to support an initial diligence conversation.
+
+## Ready Now
+
+- public README and honest status block
+- contact and security surfaces
+- code of conduct and contribution guidance
+- public issue forms
+- product screenshots and generated artifact evidence
+- public docs for overview, use cases, and roadmap
+
+## Likely Private Review Items
+
+- full source code
+- private-core runtime scripts
+- runtime/data boundary details
+- dependency inventory
+- evidence bundle and certification state
+- build and deployment specifics
+
+## Good Next Questions For A Serious Review
+
+- what exactly is in the private core
+- what dependencies are critical
+- how ownership and licensing are structured
+- what the current runtime/data boundary looks like
+- how generated artifacts are produced and validated
+
+## Bottom Line
+
+The public repository is ready for first-pass review and interest generation. A deeper diligence packet still requires private materials.
