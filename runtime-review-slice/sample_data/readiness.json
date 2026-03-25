@@ -1,0 +1,19 @@
+{
+  "status": "ready",
+  "phase": "warm_ready",
+  "lifecycleState": "warmready",
+  "readyForChat": true,
+  "listening": true,
+  "warmupMode": "fixture",
+  "lastTransitionUtc": "2026-03-25T09:10:12Z",
+  "startedAtUtc": "2026-03-25T09:09:54Z",
+  "listeningAtUtc": "2026-03-25T09:09:58Z",
+  "minimalReadyAtUtc": "2026-03-25T09:10:05Z",
+  "warmReadyAtUtc": "2026-03-25T09:10:12Z",
+  "timeToListeningMs": 4021,
+  "timeToReadyMs": 11340,
+  "timeToWarmReadyMs": 18212,
+  "alerts": [
+    "Fixture mode is active. Live model and private runtime paths are disabled."
+  ]
+}

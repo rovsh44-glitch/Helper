@@ -20,6 +20,7 @@ This public repository intentionally excludes the private-core certification bun
 
 - Real UI surfaces from a local HELPER session
 - Real generated desktop project artifacts
+- A public-safe runnable runtime review slice
 - Public-facing product docs and contact surfaces
 - Public issue templates for demo requests and reviewer intake
 - A public-safe boundary between showcase material and private core implementation
@@ -32,6 +33,7 @@ This public repository intentionally excludes the private-core certification bun
 - [Product overview](docs/product-overview.md)
 - [Architecture overview](docs/architecture-overview.md)
 - [Demo guide](docs/demo-guide.md)
+- [Runtime review slice](runtime-review-slice/README.md)
 - [Risk disclosure](docs/risk-disclosure.md)
 - [IP and ownership](docs/ip-and-ownership.md)
 - [Due diligence readiness](docs/due-diligence-readiness.md)
@@ -75,6 +77,7 @@ Desktop engineering calculator generated as a separate project artifact to demon
 - [Architecture diagram](media/helper-architecture-overview.svg)
 - [Public hero banner](media/helper-hero-banner.svg)
 - [Demo preview GIF](media/demo-preview.gif)
+- [Runnable runtime review slice](runtime-review-slice/README.md)
 - [Product deck](deck/product-deck.pdf)
 - [Investor deck](deck/investor-deck.pdf)
 

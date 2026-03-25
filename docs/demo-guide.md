@@ -10,16 +10,18 @@ This guide explains how to present the public HELPER showcase.
 4. Open `docs/executive-summary.md` for the higher-level narrative.
 5. Open `docs/product-overview.md` and `docs/architecture-overview.md` to explain the product shape.
 6. Open `docs/differentiation.md`, `docs/market-thesis.md`, and `docs/business-model.md` for investor/partner context.
-7. Open `docs/ip-and-ownership.md` and `docs/due-diligence-readiness.md` for trust and review readiness.
-8. Open `Issues -> New issue` to show demo intake and reviewer intake surfaces.
+7. Open `runtime-review-slice/README.md` to show the public-safe runnable technical proof path.
+8. Open `docs/ip-and-ownership.md` and `docs/due-diligence-readiness.md` for trust and review readiness.
+9. Open `Issues -> New issue` to show demo intake and reviewer intake surfaces.
 
 ## What To Say
 
 - HELPER is a local-first operator shell.
 - The repository is a curated public showcase, not the private core.
 - The screenshots are real local demo output.
+- The runtime review slice is public-safe, read-only, and fixture-backed by design.
 - The public docs are written to support honest diligence conversations.
 
 ## Live Demo Note
 
-If a live runtime demo is available, it should be run from the private core or a local operator environment. The public showcase repo itself is meant to explain the product and establish trust, not to replace the runnable system.
+If a live runtime demo is available, it should be run from the private core or a local operator environment. The public showcase repo now includes a narrow runnable runtime-review slice, but it still does not replace the full private core.
