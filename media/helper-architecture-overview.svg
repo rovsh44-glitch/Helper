@@ -25,12 +25,12 @@
   <text x="110" y="290" class="boxText">Tabs, forms, outputs, review</text>
 
   <rect x="400" y="190" width="260" height="130" rx="18" fill="#10203a" stroke="#304766"/>
-  <text x="430" y="230" class="boxTitle">Gemini.Api</text>
+  <text x="430" y="230" class="boxTitle">Helper.Api</text>
   <text x="430" y="262" class="boxText">Browser-facing boundary</text>
   <text x="430" y="290" class="boxText">Auth, readiness, routing</text>
 
   <rect x="720" y="190" width="300" height="130" rx="18" fill="#10203a" stroke="#304766"/>
-  <text x="750" y="230" class="boxTitle">Gemini.Genesis</text>
+  <text x="750" y="230" class="boxTitle">Helper.Runtime</text>
   <text x="750" y="262" class="boxText">Runtime services and product logic</text>
   <text x="750" y="290" class="boxText">Planning, generation, telemetry</text>
 

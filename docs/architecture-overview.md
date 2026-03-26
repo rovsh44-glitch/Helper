@@ -5,12 +5,12 @@
 HELPER has three primary layers:
 
 1. React UI in the repository root
-2. `Gemini.Api` as the browser-facing API boundary
-3. `Gemini.Genesis` as the backend runtime and domain implementation
+2. `Helper.Api` as the browser-facing API boundary
+3. `Helper.Runtime` as the backend runtime and domain implementation
 
 Main flow:
 
-`Browser UI -> Gemini.Api -> Gemini.Genesis runtime services`
+`Browser UI -> Helper.Api -> Helper.Runtime runtime services`
 
 ## Design Principles
 

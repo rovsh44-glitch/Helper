@@ -5,8 +5,8 @@ HELPER is a local-first operator shell for research, planning, generation, and r
 ## What Exists Today
 
 - a React-based operator UI
-- a browser-facing `Gemini.Api` boundary
-- a `Gemini.Genesis` backend runtime
+- a browser-facing `Helper.Api` boundary
+- a `Helper.Runtime` backend runtime
 - runtime/data separation through `HELPER_DATA_ROOT`
 - real generated desktop artifacts captured from local demo runs
 - release-baseline, certification, and evidence scaffolding
