@@ -1,0 +1,50 @@
+{
+  "projectName": "Logging Monitor",
+  "rootNamespace": "Logging Monitor.Root",
+  "files": [
+    {
+      "path": "Interfaces ILoggerService.cs",
+      "purpose": "Interface contract",
+      "role": "interface",
+      "dependencies": [],
+      "methods": [
+        {
+          "name": "LogAsync",
+          "signature": "public async Task LogAsync(string message)",
+          "purpose": "Log message",
+          "contextHints": ""
+        }
+      ]
+    },
+    {
+      "path": "Configuration/ ConfigurationManager.cs",
+      "purpose": "Config manager",
+      "role": "configuration",
+      "dependencies": [],
+      "methods": [
+        {
+          "name": "DeleteTodoCommand",
+          "signature": "public ICommand DeleteTodoCommand { get; }",
+          "purpose": "Property-like placeholder",
+          "contextHints": ""
+        }
+      ]
+    },
+    {
+      "path": "Services/My Service.cs",
+      "purpose": "Bad method signature sample",
+      "role": "service",
+      "dependencies": [],
+      "methods": [
+        {
+          "name": "Execute",
+          "signature": "public void Execute( {",
+          "purpose": "Invalid signature",
+          "contextHints": ""
+        }
+      ]
+    }
+  ],
+  "nuGetPackages": []
+}
+

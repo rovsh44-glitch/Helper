@@ -11,11 +11,13 @@ For a thinner public execution view, see [external-roadmap.md](external-roadmap.
 - keep the release-baseline truth current
 - preserve the public/private boundary
 - keep public issue forms and trust files aligned with the live repo state
+- keep both public code slices aligned with the live repo and documented proof paths
 
 ## Product And Runtime Development
 
-- expand the public runtime review slice without exposing the private core
+- expand the runtime-review slice and generated-artifact-validation slice without exposing the private core
 - harden operator flows for research, planning, generation, and runtime review
+- deepen generated-artifact validation and compile-gate proof surfaces without publishing the private repair loop
 - improve runtime observability, route telemetry, and operator review ergonomics
 - keep the runtime/data boundary explicit and maintainable for local-first operation
 

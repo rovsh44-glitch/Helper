@@ -14,6 +14,10 @@ This folder is the public reading path for the HELPER showcase repository.
 - [Runtime review slice](../runtime-review-slice/README.md)
 - [Runtime review slice architecture](runtime-review-slice-architecture.md)
 - [Runtime review slice verification](runtime-review-slice-verification.md)
+- [Generated artifact validation slice](../generated-artifact-validation-slice/README.md)
+- [Generated artifact validation slice architecture](generated-artifact-validation-slice-architecture.md)
+- [Generated artifact validation slice verification](generated-artifact-validation-slice-verification.md)
+- [Generated artifact validation slice comparison](generated-artifact-validation-slice-comparison.md)
 - [Risk disclosure](risk-disclosure.md)
 
 ## Product Narrative
@@ -41,5 +45,13 @@ This folder is the public reading path for the HELPER showcase repository.
 This repository is a curated public showcase. It intentionally does not include the private-core implementation, internal scripts, or sensitive operational evidence bundle.
 
 The runtime-review slice verification note is the canonical deterministic test/build path for the public Stage 1 slice.
+
+The generated-artifact-validation slice verification note is the canonical deterministic test/build path for the public Stage 2 slice.
+
+Canonical public proof-path commands:
+
+- Stage 1 test path: `powershell -ExecutionPolicy Bypass -File runtime-review-slice/scripts/test.ps1`
+- Stage 2 test path: `powershell -ExecutionPolicy Bypass -File generated-artifact-validation-slice/scripts/test.ps1`
+- Stage 2 sample-validation path: `powershell -ExecutionPolicy Bypass -File generated-artifact-validation-slice/scripts/validate-samples.ps1`
 
 - [Public release checklist](public-release-checklist.md)

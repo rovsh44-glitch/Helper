@@ -6,6 +6,7 @@ This note explains what the public HELPER showcase does and does not prove on it
 
 - a real public-facing documentation and trust surface
 - a narrow runnable `runtime-review-slice` with explicit boundaries
+- a narrow source-complete `generated-artifact-validation-slice` with explicit boundaries
 - screenshots and generated artifact examples presented as captured evidence from local HELPER sessions
 - intake surfaces for demos, reviewer applications, and related contact
 
@@ -17,11 +18,11 @@ This note explains what the public HELPER showcase does and does not prove on it
 - end-to-end independent reproduction of every screenshot or generated artifact shown in `media/`
 - a full hosted product or general-availability release
 
-## Why The Runtime Review Slice Matters
+## Why The Public Code Slices Matter
 
-The runnable runtime review slice exists to provide a public-safe technical proof path.
+The public code slices exist to provide public-safe technical proof paths.
 
-It demonstrates:
+The runtime-review slice demonstrates:
 
 - a real runnable slice
 - a documented slice architecture
@@ -30,9 +31,26 @@ It demonstrates:
 - a bounded API and UI surface
 - a reviewable public boundary
 
-It does not replace the private core or prove the full product.
+The generated-artifact-validation slice demonstrates:
 
-For the concrete component map and verification path behind that slice, read [runtime-review-slice-architecture.md](runtime-review-slice-architecture.md), [runtime-review-slice-verification.md](runtime-review-slice-verification.md), and [`../runtime-review-slice/README.md`](../runtime-review-slice/README.md).
+- a second source-complete public slice
+- deterministic generated-artifact validation workflows
+- blueprint normalization guardrails
+- placeholder and AST validation guardrails
+- a documented public verification path with a deterministic Stage 2 test surface
+- a report-only compile-gate path over checked-in sample projects
+
+Neither slice replaces the private core or proves the full product.
+
+For the concrete component maps and verification paths behind the public slices, read:
+
+- [runtime-review-slice-architecture.md](runtime-review-slice-architecture.md)
+- [runtime-review-slice-verification.md](runtime-review-slice-verification.md)
+- [generated-artifact-validation-slice-architecture.md](generated-artifact-validation-slice-architecture.md)
+- [generated-artifact-validation-slice-verification.md](generated-artifact-validation-slice-verification.md)
+- [generated-artifact-validation-slice-comparison.md](generated-artifact-validation-slice-comparison.md)
+- [`../runtime-review-slice/README.md`](../runtime-review-slice/README.md)
+- [`../generated-artifact-validation-slice/README.md`](../generated-artifact-validation-slice/README.md)
 
 ## How To Read The Screenshots And Generated Artifacts
 
@@ -57,7 +75,7 @@ Use the public repository for:
 - first-pass diligence
 - product-shape review
 - trust-boundary review
-- a narrow runnable technical proof path
+- two narrow public-safe technical proof paths
 
 Use private review, if appropriate, for:
 

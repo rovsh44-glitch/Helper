@@ -1,0 +1,27 @@
+{
+  "rootNamespace": "Demo.Generated",
+  "files": [
+    {
+      "fixtureFile": "BrokenPlaceholderService.cs",
+      "relativePath": "Services/BrokenPlaceholderService.cs",
+      "role": "service",
+      "expectedNamespace": "Demo.Generated.Services",
+      "expectedTypeName": "BrokenPlaceholderService"
+    },
+    {
+      "fixtureFile": "BrokenAstService.cs",
+      "relativePath": "Services/BrokenAstService.cs",
+      "role": "service",
+      "expectedNamespace": "Demo.Generated.Services",
+      "expectedTypeName": "BrokenAstService"
+    },
+    {
+      "fixtureFile": "TraversalMarker.txt",
+      "relativePath": "../TraversalMarker.txt",
+      "role": "resource",
+      "expectedNamespace": "Demo.Generated",
+      "expectedTypeName": "TraversalMarker"
+    }
+  ]
+}
+

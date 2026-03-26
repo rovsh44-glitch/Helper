@@ -14,9 +14,17 @@ Use this checklist before and after a public showcase sync.
 - `runtime-review-slice/package-lock.json` exists and matches the current public `package.json`
 - `docs/runtime-review-slice-architecture.md` exists and is linked from `README.md`, `docs/README.md`, and `runtime-review-slice/README.md`
 - `docs/runtime-review-slice-verification.md` exists and is linked from `README.md`, `docs/README.md`, and `runtime-review-slice/README.md`
+- `generated-artifact-validation-slice/` exists and is linked from `README.md`
+- `docs/generated-artifact-validation-slice-architecture.md` exists and is linked from `README.md`, `docs/README.md`, and `generated-artifact-validation-slice/README.md`
+- `docs/generated-artifact-validation-slice-verification.md` exists and is linked from `README.md`, `docs/README.md`, and `generated-artifact-validation-slice/README.md`
+- `docs/generated-artifact-validation-slice-comparison.md` exists and is linked from `README.md`, `docs/README.md`, and `generated-artifact-validation-slice/README.md`
+- `README.md` and `docs/README.md` still expose the canonical Stage 2 test path and sample-validation path
 - `runtime-review-slice/sample_data/` and `sample_data/logs/` remain sanitized: no non-redacted Windows paths, no token-like material, no non-local URLs
 - `runtime-review-slice/scripts/*.ps1` use slice-root-relative paths and local loopback hosts only
 - `runtime-review-slice/scripts/test.ps1` restores locked frontend dependencies, checks fixture presence, and can run on a clean machine without private context
+- `generated-artifact-validation-slice/sample_fixtures/` remains public-safe: no private paths, no operator identity, no token-like material, no provider URLs
+- `generated-artifact-validation-slice/scripts/*.ps1` use slice-root-relative paths and public .NET toolchain commands only
+- `generated-artifact-validation-slice/scripts/test.ps1` restores public dependencies, runs the xUnit suite, and runs the checked-in sample-validation sweep
 - any screenshot or artifact claim stays within the boundary described by `docs/public-proof-boundary.md`
 
 ## Post-Push

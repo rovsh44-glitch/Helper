@@ -1,0 +1,2 @@
+This fixture exists only to prove that traversal-like relative paths are blocked by the public path sanitizer.
+

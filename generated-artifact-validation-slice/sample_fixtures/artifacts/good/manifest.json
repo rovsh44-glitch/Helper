@@ -1,0 +1,20 @@
+{
+  "rootNamespace": "Demo.Generated",
+  "files": [
+    {
+      "fixtureFile": "ICustomerService.cs",
+      "relativePath": "Contracts/ICustomerService.cs",
+      "role": "interface",
+      "expectedNamespace": "Demo.Generated.Contracts",
+      "expectedTypeName": "ICustomerService"
+    },
+    {
+      "fixtureFile": "CustomerService.cs",
+      "relativePath": "Services/CustomerService.cs",
+      "role": "service",
+      "expectedNamespace": "Demo.Generated.Services",
+      "expectedTypeName": "CustomerService"
+    }
+  ]
+}
+
