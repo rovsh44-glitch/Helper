@@ -2,7 +2,7 @@
 
 The HELPER public showcase presents a multi-surface operator product. The key areas shown in the UI are:
 
-- `Genesis Core` - generation and turn handling
+- `Genesis Core` - a legacy UI surface label for the primary generation and turn-handling workspace
 - `Runtime Console` - structured runtime log review and control-plane posture
 - `Strategic Map` - planning and route selection
 - `Objectives` - goal management
@@ -11,6 +11,8 @@ The HELPER public showcase presents a multi-surface operator product. The key ar
 - `Live Builder` - workspace and project creation flow
 - `Library Indexing` - ingestion and library progress
 - `Settings` - security and infrastructure state
+
+`Genesis Core` here is a UI surface label, not the name of the backend runtime module. The public technical module names are `Helper.Api` and `Helper.Runtime`.
 
 ## What Makes It A Product
 

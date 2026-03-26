@@ -15,6 +15,7 @@ This repository is a curated public showcase. It is not the full private-core re
 - `14-day` parity window: `not started`
 
 This public repository intentionally excludes the private-core certification bundle, parity evidence bundle, internal scripts, and operator-only artifacts. Do not claim `human-level parity achieved` from this repository.
+Public meanings for the status terms above live in [Status definitions](docs/status-definitions.md).
 
 ## What This Showcase Covers
 
@@ -30,6 +31,7 @@ This public repository intentionally excludes the private-core certification bun
 - [Docs hub](docs/README.md)
 - [One-pager](docs/one-pager.md)
 - [Executive summary](docs/executive-summary.md)
+- [Status definitions](docs/status-definitions.md)
 - [Product overview](docs/product-overview.md)
 - [Architecture overview](docs/architecture-overview.md)
 - [Demo guide](docs/demo-guide.md)
@@ -37,6 +39,7 @@ This public repository intentionally excludes the private-core certification bun
 - [Risk disclosure](docs/risk-disclosure.md)
 - [IP and ownership](docs/ip-and-ownership.md)
 - [Due diligence readiness](docs/due-diligence-readiness.md)
+- [Public proof boundary](docs/public-proof-boundary.md)
 - [Roadmap](docs/product-roadmap.md)
 
 ## Screenshots
@@ -94,7 +97,9 @@ Desktop engineering calculator generated as a separate project artifact to demon
 
 - This repository is the sanitized showcase pack, not the private-core repo.
 - Some internal evidence and certification materials are intentionally excluded.
-- Screenshots show real local demo output, not mockups.
+- Screenshots and generated artifacts are presented as captured local demo evidence from HELPER sessions.
+- The runnable runtime review slice demonstrates a narrow public-safe proof surface, not the full private-core product.
+- For proof limits and reproducibility boundaries, see [Public proof boundary](docs/public-proof-boundary.md).
 - Public claims must stay aligned with the current honest status above.
 
 ## For Investors, Partners, And Potential Acquirers

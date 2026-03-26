@@ -4,10 +4,13 @@ This document is a working ownership note for the public showcase repository.
 
 ## Known Facts
 
-- the public repository is maintained by `rovsh34`
+- the public repository of record is `rovsh44-glitch/Helper`
+- the public showcase is maintained through the GitHub account `rovsh44-glitch`
 - the public repository is licensed under `Apache-2.0`
 - the repository is a curated showcase, not the full private-core system
 - the private runtime, internal scripts, and operational evidence remain separate
+
+If internal operator handles or historical aliases differ from the public GitHub account, the repository of record for public review remains `rovsh44-glitch/Helper`.
 
 ## Public Vs Private Boundary
 

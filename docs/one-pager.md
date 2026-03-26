@@ -36,6 +36,8 @@ The project is designed to keep runtime state and secrets out of the repository,
 - certification: `GREEN_ANCHOR_PENDING`
 - parity claim: `not proven`
 
+Public definitions for the status terms above live in [status-definitions.md](status-definitions.md).
+
 ## Repository Scope
 
 The public repository is a showcase package, not the private core. Use `docs/README.md` as the hub for the broader public reading path.

@@ -26,21 +26,25 @@ No hosted public SaaS is promised here. The repository is set up for local opera
 
 ## Can I contribute prompts or apply as a reviewer?
 
-Yes, once the prepared GitHub issue forms are published in a public showcase repository or mirror.
+Yes. Public issue forms are already live through `Issues -> New issue` in this showcase repository.
 
 ## Where should I start reading?
 
 Start with:
 
-- `README.md`
-- `docs/one-pager.md`
-- `docs/architecture-overview.md`
-- `doc/CURRENT_STATE.md`
+- [README.md](README.md)
+- [docs/README.md](docs/README.md)
+- [docs/status-definitions.md](docs/status-definitions.md)
+- [docs/architecture-overview.md](docs/architecture-overview.md)
+- [runtime-review-slice/README.md](runtime-review-slice/README.md)
 
 ## Where is the honest source of truth for current claims?
 
 Use:
 
-- `doc/CURRENT_STATE.md`
-- `doc/certification/active/CURRENT_CERT_STATE.md`
-- `doc/parity_evidence/active/CURRENT_PARITY_EVIDENCE_BUNDLE.md`
+- [README.md](README.md) for the current honest status block
+- [docs/status-definitions.md](docs/status-definitions.md) for public meanings of the current status terms
+- [docs/public-proof-boundary.md](docs/public-proof-boundary.md) for what the public repository does and does not prove
+- [docs/due-diligence-readiness.md](docs/due-diligence-readiness.md) for the current public diligence surface
+
+Some deeper certification and evidence materials remain private by design and are not published in this repository.

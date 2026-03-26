@@ -6,6 +6,7 @@ This folder is the public reading path for the HELPER showcase repository.
 
 - [One-pager](one-pager.md)
 - [Executive summary](executive-summary.md)
+- [Status definitions](status-definitions.md)
 - [Product overview](product-overview.md)
 - [Architecture overview](architecture-overview.md)
 - [Demo guide](demo-guide.md)
@@ -28,7 +29,10 @@ This folder is the public reading path for the HELPER showcase repository.
 - [Traction](traction.md)
 - [IP and ownership](ip-and-ownership.md)
 - [Due diligence readiness](due-diligence-readiness.md)
+- [Public proof boundary](public-proof-boundary.md)
 
 ## Notes
 
 This repository is a curated public showcase. It intentionally does not include the private-core implementation, internal scripts, or sensitive operational evidence bundle.
+
+- [Public release checklist](public-release-checklist.md)

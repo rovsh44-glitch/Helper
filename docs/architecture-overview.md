@@ -29,7 +29,7 @@ Main flow:
 
 ## Product Surfaces
 
-- `Genesis Core`
+- `Genesis Core` as a legacy UI label for the main generation workspace
 - `Runtime Console`
 - `Strategic Map`
 - `Objectives`
@@ -38,6 +38,8 @@ Main flow:
 - `Live Builder`
 - `Library Indexing`
 - `Settings`
+
+`Genesis Core` in this section refers to a UI surface label, not the backend module name. The public runtime layers are `Helper.Api` and `Helper.Runtime`.
 
 ## Data Boundary
 

@@ -2,22 +2,26 @@
 
 This roadmap is intentionally honest. It lists the next meaningful work, not a marketing fantasy.
 
-## Now
+## Public Showcase Operations
 
 - keep the public showcase current and honest
 - maintain the docs, media, and deck pack
 - keep the release-baseline truth current
 - preserve the public/private boundary
+- keep public issue forms and trust files aligned with the live repo state
 
-## Next
+## Product And Runtime Development
 
-- deepen demo and diligence materials
-- expand generated artifact coverage
+- expand the public runtime review slice without exposing the private core
+- harden operator flows for research, planning, generation, and runtime review
+- improve runtime observability, route telemetry, and operator review ergonomics
+- keep the runtime/data boundary explicit and maintainable for local-first operation
+
+## Evaluation And Certification Work
+
 - collect a real blinded reviewer corpus
-- open more structured partner and reviewer conversations
-
-## After That
-
+- deepen demo and diligence materials without overstating proof
+- define claim-safe public status wording and evidence thresholds
 - start the counted parity-daily window
 - finalize a claim-eligible parity evidence bundle
 - open a fresh certification day-01 after freeze conditions are satisfied

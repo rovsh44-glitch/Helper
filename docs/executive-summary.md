@@ -19,6 +19,8 @@ HELPER is a local-first operator shell for research, planning, generation, and r
 - blind human evaluation: implemented, but the current corpus is still non-authoritative
 - counted `14-day` parity window: not started
 
+Public definitions for the status terms above live in [status-definitions.md](status-definitions.md).
+
 ## Why It Matters
 
 The project is built around controlled execution, traceable claims, and clear operator boundaries. That makes it a better fit for research workflows, planning workflows, generation workflows, and internal knowledge operations than a generic black-box chatbot.
