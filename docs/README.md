@@ -7,6 +7,7 @@ This folder is the public reading path for the HELPER showcase repository.
 - [One-pager](one-pager.md)
 - [Executive summary](executive-summary.md)
 - [Status definitions](status-definitions.md)
+- [Public parity methodology](parity-methodology-public.md)
 - [Product overview](product-overview.md)
 - [Architecture overview](architecture-overview.md)
 - [Demo guide](demo-guide.md)
@@ -18,6 +19,7 @@ This folder is the public reading path for the HELPER showcase repository.
 - [Solution](solution.md)
 - [Differentiation](differentiation.md)
 - [Use cases](use-cases.md)
+- [External roadmap](external-roadmap.md)
 - [Roadmap](product-roadmap.md)
 
 ## Market And Deal Readiness

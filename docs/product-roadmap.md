@@ -2,6 +2,8 @@
 
 This roadmap is intentionally honest. It lists the next meaningful work, not a marketing fantasy.
 
+For a thinner public execution view, see [external-roadmap.md](external-roadmap.md).
+
 ## Public Showcase Operations
 
 - keep the public showcase current and honest

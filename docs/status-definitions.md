@@ -59,3 +59,5 @@ The public repository is intended to communicate:
 - a narrow runnable proof slice
 
 It is not intended to stand in for the full private-core evidence bundle or a completed certification packet.
+
+For the public method behind any future parity-related claim, see [parity-methodology-public.md](parity-methodology-public.md).

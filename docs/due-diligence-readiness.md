@@ -6,7 +6,9 @@ The public showcase repo is structured to support an initial diligence conversat
 
 - public README and honest status block
 - public status definitions
+- public parity methodology note
 - public proof-boundary note
+- public external roadmap
 - contact and security surfaces
 - code of conduct and contribution guidance
 - public issue forms
@@ -32,4 +34,4 @@ The public showcase repo is structured to support an initial diligence conversat
 
 ## Bottom Line
 
-The public repository is ready for first-pass review and interest generation. Use [status-definitions.md](status-definitions.md) and [public-proof-boundary.md](public-proof-boundary.md) alongside the README to understand what is being claimed publicly and what still requires private materials.
+The public repository is ready for first-pass review and interest generation. Use [status-definitions.md](status-definitions.md), [parity-methodology-public.md](parity-methodology-public.md), [public-proof-boundary.md](public-proof-boundary.md), and [external-roadmap.md](external-roadmap.md) alongside the README to understand what is being claimed publicly, how future parity claims would be judged, and what still requires private materials.

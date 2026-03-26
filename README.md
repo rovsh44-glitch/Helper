@@ -32,6 +32,7 @@ Public meanings for the status terms above live in [Status definitions](docs/sta
 - [One-pager](docs/one-pager.md)
 - [Executive summary](docs/executive-summary.md)
 - [Status definitions](docs/status-definitions.md)
+- [Public parity methodology](docs/parity-methodology-public.md)
 - [Product overview](docs/product-overview.md)
 - [Architecture overview](docs/architecture-overview.md)
 - [Demo guide](docs/demo-guide.md)
@@ -40,6 +41,7 @@ Public meanings for the status terms above live in [Status definitions](docs/sta
 - [IP and ownership](docs/ip-and-ownership.md)
 - [Due diligence readiness](docs/due-diligence-readiness.md)
 - [Public proof boundary](docs/public-proof-boundary.md)
+- [External roadmap](docs/external-roadmap.md)
 - [Roadmap](docs/product-roadmap.md)
 
 ## Screenshots
