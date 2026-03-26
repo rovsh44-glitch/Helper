@@ -53,6 +53,8 @@ To run the slice:
 powershell -ExecutionPolicy Bypass -File scripts/start.ps1
 ```
 
+`scripts/start.ps1` verifies the checked-in lockfile and fixtures, installs locked frontend dependencies on a clean machine if `node_modules/` is missing, builds the frontend bundle, and then starts the local API host.
+
 Then open:
 
 `http://localhost:5076`

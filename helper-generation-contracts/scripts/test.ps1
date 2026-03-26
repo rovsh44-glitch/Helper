@@ -43,7 +43,11 @@ function Invoke-Step {
     Write-Host "==> $Name"
 
     try {
+        $global:LASTEXITCODE = 0
         & $Action
+        if ($global:LASTEXITCODE -ne 0) {
+            throw "Native command exited with code $global:LASTEXITCODE."
+        }
     }
     catch {
         throw "$Name failed. $FailureHint Inner error: $($_.Exception.Message)"

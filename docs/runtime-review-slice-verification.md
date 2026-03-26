@@ -108,8 +108,10 @@ powershell -ExecutionPolicy Bypass -File scripts/start.ps1
 That script:
 
 1. sets `ASPNETCORE_URLS` to `http://127.0.0.1:5076`
-2. runs `npm run build`
-3. starts the slice API host with `dotnet run`
+2. verifies the checked-in lockfile and fixture roots
+3. runs `npm ci` on a clean machine if `node_modules/` is missing
+4. runs `npm run build`
+5. starts the slice API host with `dotnet run`
 
 Then open:
 

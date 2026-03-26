@@ -145,6 +145,45 @@ public sealed class Manager
     }
 
     [Fact]
+    public async Task ArtifactValidationService_BlocksFixtureFileTraversal()
+    {
+        var tempRoot = Path.Combine(Path.GetTempPath(), $"helper-stage2-traversal-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(tempRoot);
+        var outsideFile = Path.Combine(Path.GetTempPath(), $"helper-stage2-outside-{Guid.NewGuid():N}.cs");
+
+        try
+        {
+            await File.WriteAllTextAsync(
+                Path.Combine(tempRoot, "manifest.json"),
+                """
+{
+  "rootNamespace": "Demo.Generated",
+  "files": [
+    {
+      "fixtureFile": "../outside.cs",
+      "relativePath": "Services/Outside.cs",
+      "role": "service",
+      "expectedNamespace": "Demo.Generated.Services",
+      "expectedTypeName": "Outside"
+    }
+  ]
+}
+""");
+            await File.WriteAllTextAsync(outsideFile, "namespace Demo.Generated.Services; public sealed class Outside { }");
+
+            var report = await new ArtifactValidationService().ValidateFixtureDirectoryAsync(tempRoot);
+
+            Assert.False(report.Success);
+            Assert.Contains(report.Errors, x => x.Contains("FixtureFile: Path traversal segments are not allowed.", StringComparison.Ordinal));
+        }
+        finally
+        {
+            TryDeleteFile(outsideFile);
+            TryDeleteDirectory(tempRoot);
+        }
+    }
+
+    [Fact]
     public async Task CompileGateValidator_GoodProject_Passes()
     {
         var root = Path.Combine(ResolveSliceRoot(), "sample_fixtures", "compile_gate", "good_project");
@@ -219,6 +258,22 @@ public sealed class Manager
         try
         {
             Directory.Delete(path, true);
+        }
+        catch
+        {
+        }
+    }
+
+    private static void TryDeleteFile(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+        {
+            return;
+        }
+
+        try
+        {
+            File.Delete(path);
         }
         catch
         {
