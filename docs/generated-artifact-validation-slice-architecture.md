@@ -8,7 +8,7 @@ It is meant to answer a narrow question: what is real, what is fixture-backed, a
 
 The generated artifact validation slice is a local-first, `.NET-only`, CLI-first validation package composed of:
 
-- minimal extracted validation contracts
+- a shared generation-contract package plus slice-local validation contracts
 - deterministic validation and normalization services
 - a small CLI surface
 - a checked-in fixture set
@@ -18,7 +18,8 @@ It is not a web demo and it is not the full HELPER generation runtime.
 
 ## Directory Map
 
-- [`../generated-artifact-validation-slice/src/Helper.GeneratedArtifactValidation.Contracts/`](../generated-artifact-validation-slice/src/Helper.GeneratedArtifactValidation.Contracts/) contains the minimal public contracts and result records used by the slice
+- [`../helper-generation-contracts/`](../helper-generation-contracts/) contains the shared generation-facing contract family consumed by the slice
+- [`../generated-artifact-validation-slice/src/Helper.GeneratedArtifactValidation.Contracts/`](../generated-artifact-validation-slice/src/Helper.GeneratedArtifactValidation.Contracts/) contains slice-local validation result and report records
 - [`../generated-artifact-validation-slice/src/Helper.GeneratedArtifactValidation.Core/`](../generated-artifact-validation-slice/src/Helper.GeneratedArtifactValidation.Core/) contains the validation implementations
 - [`../generated-artifact-validation-slice/src/Helper.GeneratedArtifactValidation.Cli/`](../generated-artifact-validation-slice/src/Helper.GeneratedArtifactValidation.Cli/) contains the CLI entry point and command routing
 - [`../generated-artifact-validation-slice/test/Helper.GeneratedArtifactValidation.Tests/`](../generated-artifact-validation-slice/test/Helper.GeneratedArtifactValidation.Tests/) contains the public xUnit suite
@@ -79,7 +80,8 @@ They are not used to prove:
 
 The slice deliberately stays narrow.
 
-- Only minimal contracts were extracted into the public package.
+- The reusable generation contract family now lives in the sibling `helper-generation-contracts/` package.
+- Slice-local validation result and report contracts remain inside the Stage 2 package.
 - The compile gate is `report-only`; it does not attempt the private repair loop.
 - The CLI only operates on paths supplied by the reviewer or on checked-in fixtures.
 - Sample projects are copied into a temporary workspace before build validation.
@@ -123,9 +125,9 @@ Those omissions are deliberate. They keep the slice public-safe and keep the cla
 Read this note together with:
 
 - [`../generated-artifact-validation-slice/README.md`](../generated-artifact-validation-slice/README.md)
+- [`helper-generation-contracts-dependency-map.md`](helper-generation-contracts-dependency-map.md)
 - [`generated-artifact-validation-slice-verification.md`](generated-artifact-validation-slice-verification.md)
 - [`generated-artifact-validation-slice-comparison.md`](generated-artifact-validation-slice-comparison.md)
 - [`public-proof-boundary.md`](public-proof-boundary.md)
 
 That combination explains the engineering shape of the slice, how to verify it, and how it differs from the Stage 1 runtime-review slice.
-

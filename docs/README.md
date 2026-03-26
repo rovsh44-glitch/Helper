@@ -18,6 +18,9 @@ This folder is the public reading path for the HELPER showcase repository.
 - [Generated artifact validation slice architecture](generated-artifact-validation-slice-architecture.md)
 - [Generated artifact validation slice verification](generated-artifact-validation-slice-verification.md)
 - [Generated artifact validation slice comparison](generated-artifact-validation-slice-comparison.md)
+- [Helper generation contracts](../helper-generation-contracts/README.md)
+- [Helper generation contracts dependency map](helper-generation-contracts-dependency-map.md)
+- [Helper generation contracts compatibility](helper-generation-contracts-compatibility.md)
 - [Risk disclosure](risk-disclosure.md)
 
 ## Product Narrative
@@ -48,10 +51,13 @@ The runtime-review slice verification note is the canonical deterministic test/b
 
 The generated-artifact-validation slice verification note is the canonical deterministic test/build path for the public Stage 2 slice.
 
+The helper-generation-contracts package README is the canonical entrypoint for the public Stage 3 shared surface.
+
 Canonical public proof-path commands:
 
 - Stage 1 test path: `powershell -ExecutionPolicy Bypass -File runtime-review-slice/scripts/test.ps1`
 - Stage 2 test path: `powershell -ExecutionPolicy Bypass -File generated-artifact-validation-slice/scripts/test.ps1`
 - Stage 2 sample-validation path: `powershell -ExecutionPolicy Bypass -File generated-artifact-validation-slice/scripts/validate-samples.ps1`
+- Stage 3 test path: `powershell -ExecutionPolicy Bypass -File helper-generation-contracts/scripts/test.ps1`
 
 - [Public release checklist](public-release-checklist.md)

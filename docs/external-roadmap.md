@@ -22,6 +22,7 @@ The public repository already shows:
 - a curated trust and diligence surface
 - a runnable runtime-review slice
 - a generated-artifact-validation slice
+- a shared generation-contracts package
 - product-shape evidence through screenshots, artifacts, and docs
 - honest public status language that still stops short of a parity claim
 
@@ -29,7 +30,7 @@ The public repository already shows:
 
 ### Product And Runtime
 
-- keep the public runtime-review slice and generated-artifact-validation slice current and public-safe
+- keep the public runtime-review slice, generated-artifact-validation slice, and shared generation-contracts package current and public-safe
 - improve operator-facing flows for research, planning, generation, and runtime review
 - strengthen runtime observability and review ergonomics
 
@@ -51,6 +52,7 @@ The public repository already shows:
 
 - broaden the set of reviewable operator workflows represented in public-safe surfaces
 - deepen validation around generated artifacts and runtime outputs without exposing the private repair/runtime stack
+- widen the shared public developer surface only where compatibility and support debt remain manageable
 - make the public proof path deeper without exposing sensitive private-core logic
 
 ### Trust And Evaluation

@@ -7,6 +7,7 @@ This note explains what the public HELPER showcase does and does not prove on it
 - a real public-facing documentation and trust surface
 - a narrow runnable `runtime-review-slice` with explicit boundaries
 - a narrow source-complete `generated-artifact-validation-slice` with explicit boundaries
+- a narrow shared `helper-generation-contracts` package with explicit compatibility boundaries
 - screenshots and generated artifact examples presented as captured evidence from local HELPER sessions
 - intake surfaces for demos, reviewer applications, and related contact
 
@@ -20,7 +21,7 @@ This note explains what the public HELPER showcase does and does not prove on it
 
 ## Why The Public Code Slices Matter
 
-The public code slices exist to provide public-safe technical proof paths.
+The public code surfaces exist to provide public-safe technical proof paths.
 
 The runtime-review slice demonstrates:
 
@@ -40,7 +41,14 @@ The generated-artifact-validation slice demonstrates:
 - a documented public verification path with a deterministic Stage 2 test surface
 - a report-only compile-gate path over checked-in sample projects
 
-Neither slice replaces the private core or proves the full product.
+The helper-generation-contracts package demonstrates:
+
+- one intentional shared developer-facing public surface
+- a reusable generation-contract family that no longer lives only inside the Stage 2 slice
+- a documented compatibility boundary for that shared surface
+- a deterministic Stage 3 test path over the shared package itself
+
+None of these public surfaces replaces the private core or proves the full product.
 
 For the concrete component maps and verification paths behind the public slices, read:
 
@@ -49,8 +57,11 @@ For the concrete component maps and verification paths behind the public slices,
 - [generated-artifact-validation-slice-architecture.md](generated-artifact-validation-slice-architecture.md)
 - [generated-artifact-validation-slice-verification.md](generated-artifact-validation-slice-verification.md)
 - [generated-artifact-validation-slice-comparison.md](generated-artifact-validation-slice-comparison.md)
+- [helper-generation-contracts-dependency-map.md](helper-generation-contracts-dependency-map.md)
+- [helper-generation-contracts-compatibility.md](helper-generation-contracts-compatibility.md)
 - [`../runtime-review-slice/README.md`](../runtime-review-slice/README.md)
 - [`../generated-artifact-validation-slice/README.md`](../generated-artifact-validation-slice/README.md)
+- [`../helper-generation-contracts/README.md`](../helper-generation-contracts/README.md)
 
 ## How To Read The Screenshots And Generated Artifacts
 
@@ -75,7 +86,7 @@ Use the public repository for:
 - first-pass diligence
 - product-shape review
 - trust-boundary review
-- two narrow public-safe technical proof paths
+- two narrow public-safe technical proof paths plus one narrow shared public contract surface
 
 Use private review, if appropriate, for:
 

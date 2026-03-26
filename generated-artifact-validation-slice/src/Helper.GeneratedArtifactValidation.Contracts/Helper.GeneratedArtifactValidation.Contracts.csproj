@@ -6,5 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-</Project>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\helper-generation-contracts\src\Helper.Generation.Contracts\Helper.Generation.Contracts.csproj" />
+  </ItemGroup>
 
+</Project>

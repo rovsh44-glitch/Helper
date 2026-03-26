@@ -18,6 +18,20 @@ This slice is:
 3. fixture-backed
 4. local-first
 5. intentionally separate from the private runtime and repair loop
+6. dependent on the sibling shared contracts package for the narrow reusable generation contract family
+
+## Shared Contracts Dependency
+
+This slice now consumes the shared public package at [`../helper-generation-contracts/README.md`](../helper-generation-contracts/README.md) for:
+
+1. `FileRole`
+2. `ArbanMethodTask`
+3. `SwarmFileDefinition`
+4. `SwarmBlueprint`
+5. `GeneratedFile`
+6. `BuildError`
+
+The Stage 2 slice still keeps its own validation-result and artifact-report contracts locally because those remain slice-specific rather than shared API.
 
 ## Architecture Note
 

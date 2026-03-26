@@ -1,6 +1,7 @@
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 Set-StrictMode -Version Latest
+$PSNativeCommandUseErrorActionPreference = $true
 
 function Assert-CommandAvailable {
     param(

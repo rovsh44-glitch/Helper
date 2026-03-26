@@ -8,9 +8,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\helper-generation-contracts\src\Helper.Generation.Contracts\Helper.Generation.Contracts.csproj" />
     <ProjectReference Include="..\Helper.GeneratedArtifactValidation.Contracts\Helper.GeneratedArtifactValidation.Contracts.csproj" />
     <ProjectReference Include="..\Helper.GeneratedArtifactValidation.Core\Helper.GeneratedArtifactValidation.Core.csproj" />
   </ItemGroup>
 
 </Project>
-

@@ -19,10 +19,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\helper-generation-contracts\src\Helper.Generation.Contracts\Helper.Generation.Contracts.csproj" />
     <ProjectReference Include="..\..\src\Helper.GeneratedArtifactValidation.Contracts\Helper.GeneratedArtifactValidation.Contracts.csproj" />
     <ProjectReference Include="..\..\src\Helper.GeneratedArtifactValidation.Core\Helper.GeneratedArtifactValidation.Core.csproj" />
     <ProjectReference Include="..\..\src\Helper.GeneratedArtifactValidation.Cli\Helper.GeneratedArtifactValidation.Cli.csproj" />
   </ItemGroup>
 
 </Project>
-

@@ -69,15 +69,18 @@ Read the Stage 2 slice when you want to inspect the public generated-artifact va
 
 Read both when you want the current strongest public technical picture of HELPER without crossing into the private core.
 
+Read the shared `helper-generation-contracts` package when you want the narrow reusable contract layer that now sits underneath the Stage 2 slice.
+
 ## Practical Reading Rule
 
 Use this note together with:
 
 - [`../runtime-review-slice/README.md`](../runtime-review-slice/README.md)
 - [`../generated-artifact-validation-slice/README.md`](../generated-artifact-validation-slice/README.md)
+- [`../helper-generation-contracts/README.md`](../helper-generation-contracts/README.md)
 - [`runtime-review-slice-architecture.md`](runtime-review-slice-architecture.md)
 - [`generated-artifact-validation-slice-architecture.md`](generated-artifact-validation-slice-architecture.md)
+- [`helper-generation-contracts-dependency-map.md`](helper-generation-contracts-dependency-map.md)
 - [`public-proof-boundary.md`](public-proof-boundary.md)
 
 That set explains why two public slices now exist, what each one proves, and why neither should be mistaken for the full private-core product.
-

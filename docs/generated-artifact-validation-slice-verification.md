@@ -30,6 +30,7 @@ The slice targets `net9.0`, as defined in:
 - [`../generated-artifact-validation-slice/src/Helper.GeneratedArtifactValidation.Core/Helper.GeneratedArtifactValidation.Core.csproj`](../generated-artifact-validation-slice/src/Helper.GeneratedArtifactValidation.Core/Helper.GeneratedArtifactValidation.Core.csproj)
 - [`../generated-artifact-validation-slice/src/Helper.GeneratedArtifactValidation.Cli/Helper.GeneratedArtifactValidation.Cli.csproj`](../generated-artifact-validation-slice/src/Helper.GeneratedArtifactValidation.Cli/Helper.GeneratedArtifactValidation.Cli.csproj)
 - [`../generated-artifact-validation-slice/test/Helper.GeneratedArtifactValidation.Tests/Helper.GeneratedArtifactValidation.Tests.csproj`](../generated-artifact-validation-slice/test/Helper.GeneratedArtifactValidation.Tests/Helper.GeneratedArtifactValidation.Tests.csproj)
+- [`../helper-generation-contracts/src/Helper.Generation.Contracts/Helper.Generation.Contracts.csproj`](../helper-generation-contracts/src/Helper.Generation.Contracts/Helper.Generation.Contracts.csproj)
 
 ## Clean-Machine Setup
 
@@ -122,12 +123,13 @@ After the canonical script path succeeds, a reviewer should confirm:
 
 1. the solution file exists at [`GeneratedArtifactValidationSlice.sln`](../generated-artifact-validation-slice/GeneratedArtifactValidationSlice.sln)
 2. the CLI project exists and builds
-3. the xUnit suite passes
-4. the good artifact fixture set reports clean validation
-5. the bad artifact fixture set reports blocked placeholders, invalid syntax, or unsafe path conditions
-6. the malformed blueprint fixture normalizes into deterministic public-safe output
-7. the good sample project passes compile gate
-8. the bad sample project fails compile gate
+3. the sibling shared contracts package exists at [`../helper-generation-contracts/README.md`](../helper-generation-contracts/README.md)
+4. the xUnit suite passes
+5. the good artifact fixture set reports clean validation
+6. the bad artifact fixture set reports blocked placeholders, invalid syntax, or unsafe path conditions
+7. the malformed blueprint fixture normalizes into deterministic public-safe output
+8. the good sample project passes compile gate
+9. the bad sample project fails compile gate
 
 ## What Counts As A Successful Public Verification
 
@@ -222,9 +224,9 @@ The following are not required for successful public verification:
 Read this note together with:
 
 - [`../generated-artifact-validation-slice/README.md`](../generated-artifact-validation-slice/README.md)
+- [`helper-generation-contracts-dependency-map.md`](helper-generation-contracts-dependency-map.md)
 - [`generated-artifact-validation-slice-architecture.md`](generated-artifact-validation-slice-architecture.md)
 - [`generated-artifact-validation-slice-comparison.md`](generated-artifact-validation-slice-comparison.md)
 - [`public-proof-boundary.md`](public-proof-boundary.md)
 
 That set gives the shortest complete picture of how to verify the slice, what it is made of, and what its successful verification does and does not prove.
-

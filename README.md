@@ -23,6 +23,7 @@ Public meanings for the status terms above live in [Status definitions](docs/sta
 - Real generated desktop project artifacts
 - A public-safe runnable runtime review slice with a deterministic Stage 1 test path
 - A public-safe generated artifact validation slice with deterministic Stage 2 test and sample-validation paths
+- A public-safe shared generation contracts package with a deterministic Stage 3 test path
 - Public-facing product docs and contact surfaces
 - Public issue templates for demo requests and reviewer intake
 - A public-safe boundary between showcase material and private core implementation
@@ -44,6 +45,9 @@ Public meanings for the status terms above live in [Status definitions](docs/sta
 - [Generated artifact validation slice architecture](docs/generated-artifact-validation-slice-architecture.md)
 - [Generated artifact validation slice verification](docs/generated-artifact-validation-slice-verification.md)
 - [Generated artifact validation slice comparison](docs/generated-artifact-validation-slice-comparison.md)
+- [Helper generation contracts](helper-generation-contracts/README.md)
+- [Helper generation contracts dependency map](docs/helper-generation-contracts-dependency-map.md)
+- [Helper generation contracts compatibility](docs/helper-generation-contracts-compatibility.md)
 - [Risk disclosure](docs/risk-disclosure.md)
 - [IP and ownership](docs/ip-and-ownership.md)
 - [Due diligence readiness](docs/due-diligence-readiness.md)
@@ -96,14 +100,18 @@ Desktop engineering calculator generated as a separate project artifact to demon
 - [Generated artifact validation slice architecture note](docs/generated-artifact-validation-slice-architecture.md)
 - [Generated artifact validation slice verification note](docs/generated-artifact-validation-slice-verification.md)
 - [Generated artifact validation slice comparison note](docs/generated-artifact-validation-slice-comparison.md)
+- [Helper generation contracts](helper-generation-contracts/README.md)
+- [Helper generation contracts dependency map](docs/helper-generation-contracts-dependency-map.md)
+- [Helper generation contracts compatibility note](docs/helper-generation-contracts-compatibility.md)
 - [Product deck](deck/product-deck.pdf)
 - [Investor deck](deck/investor-deck.pdf)
 
-## Public Code Slice Proof Paths
+## Public Code Proof Paths
 
 - Stage 1 canonical test path: `powershell -ExecutionPolicy Bypass -File runtime-review-slice/scripts/test.ps1`
 - Stage 2 canonical test path: `powershell -ExecutionPolicy Bypass -File generated-artifact-validation-slice/scripts/test.ps1`
 - Stage 2 canonical sample-validation path: `powershell -ExecutionPolicy Bypass -File generated-artifact-validation-slice/scripts/validate-samples.ps1`
+- Stage 3 canonical test path: `powershell -ExecutionPolicy Bypass -File helper-generation-contracts/scripts/test.ps1`
 
 ## Public Trust Files
 
@@ -119,7 +127,7 @@ Desktop engineering calculator generated as a separate project artifact to demon
 - This repository is the sanitized showcase pack, not the private-core repo.
 - Some internal evidence and certification materials are intentionally excluded.
 - Screenshots and generated artifacts are presented as captured local demo evidence from HELPER sessions.
-- The runtime-review slice and generated-artifact-validation slice demonstrate narrow public-safe proof surfaces, not the full private-core product.
+- The runtime-review slice, generated-artifact-validation slice, and helper-generation-contracts package demonstrate narrow public-safe proof surfaces, not the full private-core product.
 - For proof limits and reproducibility boundaries, see [Public proof boundary](docs/public-proof-boundary.md).
 - Public claims must stay aligned with the current honest status above.
 
