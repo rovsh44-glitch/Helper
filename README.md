@@ -21,7 +21,7 @@ Public meanings for the status terms above live in [Status definitions](docs/sta
 
 - Real UI surfaces from a local HELPER session
 - Real generated desktop project artifacts
-- A public-safe runnable runtime review slice
+- A public-safe runnable runtime review slice with a deterministic Stage 1 test path
 - Public-facing product docs and contact surfaces
 - Public issue templates for demo requests and reviewer intake
 - A public-safe boundary between showcase material and private core implementation
@@ -37,6 +37,8 @@ Public meanings for the status terms above live in [Status definitions](docs/sta
 - [Architecture overview](docs/architecture-overview.md)
 - [Demo guide](docs/demo-guide.md)
 - [Runtime review slice](runtime-review-slice/README.md)
+- [Runtime review slice architecture](docs/runtime-review-slice-architecture.md)
+- [Runtime review slice verification](docs/runtime-review-slice-verification.md)
 - [Risk disclosure](docs/risk-disclosure.md)
 - [IP and ownership](docs/ip-and-ownership.md)
 - [Due diligence readiness](docs/due-diligence-readiness.md)
@@ -83,6 +85,8 @@ Desktop engineering calculator generated as a separate project artifact to demon
 - [Public hero banner](media/helper-hero-banner.svg)
 - [Demo preview GIF](media/demo-preview.gif)
 - [Runnable runtime review slice](runtime-review-slice/README.md)
+- [Runtime review slice architecture note](docs/runtime-review-slice-architecture.md)
+- [Runtime review slice verification note](docs/runtime-review-slice-verification.md)
 - [Product deck](deck/product-deck.pdf)
 - [Investor deck](deck/investor-deck.pdf)
 

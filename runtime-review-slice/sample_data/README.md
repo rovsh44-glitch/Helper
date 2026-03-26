@@ -18,3 +18,7 @@ Allowed placeholders:
 4. `HOST_REDACTED`
 
 The slice is intentionally fixture-backed. These files are meant to prove boundary shape, runtime review semantics, and reproducible UI behavior without exposing the private core.
+
+Test assumption:
+
+The canonical public test path in `scripts/test.ps1` uses this checked-in `sample_data/` tree directly. Replacing these fixtures changes the public proof surface and is outside the default Stage 1 verification contract.

@@ -17,15 +17,35 @@ This slice is:
 4. local-first
 5. intentionally separate from the private core
 
+## Architecture Note
+
+Read the companion note at [`../docs/runtime-review-slice-architecture.md`](../docs/runtime-review-slice-architecture.md) for:
+
+1. slice topology
+2. endpoint-to-service mapping
+3. fixture-backed service boundaries
+4. what the sample data does and does not represent
+5. which product layers are intentionally absent
+
+## Verification Note
+
+Read the companion note at [`../docs/runtime-review-slice-verification.md`](../docs/runtime-review-slice-verification.md) for:
+
+1. clean-machine setup
+2. canonical build, test, and run commands
+3. expected verification signals
+4. likely public failure modes
+5. what successful verification does and does not prove
+
 ## Quickstart
 
 From the `runtime-review-slice` directory:
 
 ```powershell
-npm install
-dotnet restore
 powershell -ExecutionPolicy Bypass -File scripts/test.ps1
 ```
+
+`scripts/test.ps1` is the canonical Stage 1 proof path. It installs locked frontend dependencies, restores .NET dependencies, builds the slice, and runs the public xUnit tests.
 
 To run the slice:
 

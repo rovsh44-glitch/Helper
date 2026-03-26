@@ -11,7 +11,7 @@ This guide explains how to present the public HELPER showcase.
 5. Open `docs/executive-summary.md` for the higher-level narrative.
 6. Open `docs/product-overview.md` and `docs/architecture-overview.md` to explain the product shape.
 7. Open `docs/differentiation.md`, `docs/market-thesis.md`, and `docs/business-model.md` for investor/partner context.
-8. Open `runtime-review-slice/README.md` to show the public-safe runnable technical proof path.
+8. Open `runtime-review-slice/README.md`, `docs/runtime-review-slice-architecture.md`, and `docs/runtime-review-slice-verification.md` to show the public-safe runnable technical proof path, explain what the slice is actually made of, and show how an external reviewer can verify it.
 9. Open `docs/public-proof-boundary.md`, `docs/ip-and-ownership.md`, and `docs/due-diligence-readiness.md` for trust and review readiness.
 10. Open `Issues -> New issue` to show demo intake and reviewer intake surfaces.
 

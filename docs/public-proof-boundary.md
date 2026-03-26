@@ -24,11 +24,15 @@ The runnable runtime review slice exists to provide a public-safe technical proo
 It demonstrates:
 
 - a real runnable slice
+- a documented slice architecture
+- a documented public verification path with a deterministic Stage 1 test surface
 - fixture-backed runtime review flows
 - a bounded API and UI surface
 - a reviewable public boundary
 
 It does not replace the private core or prove the full product.
+
+For the concrete component map and verification path behind that slice, read [runtime-review-slice-architecture.md](runtime-review-slice-architecture.md), [runtime-review-slice-verification.md](runtime-review-slice-verification.md), and [`../runtime-review-slice/README.md`](../runtime-review-slice/README.md).
 
 ## How To Read The Screenshots And Generated Artifacts
 

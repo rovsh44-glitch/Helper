@@ -11,6 +11,12 @@ Use this checklist before and after a public showcase sync.
 - top-level public docs do not contain `Gemini.Api` or `Gemini.Genesis`
 - any status jargon used in top-level docs is either defined in `docs/status-definitions.md` or removed
 - `runtime-review-slice/` exists and is linked from `README.md`
+- `runtime-review-slice/package-lock.json` exists and matches the current public `package.json`
+- `docs/runtime-review-slice-architecture.md` exists and is linked from `README.md`, `docs/README.md`, and `runtime-review-slice/README.md`
+- `docs/runtime-review-slice-verification.md` exists and is linked from `README.md`, `docs/README.md`, and `runtime-review-slice/README.md`
+- `runtime-review-slice/sample_data/` and `sample_data/logs/` remain sanitized: no non-redacted Windows paths, no token-like material, no non-local URLs
+- `runtime-review-slice/scripts/*.ps1` use slice-root-relative paths and local loopback hosts only
+- `runtime-review-slice/scripts/test.ps1` restores locked frontend dependencies, checks fixture presence, and can run on a clean machine without private context
 - any screenshot or artifact claim stays within the boundary described by `docs/public-proof-boundary.md`
 
 ## Post-Push
