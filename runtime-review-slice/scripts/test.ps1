@@ -60,6 +60,7 @@ $testProject = Join-Path $sliceRoot 'test\Helper.RuntimeSlice.Api.Tests\Helper.R
 $packageLock = Join-Path $sliceRoot 'package-lock.json'
 $sampleDataRoot = Join-Path $sliceRoot 'sample_data'
 $sampleLogsRoot = Join-Path $sampleDataRoot 'logs'
+$sampleDataValidationScript = Join-Path $PSScriptRoot 'validate-sample-data.ps1'
 
 Push-Location $sliceRoot
 
@@ -72,6 +73,7 @@ try {
     Assert-PathExists -Path $sampleLogsRoot -FailureMessage 'The public runtime-review-slice tests expect sanitized log fixtures under sample_data/logs/.'
     Assert-PathExists -Path $apiProject -FailureMessage 'The runtime-review-slice API project file is missing.'
     Assert-PathExists -Path $testProject -FailureMessage 'The runtime-review-slice test project file is missing.'
+    Assert-PathExists -Path $sampleDataValidationScript -FailureMessage 'The public runtime-review-slice sample-data validation script is missing.'
 
     Invoke-Step -Name 'Install locked frontend dependencies' -FailureHint 'scripts/test.ps1 uses npm ci so the Stage 1 frontend dependency tree matches package-lock.json. Verify npm registry access and the committed lockfile.' -Action {
         npm ci
@@ -91,6 +93,10 @@ try {
 
     Invoke-Step -Name 'Build slice test project' -FailureHint 'The test assembly must be built on the current machine before dotnet test --no-build can run deterministically.' -Action {
         dotnet build $testProject -c Debug -m:1 --no-restore
+    }
+
+    Invoke-Step -Name 'Validate sanitized sample data' -FailureHint 'The checked-in sample_data/ tree must pass the public redaction validation gate before Stage 1 is treated as safe to publish or verify.' -Action {
+        & $sampleDataValidationScript
     }
 
     Invoke-Step -Name 'Run xUnit slice tests' -FailureHint 'The public tests are fixture-backed and depend on the checked-in sanitized sample_data/ tree. Review sample_data/ if this step fails because fixtures are missing or invalid.' -Action {

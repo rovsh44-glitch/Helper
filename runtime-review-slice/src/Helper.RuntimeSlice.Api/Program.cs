@@ -93,3 +93,7 @@ if (!string.IsNullOrWhiteSpace(app.Environment.WebRootPath) && Directory.Exists(
 }
 
 app.Run();
+
+public partial class Program
+{
+}

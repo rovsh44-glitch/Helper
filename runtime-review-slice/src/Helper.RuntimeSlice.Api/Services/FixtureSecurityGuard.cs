@@ -4,7 +4,7 @@ namespace Helper.RuntimeSlice.Api.Services;
 
 internal static partial class FixtureSecurityGuard
 {
-    [GeneratedRegex(@"(?i)\b[a-z]:\\(?!redacted_runtime\\)")]
+    [GeneratedRegex(@"(?i)\b[a-z]:(?:\\|/)(?!redacted_runtime(?:\\|/))")]
     private static partial Regex WindowsAbsolutePathRegex();
 
     [GeneratedRegex(@"(?i)\b(?:api[_ -]?key|bearer|token)\s*[:=]\s*[a-z0-9._-]{8,}")]

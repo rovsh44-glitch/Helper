@@ -37,6 +37,15 @@ Read the companion note at [`../docs/runtime-review-slice-verification.md`](../d
 4. likely public failure modes
 5. what successful verification does and does not prove
 
+## Redaction Workflow Note
+
+Read the companion note at [`../docs/runtime-review-slice-redaction-workflow.md`](../docs/runtime-review-slice-redaction-workflow.md) for:
+
+1. fixture provenance and capture boundary
+2. public-safe placeholder rules
+3. the repeatable public validation gate for checked-in sample data
+4. what remains intentionally private in the raw export workflow
+
 ## Quickstart
 
 From the `runtime-review-slice` directory:
@@ -46,6 +55,12 @@ powershell -ExecutionPolicy Bypass -File scripts/test.ps1
 ```
 
 `scripts/test.ps1` is the canonical Stage 1 proof path. It installs locked frontend dependencies, restores .NET dependencies, builds the slice, and runs the public xUnit tests.
+
+To run the standalone public sample-data validation gate:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/validate-sample-data.ps1
+```
 
 To run the slice:
 

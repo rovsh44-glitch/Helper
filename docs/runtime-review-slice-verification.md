@@ -44,7 +44,8 @@ That script now performs:
 3. frontend build
 4. API build
 5. test-project build
-6. public slice test execution
+6. sample-data redaction validation
+7. public slice test execution
 
 If you want to prefetch dependencies manually before running the script, use:
 
@@ -68,13 +69,15 @@ That script performs the public test path in this order:
 3. `npm run build`
 4. `dotnet build src\Helper.RuntimeSlice.Api\Helper.RuntimeSlice.Api.csproj -c Debug -m:1 --no-restore`
 5. `dotnet build test\Helper.RuntimeSlice.Api.Tests\Helper.RuntimeSlice.Api.Tests.csproj -c Debug -m:1 --no-restore`
-6. `dotnet test test\Helper.RuntimeSlice.Api.Tests\Helper.RuntimeSlice.Api.Tests.csproj -c Debug --no-build`
+6. `scripts/validate-sample-data.ps1`
+7. `dotnet test test\Helper.RuntimeSlice.Api.Tests\Helper.RuntimeSlice.Api.Tests.csproj -c Debug --no-build`
 
 Expected result:
 
 - Vite produces a frontend build without errors
 - the API project builds successfully
 - the slice test project builds successfully
+- the checked-in sample data passes the public redaction validation gate
 - the xUnit test suite passes
 
 Representative test coverage includes:
@@ -83,6 +86,8 @@ Representative test coverage includes:
 - [`RuntimeLogSemanticDeriverTests.cs`](../runtime-review-slice/test/Helper.RuntimeSlice.Api.Tests/RuntimeLogSemanticDeriverTests.cs)
 - [`RuntimeSliceRouteTelemetryServiceTests.cs`](../runtime-review-slice/test/Helper.RuntimeSlice.Api.Tests/RuntimeSliceRouteTelemetryServiceTests.cs)
 - [`RuntimeSliceOpenApiDocumentFactoryTests.cs`](../runtime-review-slice/test/Helper.RuntimeSlice.Api.Tests/RuntimeSliceOpenApiDocumentFactoryTests.cs)
+- [`RuntimeSliceEndpointIntegrationTests.cs`](../runtime-review-slice/test/Helper.RuntimeSlice.Api.Tests/RuntimeSliceEndpointIntegrationTests.cs)
+- [`RuntimeSliceUiSmokeTests.cs`](../runtime-review-slice/test/Helper.RuntimeSlice.Api.Tests/RuntimeSliceUiSmokeTests.cs)
 
 ## Fixture Assumptions
 
@@ -96,6 +101,22 @@ It assumes:
 4. tests run against those checked-in fixtures rather than live private-core state
 
 If a reviewer swaps in a different fixture root for manual runtime experiments, that is outside the canonical Stage 1 public test contract.
+
+## Canonical Sample-Data Validation Path
+
+Run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/validate-sample-data.ps1
+```
+
+That script applies the public redaction validation gate to the checked-in `sample_data/` tree and fails if it finds:
+
+1. non-redacted Windows paths
+2. token-like material
+3. non-local URLs
+
+Read the process note at [`runtime-review-slice-redaction-workflow.md`](runtime-review-slice-redaction-workflow.md) for the full public-safe workflow and provenance boundary.
 
 ## Canonical Run Path
 
@@ -234,6 +255,7 @@ The following are not required for successful public verification:
 - external provider accounts
 - private operator scripts
 - `scripts/refresh-openapi.ps1`
+- the private raw-fixture capture and redaction tooling
 
 ## Practical Reading Rule
 
@@ -241,6 +263,7 @@ Read this note together with:
 
 - [`../runtime-review-slice/README.md`](../runtime-review-slice/README.md)
 - [`runtime-review-slice-architecture.md`](runtime-review-slice-architecture.md)
+- [`runtime-review-slice-redaction-workflow.md`](runtime-review-slice-redaction-workflow.md)
 - [`public-proof-boundary.md`](public-proof-boundary.md)
 
 That set gives the shortest complete picture of how to run the slice, what it is made of, and what its successful verification does and does not prove.
