@@ -19,3 +19,15 @@ Use this checklist before and after a public showcase sync.
 - the live `README.md` reflects the latest intended links and wording
 - changed raw GitHub docs render the new content
 - the public repo still communicates an honest boundary between showcase and private core
+
+## GitHub Render Caveat
+
+Do not close a public sync only because local `main` matches `origin/main`.
+
+GitHub repo-page rendering can lag behind pushed raw content for a short period. If the repo main page still looks stale:
+
+- verify the raw `README.md`
+- verify the raw changed docs
+- verify the repo root again after refresh
+
+If raw content is updated but the main page is temporarily stale, treat that as a render/cache lag and keep the sync open until the live page catches up.
