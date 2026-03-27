@@ -8,6 +8,7 @@ This note explains what the public HELPER showcase does and does not prove on it
 - a narrow runnable `runtime-review-slice` with explicit boundaries
 - a narrow source-complete `generated-artifact-validation-slice` with explicit boundaries
 - a narrow shared `helper-generation-contracts` package with explicit compatibility boundaries
+- a public GitHub Actions workflow that reruns the canonical Stage 1-3 proof paths on GitHub-hosted Windows runners
 - screenshots and generated artifact examples presented as captured evidence from local HELPER sessions
 - intake surfaces for demos, reviewer applications, and related contact
 
@@ -49,6 +50,8 @@ The helper-generation-contracts package demonstrates:
 - a deterministic Stage 3 test path over the shared package itself
 
 None of these public surfaces replaces the private core or proves the full product.
+
+The public CI workflow helps by continuously rerunning the same narrow proof paths that the docs expose, but it still proves only those narrow public-safe slices and the shared public contract surface.
 
 For the concrete component maps and verification paths behind the public slices, read:
 

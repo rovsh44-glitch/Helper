@@ -63,4 +63,6 @@ Canonical public proof-path commands:
 - Stage 2 sample-validation path: `powershell -ExecutionPolicy Bypass -File generated-artifact-validation-slice/scripts/validate-samples.ps1`
 - Stage 3 test path: `powershell -ExecutionPolicy Bypass -File helper-generation-contracts/scripts/test.ps1`
 
+GitHub Actions reruns the canonical Stage 1-3 proof paths through `.github/workflows/public-proof-paths.yml` on GitHub-hosted Windows runners.
+
 - [Public release checklist](public-release-checklist.md)

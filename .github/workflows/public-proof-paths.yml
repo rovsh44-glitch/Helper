@@ -1,0 +1,74 @@
+name: Public Proof Paths
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-proof-paths-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  stage1-runtime-review-slice:
+    name: Stage 1 Runtime Review Slice
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: runtime-review-slice/package-lock.json
+
+      - name: Setup .NET 9 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Run Stage 1 canonical proof path
+        shell: powershell
+        run: powershell -ExecutionPolicy Bypass -File runtime-review-slice/scripts/test.ps1
+
+  stage2-generated-artifact-validation-slice:
+    name: Stage 2 Generated Artifact Validation Slice
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 9 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Run Stage 2 canonical proof path
+        shell: powershell
+        run: powershell -ExecutionPolicy Bypass -File generated-artifact-validation-slice/scripts/test.ps1
+
+  stage3-helper-generation-contracts:
+    name: Stage 3 Helper Generation Contracts
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 9 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Run Stage 3 canonical proof path
+        shell: powershell
+        run: powershell -ExecutionPolicy Bypass -File helper-generation-contracts/scripts/test.ps1

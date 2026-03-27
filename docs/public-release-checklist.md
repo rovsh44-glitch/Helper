@@ -31,6 +31,10 @@ Use this checklist before and after a public showcase sync.
 - `generated-artifact-validation-slice/scripts/*.ps1` use slice-root-relative paths and public .NET toolchain commands only
 - `generated-artifact-validation-slice/scripts/test.ps1` restores public dependencies, runs the xUnit suite, and runs the checked-in sample-validation sweep
 - `helper-generation-contracts/scripts/test.ps1` restores public dependencies and runs the shared contract test suite
+- `.github/workflows/public-proof-paths.yml` exists
+- `.github/workflows/public-proof-paths.yml` still runs the canonical Stage 1, Stage 2, and Stage 3 commands documented in `README.md` and `docs/README.md`
+- `.github/workflows/public-proof-paths.yml` still uses `windows-latest`, `.NET 9`, and `Node.js 22` only where the public proof paths need them
+- `.github/workflows/public-proof-paths.yml` does not introduce secrets, private registries, private submodules, or private-core-only steps
 - any screenshot or artifact claim stays within the boundary described by `docs/public-proof-boundary.md`
 
 ## Post-Push
@@ -38,6 +42,8 @@ Use this checklist before and after a public showcase sync.
 - the live GitHub repo root shows the expected files and directories
 - the live `README.md` reflects the latest intended links and wording
 - changed raw GitHub docs render the new content
+- the live GitHub repo shows `.github/workflows/public-proof-paths.yml`
+- if the push changed public proof-path code or workflow wiring, the GitHub Actions tab shows a `Public Proof Paths` run for the pushed commit
 - the public repo still communicates an honest boundary between showcase and private core
 
 ## GitHub Render Caveat

@@ -115,6 +115,14 @@ Desktop engineering calculator generated as a separate project artifact to demon
 - Stage 2 canonical sample-validation path: `powershell -ExecutionPolicy Bypass -File generated-artifact-validation-slice/scripts/validate-samples.ps1`
 - Stage 3 canonical test path: `powershell -ExecutionPolicy Bypass -File helper-generation-contracts/scripts/test.ps1`
 
+## Public CI
+
+- GitHub Actions workflow: `.github/workflows/public-proof-paths.yml`
+- Trigger surface: `push` to `main`, `pull_request`, and `workflow_dispatch`
+- Runner shape: GitHub-hosted `windows-latest`, `Node.js 22` for Stage 1, and `.NET 9` for Stage 1-3
+- Proof scope: reruns the same canonical Stage 1, Stage 2, and Stage 3 commands listed above
+- Boundary: workflow success proves only the narrow public slices and shared contracts package, not the private core
+
 ## Public Trust Files
 
 - [Contact](CONTACT.md)
