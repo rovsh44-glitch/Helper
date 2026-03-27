@@ -1,5 +1,7 @@
 # HELPER
 
+[![Public Proof Paths](https://github.com/rovsh44-glitch/Helper/actions/workflows/public-proof-paths.yml/badge.svg?branch=main)](https://github.com/rovsh44-glitch/Helper/actions/workflows/public-proof-paths.yml)
+
 HELPER is a local-first operator shell for research, planning, generation, and runtime-guided execution.
 
 ![HELPER Evolution dashboard](media/helper-evolution-dashboard.png)
