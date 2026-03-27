@@ -4,6 +4,7 @@ Use this checklist before and after a public showcase sync.
 
 ## Pre-Push
 
+- the change is prepared on a topic branch, not as a planned direct push to protected `main`
 - `FAQ.md` does not point to private-only `doc/` paths
 - `FAQ.md` does not describe already-published issue forms as future work
 - `docs/ip-and-ownership.md` matches the public repository identity
@@ -35,6 +36,7 @@ Use this checklist before and after a public showcase sync.
 - `.github/workflows/public-proof-paths.yml` still runs the canonical Stage 1, Stage 2, and Stage 3 commands documented in `README.md` and `docs/README.md`
 - `.github/workflows/public-proof-paths.yml` still uses `windows-latest`, `.NET 9`, and `Node.js 22` only where the public proof paths need them
 - `.github/workflows/public-proof-paths.yml` does not introduce secrets, private registries, private submodules, or private-core-only steps
+- `main` branch protection still enforces admins, requires one approving pull-request review, and keeps the three `Public Proof Paths` jobs as required checks
 - any screenshot or artifact claim stays within the boundary described by `docs/public-proof-boundary.md`
 
 ## Post-Push
@@ -43,6 +45,7 @@ Use this checklist before and after a public showcase sync.
 - the live `README.md` reflects the latest intended links and wording
 - changed raw GitHub docs render the new content
 - the live GitHub repo shows `.github/workflows/public-proof-paths.yml`
+- the merge happened through a PR rather than a direct push to protected `main`
 - if the push changed public proof-path code or workflow wiring, the GitHub Actions tab shows a `Public Proof Paths` run for the pushed commit
 - the public repo still communicates an honest boundary between showcase and private core
 

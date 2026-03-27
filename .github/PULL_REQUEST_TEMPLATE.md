@@ -13,6 +13,8 @@ Explain the user-facing or repository-facing reason for the change.
 - [ ] README/docs/media claims remain honest and current
 - [ ] screenshots or assets are real product output, not mockups
 - [ ] I reviewed wording for overclaim risk
+- [ ] this PR is the intended merge path and is not paired with a direct push to `main`
+- [ ] `Public Proof Paths` is expected to pass for this change or already passed on the branch
 
 ## Notes
 

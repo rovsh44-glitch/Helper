@@ -25,6 +25,14 @@ This repository is currently maintainer-curated. Contributions are welcome, but 
 - do not mix unrelated cleanup into the same change
 - do not introduce undocumented public claims
 
+## Protected Main
+
+- `main` is a protected branch and should be treated as a PR-only merge target
+- do not plan work around direct pushes to `main`
+- expect `Public Proof Paths` to run on every PR and on the merge commit
+- `main` currently requires green hosted checks plus one approving review before merge
+- stale approvals are dismissed when the PR changes, so keep rebases and force-pushes intentional
+
 ## What To Avoid
 
 - committing secrets or local env files

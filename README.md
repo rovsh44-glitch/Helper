@@ -123,6 +123,8 @@ Desktop engineering calculator generated as a separate project artifact to demon
 - Trigger surface: `push` to `main`, `pull_request`, and `workflow_dispatch`
 - Runner shape: GitHub-hosted `windows-latest`, `Node.js 22` for Stage 1, and `.NET 9` for Stage 1-3
 - Proof scope: reruns the same canonical Stage 1, Stage 2, and Stage 3 commands listed above
+- Main-branch discipline: `main` is protected and is now treated as a PR-only merge target
+- Merge gate: `Public Proof Paths` must be green and `main` requires one approving pull-request review
 - Boundary: workflow success proves only the narrow public slices and shared contracts package, not the private core
 
 ## Public Trust Files
