@@ -1,0 +1,962 @@
+param(
+    [string]$ResultsJsonlPath = "",
+    [string]$SummaryJsonPath = "",
+    [string]$SummaryMdPath = ""
+)
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
+
+. (Join-Path $PSScriptRoot "common\LocalFirstBenchmarkSlices.ps1")
+
+function ConvertFrom-JsonCompat {
+    param(
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
+        [string]$Json
+    )
+
+    process {
+        return $Json | ConvertFrom-Json
+    }
+}
+
+function Resolve-LatestResultsPath {
+    param(
+        [Parameter(Mandatory = $true)][string]$Root
+    )
+
+    $candidate = Get-ChildItem -Path $Root -Recurse -Filter "results.jsonl" -ErrorAction SilentlyContinue |
+        Sort-Object LastWriteTimeUtc -Descending |
+        Select-Object -First 1
+
+    if ($null -eq $candidate) {
+        throw "Could not find results.jsonl under $Root"
+    }
+
+    return $candidate.FullName
+}
+
+function Test-Heading {
+    param(
+        [Parameter(Mandatory = $true)][string]$Text,
+        [Parameter(Mandatory = $true)][string]$Heading
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Text)) {
+        return $false
+    }
+
+    return [regex]::IsMatch($Text, "(?im)^\s*##\s*$([regex]::Escape($Heading))\s*$")
+}
+
+function Get-SectionText {
+    param(
+        [Parameter(Mandatory = $true)][string]$Text,
+        [Parameter(Mandatory = $true)][string]$Heading
+    )
+
+    $pattern = "(?ims)^\s*##\s*$([regex]::Escape($Heading))\s*$\s*(?<body>.*?)(?=^\s*##\s+\w|\z)"
+    $match = [regex]::Match($Text, $pattern)
+    if (-not $match.Success) {
+        return ""
+    }
+
+    return $match.Groups["body"].Value.Trim()
+}
+
+function Test-DuplicateBlocks {
+    param(
+        [Parameter(Mandatory = $true)][string]$Text
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Text)) {
+        return $false
+    }
+
+    $paragraphs = $Text -split "(\r?\n){2,}" |
+        ForEach-Object { ($_ -replace "\s+", " ").Trim().ToLowerInvariant() } |
+        Where-Object { $_.Length -ge 80 }
+
+    if (@($paragraphs).Count -lt 2) {
+        return $false
+    }
+
+    return @(@($paragraphs) | Group-Object | Where-Object { $_.Count -gt 1 }).Count -gt 0
+}
+
+function Test-ContainsAny {
+    param(
+        [Parameter(Mandatory = $true)][string]$Text,
+        [Parameter(Mandatory = $true)][string[]]$Patterns
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Text)) {
+        return $false
+    }
+
+    foreach ($pattern in $Patterns) {
+        if ($Text.IndexOf($pattern, [System.StringComparison]::OrdinalIgnoreCase) -ge 0) {
+            return $true
+        }
+    }
+
+    return $false
+}
+
+function Test-ContainsRegexAny {
+    param(
+        [Parameter(Mandatory = $true)][string]$Text,
+        [Parameter(Mandatory = $true)][string[]]$Patterns
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Text)) {
+        return $false
+    }
+
+    foreach ($pattern in $Patterns) {
+        if ([regex]::IsMatch($Text, $pattern)) {
+            return $true
+        }
+    }
+
+    return $false
+}
+
+function Get-StringArray {
+    param(
+        [Parameter(Mandatory = $false)]$Value
+    )
+
+    if ($null -eq $Value) {
+        return @()
+    }
+
+    if ($Value -is [string]) {
+        return @([string]$Value)
+    }
+
+    return @($Value | ForEach-Object {
+        if ($null -ne $_) {
+            [string]$_
+        }
+    })
+}
+
+function Test-SparseUncertaintySatisfied {
+    param(
+        [Parameter(Mandatory = $true)]$Result,
+        [Parameter(Mandatory = $true)][string]$ResponseText
+    )
+
+    $sectionBodies = @(
+        Get-SectionText -Text $ResponseText -Heading "Analysis"
+        Get-SectionText -Text $ResponseText -Heading "Conclusion"
+        Get-SectionText -Text $ResponseText -Heading "Opinion"
+    ) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+
+    $textToCheck = if (@($sectionBodies).Count -gt 0) {
+        @($sectionBodies) -join "`n"
+    }
+    else {
+        $ResponseText
+    }
+
+    $lexicalPatterns = @(
+        '(?i)\buncertain\b',
+        '(?i)\blimited evidence\b',
+        '(?i)\bunresolved\b',
+        '(?i)\bnot (?:verified|confirmed)\b',
+        '(?i)\u043d\u0435\u043e\u043f\u0440\u0435\u0434',
+        '(?i)\u043e\u0433\u0440\u0430\u043d\u0438\u0447',
+        '(?i)\u043d\u0435\u044f\u0441',
+        '(?i)\u043d\u0435\u0434\u043e\u0441\u0442',
+        '(?i)\u043d\u0435\u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436',
+        '(?i)\u043d\u0435\u043f\u0440\u043e\u0432\u0435\u0440',
+        '(?i)\u0432\u044b\u0441\u043e\u043a(?:[^\r\n]{0,30})\u043d\u0435\u043e\u043f\u0440'
+    )
+
+    if (Test-ContainsRegexAny -Text $textToCheck -Patterns $lexicalPatterns) {
+        return $true
+    }
+
+    $uncertaintyFlags = Get-StringArray -Value $Result.uncertaintyFlags
+    if (@($uncertaintyFlags | Where-Object {
+                $_ -match '^(uncertainty\.|missing_sources_for_factual_claims$|factual_without_sources$)'
+            }).Count -gt 0) {
+        $groundingStatus = [string]$Result.groundingStatus
+        return [string]::Equals($groundingStatus, "unverified", [System.StringComparison]::OrdinalIgnoreCase) -or
+            [string]::Equals($groundingStatus, "grounded_with_contradictions", [System.StringComparison]::OrdinalIgnoreCase)
+    }
+
+    return $false
+}
+
+function Test-ObjectProperty {
+    param(
+        [Parameter(Mandatory = $false)]$Object,
+        [Parameter(Mandatory = $true)][string]$Name
+    )
+
+    if ($null -eq $Object) {
+        return $false
+    }
+
+    return $Object.PSObject.Properties.Match($Name).Count -gt 0
+}
+
+function Get-SearchTraceSources {
+    param(
+        [Parameter(Mandatory = $true)]$Result
+    )
+
+    if (-not (Test-ObjectProperty -Object $Result -Name "searchTrace") -or
+        $null -eq $Result.searchTrace -or
+        -not (Test-ObjectProperty -Object $Result.searchTrace -Name "sources") -or
+        $null -eq $Result.searchTrace.sources) {
+        return @()
+    }
+
+    return @($Result.searchTrace.sources)
+}
+
+function Get-SearchTraceEvents {
+    param(
+        [Parameter(Mandatory = $true)]$Result
+    )
+
+    if (-not (Test-ObjectProperty -Object $Result -Name "searchTrace") -or
+        $null -eq $Result.searchTrace -or
+        -not (Test-ObjectProperty -Object $Result.searchTrace -Name "events") -or
+        $null -eq $Result.searchTrace.events) {
+        return @()
+    }
+
+    return Get-StringArray -Value $Result.searchTrace.events
+}
+
+function Get-SearchTraceEventValue {
+    param(
+        [Parameter(Mandatory = $true)]$Result,
+        [Parameter(Mandatory = $true)][string]$Prefix
+    )
+
+    foreach ($event in (Get-SearchTraceEvents -Result $Result)) {
+        if ($event.StartsWith("$Prefix=", [System.StringComparison]::OrdinalIgnoreCase)) {
+            return $event.Substring($Prefix.Length + 1)
+        }
+    }
+
+    return $null
+}
+
+function Get-SearchTraceEventIntValue {
+    param(
+        [Parameter(Mandatory = $true)]$Result,
+        [Parameter(Mandatory = $true)][string]$Prefix,
+        [int]$Default = 0
+    )
+
+    $rawValue = Get-SearchTraceEventValue -Result $Result -Prefix $Prefix
+    if ([string]::IsNullOrWhiteSpace($rawValue)) {
+        return $Default
+    }
+
+    $value = 0
+    if ([int]::TryParse($rawValue, [ref]$value)) {
+        return $value
+    }
+
+    return $Default
+}
+
+function Get-NormalizedHost {
+    param(
+        [Parameter(Mandatory = $true)][string]$Url
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Url)) {
+        return ""
+    }
+
+    $uri = $null
+    if ([System.Uri]::TryCreate($Url, [System.UriKind]::Absolute, [ref]$uri)) {
+        return $uri.Host.ToLowerInvariant()
+    }
+
+    return ""
+}
+
+function Get-ContradictionClaimCount {
+    param(
+        [Parameter(Mandatory = $true)]$Result
+    )
+
+    if (-not (Test-ObjectProperty -Object $Result -Name "claimGroundings") -or $null -eq $Result.claimGroundings) {
+        return 0
+    }
+
+    return @($Result.claimGroundings | Where-Object { $_.contradictionDetected -eq $true }).Count
+}
+
+function Test-GroundedWithoutPassageEvidence {
+    param(
+        [Parameter(Mandatory = $true)]$Result
+    )
+
+    $groundingStatus = [string]$Result.groundingStatus
+    if (@("grounded", "grounded_with_contradictions") -notcontains $groundingStatus) {
+        return $false
+    }
+
+    $sources = @(Get-SearchTraceSources -Result $Result)
+    if ($sources.Count -eq 0) {
+        return $false
+    }
+
+    $hasPassages = @($sources | Where-Object { [int]$_.passageCount -gt 0 }).Count -gt 0
+    $extractedCount = Get-SearchTraceEventIntValue -Result $Result -Prefix "web_page_fetch.extracted_count"
+
+    return (-not $hasPassages) -and ($extractedCount -le 0)
+}
+
+function Test-FetchFailureDespiteRelevantSearchHits {
+    param(
+        [Parameter(Mandatory = $true)]$Result,
+        [Parameter(Mandatory = $true)][bool]$MandatoryWeb
+    )
+
+    if (-not $MandatoryWeb) {
+        return $false
+    }
+
+    $searchTraceStatus = if ((Test-ObjectProperty -Object $Result -Name "searchTrace") -and
+        $null -ne $Result.searchTrace -and
+        (Test-ObjectProperty -Object $Result.searchTrace -Name "status") -and
+        $null -ne $Result.searchTrace.status) {
+        [string]$Result.searchTrace.status
+    }
+    else {
+        ""
+    }
+
+    if ([string]::IsNullOrWhiteSpace($searchTraceStatus) -or
+        ($searchTraceStatus.IndexOf("live", [System.StringComparison]::OrdinalIgnoreCase) -lt 0)) {
+        return $false
+    }
+
+    $candidateCount = [math]::Max([int]$Result.sourcesCount, @(Get-SearchTraceSources -Result $Result).Count)
+    if ($candidateCount -lt [math]::Max(1, [int]$Result.minWebSources)) {
+        return $false
+    }
+
+    if (-not (Test-GroundedWithoutPassageEvidence -Result $Result)) {
+        return $false
+    }
+
+    $events = @(Get-SearchTraceEvents -Result $Result)
+    return @($events | Where-Object {
+            $_ -like "web_page_fetch.error*" -or
+            $_ -like "web_page_fetch.transport_retry_failed*" -or
+            $_ -like "web_page_fetch.transport_failed*" -or
+            $_ -like "web_page_fetch.transport_retry*"
+        }).Count -gt 0
+}
+
+function Test-FalseContradictionWithoutContradictingClaims {
+    param(
+        [Parameter(Mandatory = $true)]$Result
+    )
+
+    if (-not [string]::Equals([string]$Result.groundingStatus, "grounded_with_contradictions", [System.StringComparison]::OrdinalIgnoreCase)) {
+        return $false
+    }
+
+    if ((Get-ContradictionClaimCount -Result $Result) -gt 0) {
+        return $false
+    }
+
+    return Test-GroundedWithoutPassageEvidence -Result $Result
+}
+
+function Test-LooksLikeRenderableEvidenceSource {
+    param(
+        [Parameter(Mandatory = $true)]$Source
+    )
+
+    $url = ""
+    $title = ""
+    if ($null -ne $Source) {
+        if ($Source -is [string]) {
+            $url = [string]$Source
+        }
+        else {
+            if (Test-ObjectProperty -Object $Source -Name "url") {
+                $url = [string]$Source.url
+            }
+            if (Test-ObjectProperty -Object $Source -Name "title") {
+                $title = [string]$Source.title
+            }
+        }
+    }
+
+    if ([string]::IsNullOrWhiteSpace($url)) {
+        return $false
+    }
+
+    $sourceHost = Get-NormalizedHost -Url $url
+    $renderableHosts = @(
+        "ncbi.nlm.nih.gov",
+        "pubmed.ncbi.nlm.nih.gov",
+        "springer.com",
+        "sciencedirect.com",
+        "mayoclinic.org",
+        "health.harvard.edu",
+        "who.int",
+        "cdc.gov",
+        "nih.gov",
+        "cochrane.org",
+        "medelement.com"
+    )
+    foreach ($renderableHost in $renderableHosts) {
+        if ($sourceHost.Equals($renderableHost, [System.StringComparison]::OrdinalIgnoreCase) -or
+            $sourceHost.EndsWith(".$renderableHost", [System.StringComparison]::OrdinalIgnoreCase)) {
+            return $true
+        }
+    }
+
+    $descriptor = "$title`n$url"
+    $patterns = @(
+        '(?i)/article/',
+        '(?i)/articles/',
+        '(?i)/abstract/',
+        '(?i)/guideline',
+        '(?i)/recommendation',
+        '(?i)/healthy-aging',
+        '(?i)/post/',
+        '(?i)/study/',
+        '(?i)\bPMC\d+\b',
+        '(?i)\bsystematic review\b',
+        '(?i)\bmeta-analysis\b'
+    )
+    return (Test-ContainsRegexAny -Text $descriptor -Patterns $patterns)
+}
+
+function Test-BrowserOrFetchRecoveryUnresolved {
+    param(
+        [Parameter(Mandatory = $true)]$Result
+    )
+
+    $transportFailureCount = Get-SearchTraceEventIntValue -Result $Result -Prefix "web_page_fetch.transport_failure_count"
+    $extractedCount = Get-SearchTraceEventIntValue -Result $Result -Prefix "web_page_fetch.extracted_count"
+    if ($transportFailureCount -le 0 -or $extractedCount -gt 0) {
+        return $false
+    }
+
+    $events = @(Get-SearchTraceEvents -Result $Result)
+    $hasBrowserAttempt = @($events | Where-Object {
+            $_ -like "web_page_fetch.render_recovery*" -or
+            $_ -like "browser_render.*"
+        }).Count -gt 0
+
+    $sources = @(Get-SearchTraceSources -Result $Result)
+    $hasRenderableSources = @($sources | Where-Object {
+            Test-LooksLikeRenderableEvidenceSource -Source $_
+        }).Count -gt 0
+
+    if (-not $hasRenderableSources) {
+        $rawSources = Get-StringArray -Value $Result.sources
+        $hasRenderableSources = @($rawSources | Where-Object {
+                Test-LooksLikeRenderableEvidenceSource -Source $_
+            }).Count -gt 0
+    }
+
+    if (-not $hasRenderableSources) {
+        return $false
+    }
+
+    return (
+        $hasBrowserAttempt -or
+        [string]::Equals([string]$Result.groundingStatus, "grounded_with_limits", [System.StringComparison]::OrdinalIgnoreCase) -or
+        (Test-GroundedWithoutPassageEvidence -Result $Result)
+    )
+}
+
+function Get-MedicalAuthorityMix {
+    param(
+        [Parameter(Mandatory = $true)]$Result
+    )
+
+    $strongHosts = @(
+        "who.int",
+        "cdc.gov",
+        "nih.gov",
+        "ncbi.nlm.nih.gov",
+        "pubmed.ncbi.nlm.nih.gov",
+        "cochrane.org",
+        "nice.org.uk",
+        "medelement.com",
+        "headache.ru",
+        "painrussia.ru",
+        "emcmos.ru",
+        "unicef.org"
+    )
+    $weakHosts = @(
+        "doctor.rambler.ru",
+        "glamour.ru",
+        "fitstars.ru",
+        "fitness-pro.ru",
+        "atlas-zdorovya.ru"
+    )
+    $strongTextPatterns = @(
+        '(?i)\bwho\b',
+        '(?i)\bcdc\b',
+        '(?i)\bnih\b',
+        '(?i)\bcochrane\b',
+        '(?i)\bpubmed\b',
+        '(?i)\bguideline\b',
+        '(?i)\bmeta-analys(?:is|es)\b',
+        '(?i)\bsystematic review\b',
+        '(?i)\bfact sheet\b'
+    )
+    $weakTextPatterns = @(
+        '(?i)\bglamour\b',
+        '(?i)\brambler\b',
+        '(?i)\bfitstars\b',
+        '(?i)\bfitness[- ]?pro\b',
+        '(?i)\bbestseller'
+    )
+
+    $strongCount = 0
+    $weakCount = 0
+    foreach ($source in (Get-SearchTraceSources -Result $Result)) {
+        $url = [string]$source.url
+        $title = [string]$source.title
+        $sourceHost = Get-NormalizedHost -Url $url
+        $descriptor = "$title`n$url"
+
+        $isStrong = $false
+        $isWeak = $false
+        foreach ($pattern in $strongHosts) {
+            if ($sourceHost.Equals($pattern, [System.StringComparison]::OrdinalIgnoreCase) -or
+                $sourceHost.EndsWith(".$pattern", [System.StringComparison]::OrdinalIgnoreCase)) {
+                $isStrong = $true
+                break
+            }
+        }
+        if (-not $isStrong -and (Test-ContainsRegexAny -Text $descriptor -Patterns $strongTextPatterns)) {
+            $isStrong = $true
+        }
+
+        foreach ($pattern in $weakHosts) {
+            if ($sourceHost.Equals($pattern, [System.StringComparison]::OrdinalIgnoreCase) -or
+                $sourceHost.EndsWith(".$pattern", [System.StringComparison]::OrdinalIgnoreCase)) {
+                $isWeak = $true
+                break
+            }
+        }
+        if (-not $isWeak -and (Test-ContainsRegexAny -Text $descriptor -Patterns $weakTextPatterns)) {
+            $isWeak = $true
+        }
+
+        if ($isStrong) {
+            $strongCount++
+        }
+        if ($isWeak) {
+            $weakCount++
+        }
+    }
+
+    return [ordered]@{
+        strong = $strongCount
+        weak = $weakCount
+    }
+}
+
+function Get-IssueList {
+    param(
+        [Parameter(Mandatory = $true)]$Result
+    )
+
+    $issues = New-Object System.Collections.Generic.List[string]
+    if ([string]$Result.status -ne "ok") {
+        $issues.Add("runtime_error")
+        return $issues
+    }
+
+    $responseText = [string]$Result.response
+    $mandatoryWeb = ([string]$Result.evidenceMode) -in @("local_plus_web", "web_required_fresh", "conflict_check")
+    $sparseEvidence = [string]$Result.evidenceMode -eq "uncertain_sparse"
+    $sourcesCount = [int]$Result.sourcesCount
+    $minWebSources = [int]$Result.minWebSources
+    $groundingStatus = [string]$Result.groundingStatus
+    $citationCoverage = [double]$Result.citationCoverage
+    $searchTrace = if (Test-ObjectProperty -Object $Result -Name "searchTrace") {
+        $Result.searchTrace
+    }
+    else {
+        $null
+    }
+    $searchTraceStatus = ""
+    if ($null -ne $searchTrace -and $null -ne $searchTrace.status) {
+        $searchTraceStatus = [string]$searchTrace.status
+    }
+
+    foreach ($heading in @("Local Findings", "Web Findings", "Sources", "Analysis", "Conclusion", "Opinion")) {
+        if (-not (Test-Heading -Text $responseText -Heading $heading)) {
+            $issues.Add("missing_heading_$((ConvertTo-LowerHeadingId -Heading $heading))")
+        }
+    }
+
+    if ($mandatoryWeb -and $sourcesCount -lt $minWebSources) {
+        $issues.Add("web_sources_below_minimum")
+    }
+
+    if ($mandatoryWeb -and [string]::IsNullOrWhiteSpace($searchTraceStatus)) {
+        $issues.Add("missing_search_trace_for_web_case")
+    }
+
+    if ($mandatoryWeb -and $sourcesCount -eq 0) {
+        $issues.Add("no_sources_in_mandatory_web_case")
+    }
+
+    if ($mandatoryWeb -and $citationCoverage -lt 0.5) {
+        $issues.Add("low_citation_coverage_for_web_case")
+    }
+
+    if ([string]::Equals($groundingStatus, "clarification_required", [System.StringComparison]::OrdinalIgnoreCase) -or
+        [bool]$Result.requiresConfirmation) {
+        $issues.Add("clarification_instead_of_answer")
+    }
+
+    if ([string]::IsNullOrWhiteSpace($groundingStatus) -or
+        [string]::Equals($groundingStatus, "unknown", [System.StringComparison]::OrdinalIgnoreCase) -or
+        [string]::Equals($groundingStatus, "degraded", [System.StringComparison]::OrdinalIgnoreCase)) {
+        $issues.Add("weak_grounding_status")
+    }
+
+    if ([int]$Result.responseLength -lt 450) {
+        $issues.Add("response_too_short")
+    }
+
+    if (Test-DuplicateBlocks -Text $responseText) {
+        $issues.Add("duplicated_response_blocks")
+    }
+
+    if (Test-ContainsAny -Text $responseText -Patterns @(
+        "unexpected token",
+        "!doctype",
+        "github advanced security",
+        "enterprise platform",
+        "ai-powered developer platform",
+        "syntaxerror"
+    )) {
+        $issues.Add("tooling_or_site_chrome_noise")
+    }
+
+    if ($sparseEvidence -and -not (Test-SparseUncertaintySatisfied -Result $Result -ResponseText $responseText)) {
+        $issues.Add("missing_explicit_uncertainty_for_sparse_case")
+    }
+
+    if (Test-GroundedWithoutPassageEvidence -Result $Result) {
+        $issues.Add("grounded_without_passage_evidence")
+    }
+
+    if (Test-FetchFailureDespiteRelevantSearchHits -Result $Result -MandatoryWeb $mandatoryWeb) {
+        $issues.Add("fetch_failure_despite_relevant_search_hits")
+    }
+
+    if (Test-FalseContradictionWithoutContradictingClaims -Result $Result) {
+        $issues.Add("false_contradiction_without_contradicting_claims")
+    }
+
+    if (Test-BrowserOrFetchRecoveryUnresolved -Result $Result) {
+        $issues.Add("browser_or_fetch_recovery_unresolved")
+    }
+
+    if ([string]::Equals([string]$Result.domain, "health_and_medicine", [System.StringComparison]::OrdinalIgnoreCase) -and
+        [string]::Equals([string]$Result.evidenceMode, "conflict_check", [System.StringComparison]::OrdinalIgnoreCase)) {
+        $authorityMix = Get-MedicalAuthorityMix -Result $Result
+        if ($authorityMix.weak -ge 2 -and $authorityMix.strong -lt 2) {
+            $issues.Add("weak_medical_source_mix_for_conflict_case")
+        }
+    }
+
+    return $issues
+}
+
+function ConvertTo-LowerHeadingId {
+    param(
+        [Parameter(Mandatory = $true)][string]$Heading
+    )
+
+    return (($Heading.ToLowerInvariant() -replace "[^a-z0-9]+", "_").Trim("_"))
+}
+
+function Add-GroupSummary {
+    param(
+        [Parameter(Mandatory = $true)]$Accumulator,
+        [Parameter(Mandatory = $true)][string]$Key,
+        [Parameter(Mandatory = $true)]$Result,
+        [string[]]$Issues = @()
+    )
+
+    if (-not $Accumulator.ContainsKey($Key)) {
+        $Accumulator[$Key] = [ordered]@{
+            total = 0
+            ok = 0
+            errors = 0
+            avgSources = 0.0
+            avgCitationCoverage = 0.0
+            casesWithIssues = 0
+        }
+    }
+
+    $entry = $Accumulator[$Key]
+    $entry.total++
+    if ([string]$Result.status -eq "ok") {
+        $entry.ok++
+    }
+    else {
+        $entry.errors++
+    }
+
+    $entry.avgSources += [double]$Result.sourcesCount
+    $entry.avgCitationCoverage += [double]$Result.citationCoverage
+    if (@($Issues).Count -gt 0) {
+        $entry.casesWithIssues++
+    }
+}
+
+if ([string]::IsNullOrWhiteSpace($ResultsJsonlPath)) {
+    $ResultsJsonlPath = Resolve-LatestResultsPath -Root "artifacts/eval/local_first_librarian_300"
+}
+
+if (-not (Test-Path -LiteralPath $ResultsJsonlPath)) {
+    throw "Results file not found: $ResultsJsonlPath"
+}
+
+$runRoot = Split-Path -Path $ResultsJsonlPath -Parent
+if ([string]::IsNullOrWhiteSpace($SummaryJsonPath)) {
+    $SummaryJsonPath = Join-Path $runRoot "reports\analysis_summary.json"
+}
+if ([string]::IsNullOrWhiteSpace($SummaryMdPath)) {
+    $SummaryMdPath = Join-Path $runRoot "reports\analysis_summary.md"
+}
+
+$summaryDir = Split-Path -Path $SummaryJsonPath -Parent
+if (-not [string]::IsNullOrWhiteSpace($summaryDir)) {
+    New-Item -ItemType Directory -Force -Path $summaryDir | Out-Null
+}
+
+$lines = Get-Content -LiteralPath $ResultsJsonlPath -Encoding UTF8 | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+$results = @()
+foreach ($line in $lines) {
+    $results += ($line | ConvertFrom-JsonCompat)
+}
+
+if ($results.Count -eq 0) {
+    throw "Results are empty: $ResultsJsonlPath"
+}
+
+$issueCounts = @{}
+$issueSamples = @{}
+$byEvidenceMode = @{}
+$byTaskType = @{}
+$byDomain = @{}
+$bySlice = @{}
+$perCase = New-Object System.Collections.Generic.List[object]
+
+foreach ($result in $results) {
+    $issues = @((Get-IssueList -Result $result))
+    foreach ($issue in $issues) {
+        if (-not $issueCounts.ContainsKey($issue)) {
+            $issueCounts[$issue] = 0
+            $issueSamples[$issue] = New-Object System.Collections.Generic.List[string]
+        }
+
+        $issueCounts[$issue]++
+        if ($issueSamples[$issue].Count -lt 5) {
+            $issueSamples[$issue].Add([string]$result.id)
+        }
+    }
+
+    Add-GroupSummary -Accumulator $byEvidenceMode -Key ([string]$result.evidenceMode) -Result $result -Issues $issues
+    Add-GroupSummary -Accumulator $byTaskType -Key ([string]$result.taskType) -Result $result -Issues $issues
+    Add-GroupSummary -Accumulator $byDomain -Key ([string]$result.domain) -Result $result -Issues $issues
+    $sliceIds = @(Get-LocalFirstSliceArrayValue -InputObject $result -PropertyName "sliceIds")
+    if ($sliceIds.Count -eq 0) {
+        $sliceIds = @(Get-LocalFirstBenchmarkSliceIds -Case $result)
+    }
+    foreach ($sliceId in $sliceIds) {
+        Add-GroupSummary -Accumulator $bySlice -Key ([string]$sliceId) -Result $result -Issues $issues
+    }
+
+    $perCase.Add([ordered]@{
+        id = [string]$result.id
+        domain = [string]$result.domain
+        taskType = [string]$result.taskType
+        evidenceMode = [string]$result.evidenceMode
+        sliceIds = [string[]]$sliceIds
+        status = [string]$result.status
+        sourcesCount = [int]$result.sourcesCount
+        citationCoverage = [double]$result.citationCoverage
+        groundingStatus = [string]$result.groundingStatus
+        issues = [string[]]$issues
+    })
+}
+
+foreach ($group in @($byEvidenceMode.Keys)) {
+    $entry = $byEvidenceMode[$group]
+    if ($entry.total -gt 0) {
+        $entry.avgSources = [math]::Round($entry.avgSources / $entry.total, 2)
+        $entry.avgCitationCoverage = [math]::Round($entry.avgCitationCoverage / $entry.total, 3)
+    }
+}
+
+foreach ($group in @($byTaskType.Keys)) {
+    $entry = $byTaskType[$group]
+    if ($entry.total -gt 0) {
+        $entry.avgSources = [math]::Round($entry.avgSources / $entry.total, 2)
+        $entry.avgCitationCoverage = [math]::Round($entry.avgCitationCoverage / $entry.total, 3)
+    }
+}
+
+foreach ($group in @($byDomain.Keys)) {
+    $entry = $byDomain[$group]
+    if ($entry.total -gt 0) {
+        $entry.avgSources = [math]::Round($entry.avgSources / $entry.total, 2)
+        $entry.avgCitationCoverage = [math]::Round($entry.avgCitationCoverage / $entry.total, 3)
+    }
+}
+
+foreach ($slice in (Get-LocalFirstBenchmarkSliceCatalog)) {
+    $sliceId = [string]$slice.id
+    if (-not $bySlice.ContainsKey($sliceId)) {
+        $bySlice[$sliceId] = [ordered]@{
+            total = 0
+            ok = 0
+            errors = 0
+            avgSources = 0.0
+            avgCitationCoverage = 0.0
+            casesWithIssues = 0
+        }
+    }
+}
+
+foreach ($group in @($bySlice.Keys)) {
+    $entry = $bySlice[$group]
+    if ($entry.total -gt 0) {
+        $entry.avgSources = [math]::Round($entry.avgSources / $entry.total, 2)
+        $entry.avgCitationCoverage = [math]::Round($entry.avgCitationCoverage / $entry.total, 3)
+    }
+}
+
+$sortedIssues = $issueCounts.GetEnumerator() |
+    Sort-Object -Property @{ Expression = "Value"; Descending = $true }, @{ Expression = "Name"; Descending = $false } |
+    ForEach-Object {
+        [ordered]@{
+            issue = $_.Key
+            count = [int]$_.Value
+            sampleIds = [string[]]$issueSamples[$_.Key]
+        }
+    }
+
+$worstCases = $perCase |
+    Sort-Object -Property @{ Expression = { @($_.issues).Count }; Descending = $true }, @{ Expression = "id"; Descending = $false } |
+    Select-Object -First 20
+
+$validationModes = @(
+    $results |
+        ForEach-Object {
+            $validationMode = ""
+            $validationProperty = if ($null -ne $_) { $_.PSObject.Properties["validationMode"] } else { $null }
+            if ($null -ne $validationProperty -and $null -ne $validationProperty.Value) {
+                $validationMode = [string]$validationProperty.Value
+            }
+            if (-not [string]::IsNullOrWhiteSpace($validationMode)) {
+                $validationMode
+            }
+        } |
+        Select-Object -Unique
+)
+
+$summary = [ordered]@{
+    resultsPath = [System.IO.Path]::GetFullPath($ResultsJsonlPath)
+    validationModes = [string[]]$validationModes
+    totalCases = $results.Count
+    okCases = @($results | Where-Object { $_.status -eq "ok" }).Count
+    errorCases = @($results | Where-Object { $_.status -ne "ok" }).Count
+    issueCounts = $sortedIssues
+    byEvidenceMode = $byEvidenceMode
+    byTaskType = $byTaskType
+    byDomain = $byDomain
+    bySlice = $bySlice
+    worstCases = $worstCases
+}
+
+$summary | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $SummaryJsonPath -Encoding UTF8
+
+$mdLines = New-Object System.Collections.Generic.List[string]
+$mdLines.Add("# Local-First Librarian 300 Analysis")
+$mdLines.Add("")
+$mdLines.Add([string]::Format('- Results: `{0}`', [System.IO.Path]::GetFullPath($ResultsJsonlPath)))
+if (@($validationModes).Count -gt 0) {
+    $mdLines.Add([string]::Format('- Validation modes: `{0}`', ($validationModes -join '`, `')))
+}
+$mdLines.Add([string]::Format('- Total cases: `{0}`', $summary.totalCases))
+$mdLines.Add([string]::Format('- OK cases: `{0}`', $summary.okCases))
+$mdLines.Add([string]::Format('- Error cases: `{0}`', $summary.errorCases))
+$mdLines.Add("")
+$mdLines.Add("## Top Issues")
+$mdLines.Add("")
+$mdLines.Add("| Issue | Count | Sample IDs |")
+$mdLines.Add("| --- | ---: | --- |")
+foreach ($issue in $sortedIssues) {
+    $mdLines.Add(('| `{0}` | {1} | `{2}` |' -f $issue.issue, $issue.count, ($issue.sampleIds -join '`, `')))
+}
+$mdLines.Add("")
+$mdLines.Add("## By Evidence Mode")
+$mdLines.Add("")
+$mdLines.Add("| Evidence Mode | Total | Errors | Avg Sources | Avg Citation Coverage | Cases With Issues |")
+$mdLines.Add("| --- | ---: | ---: | ---: | ---: | ---: |")
+foreach ($key in ($byEvidenceMode.Keys | Sort-Object)) {
+    $entry = $byEvidenceMode[$key]
+    $mdLines.Add(('| `{0}` | {1} | {2} | {3} | {4} | {5} |' -f $key, $entry.total, $entry.errors, $entry.avgSources, $entry.avgCitationCoverage, $entry.casesWithIssues))
+}
+$mdLines.Add("")
+$mdLines.Add("## By Task Type")
+$mdLines.Add("")
+$mdLines.Add("| Task Type | Total | Errors | Avg Sources | Avg Citation Coverage | Cases With Issues |")
+$mdLines.Add("| --- | ---: | ---: | ---: | ---: | ---: |")
+foreach ($key in ($byTaskType.Keys | Sort-Object)) {
+    $entry = $byTaskType[$key]
+    $mdLines.Add(('| `{0}` | {1} | {2} | {3} | {4} | {5} |' -f $key, $entry.total, $entry.errors, $entry.avgSources, $entry.avgCitationCoverage, $entry.casesWithIssues))
+}
+$mdLines.Add("")
+$mdLines.Add("## By Domain")
+$mdLines.Add("")
+$mdLines.Add("| Domain | Total | Errors | Avg Sources | Avg Citation Coverage | Cases With Issues |")
+$mdLines.Add("| --- | ---: | ---: | ---: | ---: | ---: |")
+foreach ($key in ($byDomain.Keys | Sort-Object)) {
+    $entry = $byDomain[$key]
+    $mdLines.Add(('| `{0}` | {1} | {2} | {3} | {4} | {5} |' -f $key, $entry.total, $entry.errors, $entry.avgSources, $entry.avgCitationCoverage, $entry.casesWithIssues))
+}
+$mdLines.Add("")
+$mdLines.Add("## By Slice")
+$mdLines.Add("")
+$mdLines.Add("| Slice | Total | Errors | Avg Sources | Avg Citation Coverage | Cases With Issues |")
+$mdLines.Add("| --- | ---: | ---: | ---: | ---: | ---: |")
+foreach ($key in ($bySlice.Keys | Sort-Object)) {
+    $entry = $bySlice[$key]
+    $mdLines.Add(('| `{0}` | {1} | {2} | {3} | {4} | {5} |' -f $key, $entry.total, $entry.errors, $entry.avgSources, $entry.avgCitationCoverage, $entry.casesWithIssues))
+}
+$mdLines.Add("")
+$mdLines.Add("## Worst Cases")
+$mdLines.Add("")
+foreach ($case in $worstCases) {
+    $mdLines.Add([string]::Format('- `{0}` | `{1}` | `{2}` | slices: `{3}` | issues: `{4}`', $case.id, $case.evidenceMode, $case.taskType, ($case.sliceIds -join '`, `'), ($case.issues -join '`, `')))
+}
+
+Set-Content -LiteralPath $SummaryMdPath -Value ($mdLines -join "`r`n") -Encoding UTF8
+
+Write-Host "[LocalFirstAnalysis] Summary -> $SummaryMdPath"

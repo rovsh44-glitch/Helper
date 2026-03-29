@@ -1,0 +1,151 @@
+﻿{
+    "schemaVersion":  1,
+    "generatedAtUtc":  "2026-03-18T16:38:35.5995869Z",
+    "status":  "PASS",
+    "releaseDecision":  "eligible to open a fresh precert day-01 after freeze",
+    "executionBoardStatus":  "complete",
+    "certificationSource":  "doc/certification/active/CURRENT_GATE_SNAPSHOT.json",
+    "localVerification":  [
+                              {
+                                  "id":  "frontendBuild",
+                                  "title":  "Frontend build",
+                                  "status":  "PASS",
+                                  "evidence":  "local:scripts/build_frontend_verification.ps1 -RequireRebuild",
+                                  "durationMs":  154,
+                                  "details":  "mode=reused_dist; Reused a fresh dist artifact that was produced by the canonical frontend build entrypoint."
+                              },
+                              {
+                                  "id":  "backendApiBuild",
+                                  "title":  "Backend API build",
+                                  "status":  "PASS",
+                                  "evidence":  "local:dotnet build src/Helper.Api/Helper.Api.csproj -c Debug -m:1",
+                                  "durationMs":  1615,
+                                  "details":  "passed"
+                              },
+                              {
+                                  "id":  "runtimeCliBuild",
+                                  "title":  "Runtime CLI build",
+                                  "status":  "PASS",
+                                  "evidence":  "local:dotnet build src/Helper.Runtime.Cli/Helper.Runtime.Cli.csproj -c Debug -m:1",
+                                  "durationMs":  1461,
+                                  "details":  "passed"
+                              },
+                              {
+                                  "id":  "tests",
+                                  "title":  "Regression tests",
+                                  "status":  "PASS",
+                                  "evidence":  "local:scripts/run_dotnet_test_batched.ps1 --no-build --blame-hang --blame-hang-timeout 2m",
+                                  "durationMs":  1279106,
+                                  "details":  "passed"
+                              },
+                              {
+                                  "id":  "securityScan",
+                                  "title":  "Secret scan",
+                                  "status":  "PASS",
+                                  "evidence":  "local:scripts/secret_scan.ps1",
+                                  "durationMs":  5049,
+                                  "details":  "passed"
+                              },
+                              {
+                                  "id":  "configGovernance",
+                                  "title":  "Config governance",
+                                  "status":  "PASS",
+                                  "evidence":  "local:scripts/check_env_governance.ps1",
+                                  "durationMs":  1631,
+                                  "details":  "passed"
+                              },
+                              {
+                                  "id":  "docsGate",
+                                  "title":  "Docs entrypoints",
+                                  "status":  "PASS",
+                                  "evidence":  "local:scripts/check_docs_entrypoints.ps1",
+                                  "durationMs":  608,
+                                  "details":  "passed"
+                              },
+                              {
+                                  "id":  "apiUiBoundary",
+                                  "title":  "UI/API boundary",
+                                  "status":  "PASS",
+                                  "evidence":  "local:scripts/check_ui_api_usage.ps1",
+                                  "durationMs":  568,
+                                  "details":  "passed"
+                              },
+                              {
+                                  "id":  "frontendArchitecture",
+                                  "title":  "Frontend architecture",
+                                  "status":  "PASS",
+                                  "evidence":  "local:scripts/check_frontend_architecture.ps1 -SkipApiBoundary",
+                                  "durationMs":  594,
+                                  "details":  "passed"
+                              },
+                              {
+                                  "id":  "openApiContract",
+                                  "title":  "OpenAPI contract gate",
+                                  "status":  "PASS",
+                                  "evidence":  "local:scripts/openapi_gate.ps1",
+                                  "durationMs":  3169,
+                                  "details":  "passed"
+                              },
+                              {
+                                  "id":  "generatedClientDiff",
+                                  "title":  "Generated client diff gate",
+                                  "status":  "PASS",
+                                  "evidence":  "local:scripts/generated_client_diff_gate.ps1",
+                                  "durationMs":  613,
+                                  "details":  "passed"
+                              },
+                              {
+                                  "id":  "uiWorkflowSmoke",
+                                  "title":  "UI workflow smoke",
+                                  "status":  "PASS",
+                                  "evidence":  "temp/verification/ui_workflow_smoke.json",
+                                  "durationMs":  42974,
+                                  "details":  "scenarios=9; workspace=C:\\Users\\rovsh\\AppData\\Local\\Temp\\HELPER_w3_pr07_runtime\\PROJECTS\\baseline_capture_20260318_211616"
+                              }
+                          ],
+    "certificationEvidence":  [
+                                  {
+                                      "id":  "cert_3_1",
+                                      "title":  "Counted parity gate",
+                                      "status":  "PASS",
+                                      "evidence":  "doc/pre_certification/cycles/precert_2026-03-16/day-01/DAILY_CERT_SUMMARY_day01.md",
+                                      "durationMs":  0,
+                                      "details":  "From active counted certification evidence."
+                                  },
+                                  {
+                                      "id":  "cert_3_2",
+                                      "title":  "Strict parity window",
+                                      "status":  "ANCHOR_PENDING",
+                                      "evidence":  "doc/pre_certification/cycles/precert_2026-03-16/day-01/DAILY_CERT_SUMMARY_day01.md",
+                                      "durationMs":  0,
+                                      "details":  "Informational for fresh-precert readiness; current active-cycle anchor may remain pending."
+                                  },
+                                  {
+                                      "id":  "cert_3_3",
+                                      "title":  "Smoke generation compile gate",
+                                      "status":  "PASS",
+                                      "evidence":  "doc/pre_certification/cycles/precert_2026-03-16/day-01/DAILY_CERT_SUMMARY_day01.md",
+                                      "durationMs":  0,
+                                      "details":  "From active counted certification evidence."
+                                  },
+                                  {
+                                      "id":  "cert_3_4",
+                                      "title":  "Human parity sample",
+                                      "status":  "PASS",
+                                      "evidence":  "doc/pre_certification/cycles/precert_2026-03-16/day-01/DAILY_CERT_SUMMARY_day01.md",
+                                      "durationMs":  0,
+                                      "details":  "From active counted certification evidence."
+                                  },
+                                  {
+                                      "id":  "cert_3_5",
+                                      "title":  "Real-model eval gate",
+                                      "status":  "PASS",
+                                      "evidence":  "doc/pre_certification/cycles/precert_2026-03-16/day-01/DAILY_CERT_SUMMARY_day01.md",
+                                      "durationMs":  0,
+                                      "details":  "From active counted certification evidence."
+                                  }
+                              ],
+    "blockers":  [
+
+                 ]
+}

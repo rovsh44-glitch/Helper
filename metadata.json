@@ -1,0 +1,24 @@
+{
+  "name": "Helper",
+  "version": "6.0.0-Stable",
+  "status": "Base Stable Version",
+  "last_milestone": "Cognitive Evolution & Remediation Perfection Complete",
+  "features": [
+    "Multimodal Vision (Qwen2.5-VL)",
+    "Strategic Metacognition (IStrategicPlanner)",
+    "Self-Correction Loop (ICriticService)",
+    "Tiered Long-term Memory (Qdrant: Episodic, Semantic, Procedural)",
+    "Goal Persistence (IGoalManager)",
+    "Airlock Internet Search (SearxNG API)",
+    "Local Security Sandbox (FileSystemGuard)",
+    "Native DjVu & Image Parsing"
+  ],
+  "stack": {
+    "backend": ".NET 8.0 Minimal API",
+    "frontend": "Vite + React + Tailwind",
+    "vector_db": "Qdrant (Docker)",
+    "search": "SearxNG (Docker)",
+    "llm_orchestration": "Ollama (Custom AILink)"
+  },
+  "description": "A sovereign, autonomous engineering and research agent designed for local-first execution and cognitive self-evolution."
+}

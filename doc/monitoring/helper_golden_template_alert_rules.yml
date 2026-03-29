@@ -1,0 +1,43 @@
+groups:
+  - name: helper-golden-template-slo
+    interval: 30s
+    rules:
+      - alert: HelperGoldenPromotionSuccessRateLow
+        expr: sum(increase(generation_template_promotion_success_total[24h])) / clamp_min(sum(increase(generation_template_promotion_attempt_total[24h])), 1) < 0.90
+        for: 30m
+        labels:
+          severity: p1
+          service: helper
+        annotations:
+          summary: "Golden template promotion success dropped below 90%"
+          description: "Runtime promotion success ratio is below target for 24h rolling window."
+
+      - alert: HelperGoldenCertificationFailSpike
+        expr: sum(increase(generation_template_promotion_fail_reason_total{reason="certification"}[2h])) >= 3
+        for: 15m
+        labels:
+          severity: p1
+          service: helper
+        annotations:
+          summary: "Certification failures are spiking"
+          description: "At least 3 certification-related promotion failures in 2h."
+
+      - alert: HelperGoldenRollbackRateHigh
+        expr: sum(increase(generation_template_promotion_fail_reason_total{reason=~"activation|post_activation_certification"}[24h])) / clamp_min(sum(increase(generation_template_promotion_attempt_total[24h])), 1) > 0.05
+        for: 20m
+        labels:
+          severity: p1
+          service: helper
+        annotations:
+          summary: "Activation rollback proxy rate exceeded 5%"
+          description: "Activation-related failure rate is above SLO threshold."
+
+      - alert: HelperParityGateFail
+        expr: helper_parity_gate_last_pass == 0
+        for: 30m
+        labels:
+          severity: p1
+          service: helper
+        annotations:
+          summary: "Parity gate is failing"
+          description: "Latest parity gate status is non-pass. Export helper_parity_gate_last_pass from nightly pipeline."

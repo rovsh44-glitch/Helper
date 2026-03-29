@@ -1,0 +1,11 @@
+<Project>
+  <PropertyGroup Condition="'$(MSBuildProjectExtension)' == '.csproj'">
+    <HelperProjectRelativeDirectory Condition="'$(HelperProjectRelativeDirectory)' == ''">$([System.String]::Copy('$(MSBuildProjectDirectory)').Replace('$(MSBuildThisFileDirectory)', ''))</HelperProjectRelativeDirectory>
+    <HelperMsbuildStateRoot Condition="'$(HelperMsbuildStateRoot)' == '' and '$(HELPER_MSBUILD_INTERMEDIATE_ROOT)' != ''">$(HELPER_MSBUILD_INTERMEDIATE_ROOT)\repo\</HelperMsbuildStateRoot>
+    <HelperMsbuildStateRoot Condition="'$(HelperMsbuildStateRoot)' == '' and ('$(CODEX_THREAD_ID)' != '' or '$(CODEX_SANDBOX_NETWORK_DISABLED)' == '1')">$(USERPROFILE)\.codex\memories\msbuild-intermediate\repo\</HelperMsbuildStateRoot>
+    <BaseIntermediateOutputPath Condition="'$(HelperMsbuildStateRoot)' != '' and '$(BaseIntermediateOutputPath)' == ''">$(HelperMsbuildStateRoot)obj\$(HelperProjectRelativeDirectory)\</BaseIntermediateOutputPath>
+    <MSBuildProjectExtensionsPath Condition="'$(HelperMsbuildStateRoot)' != '' and '$(MSBuildProjectExtensionsPath)' == ''">$(BaseIntermediateOutputPath)</MSBuildProjectExtensionsPath>
+    <DefaultItemExcludesInProjectFolder Condition="'$(HelperMsbuildStateRoot)' != ''">$(DefaultItemExcludesInProjectFolder);obj/**;bin/**</DefaultItemExcludesInProjectFolder>
+    <NuGetAudit Condition="'$(HelperMsbuildStateRoot)' != '' and '$(NuGetAudit)' == ''">false</NuGetAudit>
+  </PropertyGroup>
+</Project>

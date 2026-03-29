@@ -1,0 +1,52 @@
+{
+  "name": "helper",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build --configLoader native",
+    "frontend:build": "npm run build",
+    "runtime-slice:dev": "vite --config vite.runtime-slice.config.ts",
+    "runtime-slice:build": "vite build --configLoader native --config vite.runtime-slice.config.ts",
+    "runtime-slice:preview": "vite preview --config vite.runtime-slice.config.ts",
+    "build:verification": "powershell -ExecutionPolicy Bypass -File scripts/build_frontend_verification.ps1",
+    "preview": "vite preview",
+    "config:refresh": "powershell -ExecutionPolicy Bypass -File scripts/generate_env_reference.ps1",
+    "config:check": "powershell -ExecutionPolicy Bypass -File scripts/check_env_governance.ps1",
+    "docs:check": "powershell -ExecutionPolicy Bypass -File scripts/check_docs_entrypoints.ps1",
+    "security:scan": "powershell -ExecutionPolicy Bypass -File scripts/secret_scan.ps1",
+    "api:ui-gate": "powershell -ExecutionPolicy Bypass -File scripts/check_ui_api_usage.ps1",
+    "frontend:check": "powershell -ExecutionPolicy Bypass -File scripts/check_frontend_architecture.ps1",
+    "api:refresh-openapi-snapshot": "powershell -ExecutionPolicy Bypass -File scripts/refresh_openapi_snapshot.ps1",
+    "security:rotate-key": "powershell -ExecutionPolicy Bypass -File scripts/rotate_helper_api_key.ps1",
+    "eval:gate": "powershell -ExecutionPolicy Bypass -File scripts/run_eval_gate.ps1",
+    "eval:offline": "powershell -ExecutionPolicy Bypass -File scripts/run_offline_eval.ps1",
+    "baseline:capture": "powershell -ExecutionPolicy Bypass -File scripts/baseline_capture.ps1",
+    "ui:smoke": "powershell -ExecutionPolicy Bypass -File scripts/run_ui_workflow_smoke.ps1",
+    "ui:perf-regression": "powershell -ExecutionPolicy Bypass -File scripts/ui_perf_regression.ps1",
+    "load:smoke": "powershell -ExecutionPolicy Bypass -File scripts/run_load_chaos_smoke.ps1",
+    "tool:benchmark": "powershell -ExecutionPolicy Bypass -File scripts/run_tool_benchmark.ps1",
+    "api:generate-client": "powershell -ExecutionPolicy Bypass -File scripts/generate_typed_client.ps1 -Output services/generatedOpenApiSummary.ts",
+    "qdrant:migrate-ids": "powershell -ExecutionPolicy Bypass -File scripts/migrate_qdrant_legacy_ids.ps1",
+    "ci:gate": "powershell -ExecutionPolicy Bypass -File scripts/ci_gate.ps1"
+  },
+  "dependencies": {
+    "@microsoft/signalr": "^10.0.0",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.574.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "tailwind-merge": "^3.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "autoprefixer": "^10.4.21",
+    "tailwindcss": "^3.4.17",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0"
+  }
+}

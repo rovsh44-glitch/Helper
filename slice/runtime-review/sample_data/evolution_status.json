@@ -1,0 +1,34 @@
+{
+  "processedFiles": 124,
+  "totalFiles": 160,
+  "activeTask": "Indexing sanitized runtime review corpus",
+  "goals": [
+    {
+      "title": "Stabilize runtime review boundary",
+      "description": "Keep the public slice read-only, fixture-backed, and reproducible."
+    },
+    {
+      "title": "Expose route telemetry",
+      "description": "Show recent routing quality and degradation alerts without leaking private core details."
+    }
+  ],
+  "isLearning": true,
+  "isIndexing": true,
+  "isEvolution": false,
+  "currentPhase": "Indexing",
+  "fileProgress": 0.78,
+  "pipelineVersion": "structured-v2",
+  "chunkingStrategy": "hybrid-structural",
+  "currentSection": "Runtime review sample corpus",
+  "currentPageStart": 19,
+  "currentPageEnd": 24,
+  "parserVersion": "fixture-parser-v1",
+  "recentLearnings": [
+    "Route alerts rise when degraded outcomes exceed half of recent events.",
+    "Runtime log semantics remain stable after path redaction.",
+    "Fixture-backed readiness snapshots keep the UI deterministic."
+  ],
+  "alerts": [
+    "Generation, chat, and web research are intentionally excluded from this slice."
+  ]
+}

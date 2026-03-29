@@ -1,0 +1,63 @@
+groups:
+  - name: helper-parity-slo
+    interval: 30s
+    rules:
+      - alert: HelperConversationSuccessRateLow
+        expr: helper_conversation_success_rate < 0.85
+        for: 15m
+        labels:
+          severity: p1
+          service: helper
+        annotations:
+          summary: "Helper conversation success rate dropped below 85%"
+          description: "Conversation success rate is below target for 15 minutes."
+
+      - alert: HelperUserHelpfulnessLow
+        expr: helper_user_helpfulness_average < 4.3
+        for: 30m
+        labels:
+          severity: p1
+          service: helper
+        annotations:
+          summary: "Helper helpfulness dropped below 4.3/5"
+          description: "Human feedback average is under target."
+
+      - alert: HelperCitationCoverageLow
+        expr: helper_citation_coverage < 0.70
+        for: 30m
+        labels:
+          severity: p1
+          service: helper
+        annotations:
+          summary: "Citation coverage dropped below 70%"
+          description: "Factual responses have insufficient grounded coverage."
+
+      - alert: HelperEndToEndTtftHigh
+        expr: helper_end_to_end_ttft_ms > 2000
+        for: 20m
+        labels:
+          severity: p2
+          service: helper
+        annotations:
+          summary: "End-to-end TTFT is above target"
+          description: "Observed end-to-end TTFT exceeds 2 seconds."
+
+      - alert: HelperToolCorrectnessLow
+        expr: helper_tool_success_ratio < 0.90
+        for: 30m
+        labels:
+          severity: p2
+          service: helper
+        annotations:
+          summary: "Tool correctness ratio dropped below 90%"
+          description: "Tool execution quality gate is below expected level."
+
+      - alert: HelperToolCorrectnessLowBySourceChat
+        expr: helper_tool_success_ratio_by_source{source="chat_execute"} < 0.90
+        for: 30m
+        labels:
+          severity: p2
+          service: helper
+        annotations:
+          summary: "Chat-routed tool correctness ratio dropped below 90%"
+          description: "Tool execution quality for chat source is below expected level."

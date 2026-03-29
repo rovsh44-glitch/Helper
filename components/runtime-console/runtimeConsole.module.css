@@ -1,0 +1,228 @@
+.heroCard {
+  border-radius: 30px;
+}
+
+.sectionCard {
+  border-radius: 30px;
+}
+
+.sectionCardLarge {
+  border-radius: 28px;
+}
+
+.logCard {
+  border-radius: 22px;
+}
+
+.accentGlow {
+  box-shadow: 0 0 24px rgba(34, 211, 238, 0.12);
+}
+
+.kickerWide {
+  font-size: 10px;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+}
+
+.kickerUltra {
+  font-size: 11px;
+  letter-spacing: 0.45em;
+  text-transform: uppercase;
+}
+
+.kicker {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.kickerMedium {
+  font-size: 10px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+}
+
+.kickerTight {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.kickerFeed {
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+}
+
+.metaText {
+  font-size: 11px;
+}
+
+.detailText {
+  font-size: 12px;
+}
+
+.summaryText {
+  font-size: 13px;
+  line-height: 1.5rem;
+}
+
+.layoutGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+.lowerDeckGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+.filterGrid {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.sourceMetaGrid {
+  min-width: 148px;
+}
+
+.feedViewport {
+  max-height: 360px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.logViewport {
+  max-height: 760px;
+  overflow-y: auto;
+}
+
+.timelineShell {
+  position: relative;
+  isolation: isolate;
+}
+
+.timelineShell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at top left, rgba(34, 211, 238, 0.12), transparent 42%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.05), rgba(15, 23, 42, 0.4));
+  pointer-events: none;
+  z-index: 0;
+}
+
+.timelineShell > * {
+  position: relative;
+  z-index: 1;
+}
+
+.timelineCard {
+  animation: timelineLift 680ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.timelineConnector {
+  left: 17px;
+  top: 2.5rem;
+  height: calc(100% - 0.5rem);
+}
+
+.timelineConnectorActive {
+  position: relative;
+  overflow: hidden;
+}
+
+.timelineConnectorActive::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.75), transparent);
+  animation: timelineScan 2.8s linear infinite;
+}
+
+.timelineNode {
+  left: 8px;
+  top: 0.75rem;
+}
+
+.timelineNodeActive {
+  will-change: transform, box-shadow;
+  animation: timelinePulse 2.6s ease-in-out infinite;
+}
+
+.timelineBlock {
+  border-radius: 24px;
+}
+
+@media (min-width: 640px) {
+  .sourceMetaGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .filterGrid {
+    grid-template-columns: 88px minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .lowerDeckGrid {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.9fr) minmax(0, 0.9fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .layoutGrid {
+    grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.95fr);
+  }
+
+  .sourceMetaGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .timelineCard,
+  .timelineNodeActive,
+  .timelineConnectorActive::after {
+    animation: none !important;
+  }
+}
+
+@keyframes timelineLift {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes timelinePulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.2);
+  }
+
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 8px rgba(34, 211, 238, 0);
+  }
+}
+
+@keyframes timelineScan {
+  from {
+    transform: translateY(-100%);
+  }
+
+  to {
+    transform: translateY(100%);
+  }
+}

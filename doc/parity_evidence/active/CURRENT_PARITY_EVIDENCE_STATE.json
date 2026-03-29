@@ -1,0 +1,56 @@
+﻿{
+    "generated":  "2026-03-24 15:38:33 +05:00",
+    "status":  "INSUFFICIENT_EVIDENCE",
+    "details":  "Parity evidence artifacts exist, but counted 14-day coverage has not started.",
+    "blindHumanEval":  {
+                           "path":  "doc/human_eval_parity_report_latest.md",
+                           "exists":  true,
+                           "evidenceLevel":  "sample",
+                           "authoritative":  false,
+                           "formatStatus":  "INSUFFICIENT_FORMAT",
+                           "provenanceStatus":  "PASS",
+                           "blindCollectionStatus":  "PRE_SCORE_BLIND",
+                           "reviewerDiversityStatus":  "PASS",
+                           "integrityStatus":  "FAIL",
+                           "integritySufficiency":  "INSUFFICIENT_INTEGRITY"
+                       },
+    "realModelEval":  {
+                          "path":  "doc/eval_real_model_report.md",
+                          "exists":  true,
+                          "mode":  "live",
+                          "requestedEvidenceLevel":  "authoritative",
+                          "evidenceLevel":  "authoritative",
+                          "authoritativeGateStatus":  "PASS",
+                          "authoritative":  true,
+                          "status":  "PASS",
+                          "nonAuthoritativeReasons":  "none",
+                          "traceabilityStatus":  "PASS"
+                      },
+    "certification":  {
+                          "path":  "doc/HELPER_HUMAN_LEVEL_PARITY_CERTIFICATION_REPORT_2026-02-26.md",
+                          "exists":  true,
+                          "evidenceLevel":  "live_non_authoritative",
+                          "authoritative":  false,
+                          "windowComplete":  false,
+                          "go":  false,
+                          "evidenceCompletenessStatus":  "INCOMPLETE",
+                          "authoritativeSourceStatus":  "INCOMPLETE",
+                          "noGoReasons":  "missing_counted_days=0; blind_human_eval_non_authoritative=INSUFFICIENT_INTEGRITY",
+                          "status":  "FAIL"
+                      },
+    "dailyCoverage":  {
+                          "validSnapshots":  1,
+                          "countedSnapshots":  0,
+                          "invalidSnapshots":  0,
+                          "latestCountedSnapshotPath":  "",
+                          "latestCountedSnapshotDate":  "",
+                          "latestAnySnapshotPath":  "doc/parity_daily/sample_snapshot.json",
+                          "latestAnySnapshotDate":  "2026-02-26"
+                      },
+    "bundle":  {
+                   "path":  "doc/parity_evidence/active/CURRENT_PARITY_EVIDENCE_BUNDLE.json",
+                   "exists":  true,
+                   "status":  "INCOMPLETE",
+                   "claimEligible":  false
+               }
+}

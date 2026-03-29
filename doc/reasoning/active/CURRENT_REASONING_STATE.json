@@ -1,0 +1,9 @@
+﻿{
+    "generated":  "2026-03-19 12:43:54 +05:00",
+    "status":  "BASELINE_DEFINED_NOT_EXECUTED",
+    "details":  "Reasoning benchmark dataset exists, but no live passing baseline was captured yet.",
+    "baselineMarkdownPath":  "doc/reasoning/active/CURRENT_REASONING_BASELINE.md",
+    "baselineJsonPath":  "doc/reasoning/active/CURRENT_REASONING_BASELINE.json",
+    "benchmarkMode":  "dry-run",
+    "lastPassRate":  "0%"
+}

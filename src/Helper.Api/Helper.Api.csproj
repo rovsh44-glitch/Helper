@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- RouteHandlerAnalyzer crashes on current minimal-API shapes; keep this suppression scoped to the API project. -->
+    <NoWarn>$(NoWarn);AD0001</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="PROJECTS\**\*.cs" />
+    <Compile Remove="bin\**\PROJECTS\**\*.cs" />
+    <Content Remove="PROJECTS\**\*" />
+    <Content Remove="bin\**\PROJECTS\**\*" />
+    <Content Remove="auth_keys.json" />
+    <Content Remove="API_PORT.txt" />
+    <Content Remove="LOG\**" />
+    <Content Remove="logs\**" />
+    <Content Remove="library\**" />
+    <Content Remove="sandbox\**" />
+    <None Remove="PROJECTS\**\*" />
+    <None Remove="bin\**\PROJECTS\**\*" />
+    <None Remove="auth_keys.json" />
+    <None Remove="API_PORT.txt" />
+    <None Remove="LOG\**" />
+    <None Remove="logs\**" />
+    <None Remove="library\**" />
+    <None Remove="sandbox\**" />
+    <EmbeddedResource Remove="PROJECTS\**\*" />
+    <EmbeddedResource Remove="bin\**\PROJECTS\**\*" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Helper.Runtime\Helper.Runtime.csproj" />
+    <ProjectReference Include="..\Helper.Runtime.WebResearch\Helper.Runtime.WebResearch.csproj" />
+    <ProjectReference Include="..\Helper.Runtime.Knowledge\Helper.Runtime.Knowledge.csproj" />
+    <ProjectReference Include="..\Helper.Runtime.Evolution\Helper.Runtime.Evolution.csproj" />
+  </ItemGroup>
+</Project>
+

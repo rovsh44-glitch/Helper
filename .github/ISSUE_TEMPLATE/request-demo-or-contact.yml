@@ -1,0 +1,51 @@
+name: Request demo or contact
+description: Start a demo, partnership, investment, acquisition, or technical diligence conversation.
+title: "[Contact] "
+labels:
+  - contact:intake
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This is a public intake surface. Do not post confidential material, credentials, or diligence-sensitive detail here.
+  - type: dropdown
+    id: intent
+    attributes:
+      label: Intent
+      options:
+        - Demo request
+        - Partnership discussion
+        - Investment interest
+        - Acquisition or licensing interest
+        - Technical diligence introduction
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: name
+    attributes:
+      label: Name
+    validations:
+      required: true
+  - type: input
+    id: organization
+    attributes:
+      label: Organization
+  - type: input
+    id: contact_email
+    attributes:
+      label: Contact email
+    validations:
+      required: true
+  - type: textarea
+    id: goal
+    attributes:
+      label: What are you looking for?
+      description: Describe the conversation you want to start.
+    validations:
+      required: true
+  - type: textarea
+    id: non_confidential_context
+    attributes:
+      label: Non-confidential context
+      description: Share only information that is safe to post publicly.

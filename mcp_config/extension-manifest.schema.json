@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://helper.local/schemas/extension-manifest.schema.json",
+  "title": "HELPER Extension Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "displayName",
+    "category",
+    "providerType",
+    "transport",
+    "description",
+    "capabilities",
+    "trustLevel",
+    "defaultEnabled",
+    "disabledInCertificationMode",
+    "quietWhenUnavailable"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "helper.extension.manifest/v1"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_.-]*$"
+    },
+    "displayName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "category": {
+      "type": "string",
+      "enum": ["built_in", "internal", "external", "experimental"]
+    },
+    "providerType": {
+      "type": "string",
+      "enum": ["local_tools", "helper_actions", "mcp"]
+    },
+    "transport": {
+      "type": "string",
+      "enum": ["none", "stdio"]
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "command": {
+      "type": "string"
+    },
+    "args": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "declaredTools": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-zA-Z0-9_.:-]+$"
+      }
+    },
+    "requiredEnv": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Z][A-Z0-9_]*$"
+      }
+    },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "trustLevel": {
+      "type": "string",
+      "enum": ["built_in", "internal", "trusted_external", "experimental"]
+    },
+    "defaultEnabled": {
+      "type": "boolean"
+    },
+    "disabledInCertificationMode": {
+      "type": "boolean"
+    },
+    "quietWhenUnavailable": {
+      "type": "boolean"
+    },
+    "toolPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "allowAllTools": {
+          "type": "boolean"
+        },
+        "allowedTools": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_.:-]+$"
+          }
+        }
+      }
+    }
+  }
+}

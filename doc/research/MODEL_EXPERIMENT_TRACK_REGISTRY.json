@@ -1,0 +1,60 @@
+{
+  "generated": "2026-03-23 00:00:00 +05:00",
+  "trackId": "model_experiment_track",
+  "status": "TRACK_DEFINED_RESEARCH_ONLY",
+  "registryVersion": 1,
+  "productExecutionTrack": {
+    "authoritativeDocs": [
+      "doc/archive/comparative/HELPER_EXECUTION_ORDER_TABLE_LFL300_2026-03-22.md",
+      "doc/archive/comparative/HELPER_EXECUTION_DASHBOARD_LFL300_2026-03-22.md"
+    ],
+    "operatorScripts": [
+      "scripts/run_eval_runner_v2.ps1",
+      "scripts/run_local_first_librarian_corpus.ps1",
+      "scripts/analyze_local_first_librarian_run.ps1"
+    ],
+    "scope": "product_quality_closure_only"
+  },
+  "modelExperimentTrack": {
+    "policyPath": "doc/research/MODEL_EXPERIMENT_TRACK_POLICY.md",
+    "activeStateJsonPath": "doc/research/active/CURRENT_MODEL_EXPERIMENT_TRACK.json",
+    "activeStateMarkdownPath": "doc/research/active/CURRENT_MODEL_EXPERIMENT_TRACK.md",
+    "artifactRoot": "artifacts/eval/model_experiments",
+    "notesRoot": "doc/research/notes",
+    "nonAuthoritativeByDefault": true,
+    "allowedThemes": [
+      {
+        "id": "selective_residual_memory",
+        "title": "Selective Residual Memory",
+        "description": "Model-side memory routing ideas inspired by selective aggregation."
+      },
+      {
+        "id": "evidence_aware_decoding",
+        "title": "Evidence-Aware Decoding",
+        "description": "Decoding strategies that condition generation behavior on evidence quality or tier."
+      },
+      {
+        "id": "retrieval_conditioned_latent_routing",
+        "title": "Retrieval-Conditioned Latent Routing",
+        "description": "Model-side routing experiments informed by retrieval state without mutating the product execution plan."
+      }
+    ],
+    "proposalRequiredFields": [
+      "experiment_id",
+      "theme_id",
+      "hypothesis",
+      "artifact_root",
+      "benchmark_slice_targets",
+      "success_criteria",
+      "rollback_or_no_promotion_rule"
+    ],
+    "promotionRule": {
+      "requiresSeparateRfc": true,
+      "requiresBenchmarkEvidence": true,
+      "requiresReproductionOnProductTrack": true,
+      "mayNotDirectlyMutateExecutionPlan": true
+    },
+    "activeExperiments": []
+  }
+}
+

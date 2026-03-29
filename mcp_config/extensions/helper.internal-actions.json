@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "helper.extension.manifest/v1",
+  "id": "helper-internal-actions",
+  "displayName": "Helper Internal Actions",
+  "category": "internal",
+  "providerType": "helper_actions",
+  "transport": "none",
+  "description": "Higher-level Helper actions published through the MCP host.",
+  "declaredTools": ["helper_research", "helper_generate_project"],
+  "capabilities": ["research", "project-generation"],
+  "trustLevel": "internal",
+  "defaultEnabled": true,
+  "disabledInCertificationMode": false,
+  "quietWhenUnavailable": false
+}

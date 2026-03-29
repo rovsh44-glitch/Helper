@@ -1,0 +1,68 @@
+{
+  "title": "Helper Golden Template Pipeline",
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "tags": ["helper", "golden-template", "promotion"],
+  "panels": [
+    {
+      "title": "Promotion Success Ratio (24h)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(increase(generation_template_promotion_success_total[24h])) / clamp_min(sum(increase(generation_template_promotion_attempt_total[24h])), 1)",
+          "legendFormat": "promotion_success_ratio_24h"
+        }
+      ]
+    },
+    {
+      "title": "Certification/Promotion Failures by Reason",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (reason) (increase(generation_template_promotion_fail_reason_total[24h]))",
+          "legendFormat": "{{reason}}"
+        }
+      ]
+    },
+    {
+      "title": "Format Fix Outcomes",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "generation_template_promotion_format_fix_applied_total",
+          "legendFormat": "format_fix_applied_total"
+        },
+        {
+          "expr": "generation_template_promotion_format_still_failing_total",
+          "legendFormat": "format_fix_still_failing_total"
+        }
+      ]
+    },
+    {
+      "title": "Activation Rollback Proxy Events",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(increase(generation_template_promotion_fail_reason_total{reason=~\"activation|post_activation_certification\"}[24h]))",
+          "legendFormat": "activation_or_post_activation_fail_24h"
+        }
+      ]
+    },
+    {
+      "title": "Golden Route Hit/Miss",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "generation_golden_template_hit_total",
+          "legendFormat": "golden_route_hit_total"
+        },
+        {
+          "expr": "generation_golden_template_miss_total",
+          "legendFormat": "golden_route_miss_total"
+        }
+      ]
+    }
+  ]
+}

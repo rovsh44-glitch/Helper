@@ -1,0 +1,18 @@
+{
+  "generated": "2026-03-23 00:00:00 +05:00",
+  "status": "TRACK_DEFINED_NO_ACTIVE_EXPERIMENTS",
+  "details": "Research governance track is defined and separated from the product-quality execution roadmap; no active model-side experiments are registered yet.",
+  "registryPath": "doc/research/MODEL_EXPERIMENT_TRACK_REGISTRY.json",
+  "policyPath": "doc/research/MODEL_EXPERIMENT_TRACK_POLICY.md",
+  "productionRoadmapSeparated": true,
+  "productRunnerScope": "product_quality_closure_only",
+  "activeExperimentCount": 0,
+  "nonAuthoritativeByDefault": true,
+  "allowedThemeIds": [
+    "selective_residual_memory",
+    "evidence_aware_decoding",
+    "retrieval_conditioned_latent_routing"
+  ],
+  "promotionGate": "separate_rfc_and_product_track_reproduction_required"
+}
+

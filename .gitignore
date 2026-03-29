@@ -1,0 +1,91 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.vs/
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+!Helper.sln
+*.sw?
+
+# Legacy Runtime Artifacts
+PROJECTS/
+PROJECTS /
+library/
+ocr_venv/
+runtime/
+tmp_pdfepub_smoke/
+AGI_TEST_V3/
+LOG/
+logs/
+generated_projects/
+output_projects/
+tmp_tpl_build/
+bin/
+obj/
+src/Helper.Api/output_projects/
+sandbox/
+tools/ghostscript/
+temp/
+artifacts/
+showcase_repo/
+src/**/bin/
+src/**/obj/
+src/**/.playwright/
+test/**/bin/
+test/**/obj/
+test/**/.playwright/
+test/**/TestResults/
+New folder*/
+*.pid
+searxng/settings.yml
+
+# Source-surface runtime debris
+src/Helper.Api/API_PORT.txt
+src/Helper.Api/auth_keys.json
+src/Helper.Api/LOG/
+src/Helper.Api/logs/
+src/Helper.Api/library/
+src/Helper.Api/sandbox/
+
+# Hygiene reports
+temp/hygiene/
+artifacts/hygiene/
+
+# Local evidence and generated review surfaces
+doc/pre_certification/
+doc/certification_2026-03-15/
+doc/parity_nightly/
+doc/parity_daily_example_14d/
+doc/PHOTO/
+doc/self_audit_tmp/
+doc/canary_gate_report.md
+doc/eval_dataset_validation_report.md
+doc/load_streaming_chaos_report.md
+doc/human_eval_blind_pack_validation.json
+doc/human_eval_blind_pack_validation.md
+doc/human_eval_parity_report_latest.*
+doc/generation_health_*.md
+doc/generation_health_*.json
+doc/smoke_compile_baseline_*.md
+doc/perf_baseline_*.md
+doc/perf_baseline_*.json
+doc/process_monitor_*.md
+doc/TMP_*

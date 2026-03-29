@@ -1,0 +1,38 @@
+﻿{
+    "generated":  "2026-03-19 12:43:54 +05:00",
+    "benchmarkMode":  "dry-run",
+    "datasetPath":  "eval/reasoning_arc_lite.jsonl",
+    "scenarioCount":  6,
+    "runtimeErrors":  0,
+    "passCount":  0,
+    "candidatesGenerated":  0,
+    "candidatesLocallyVerified":  0,
+    "candidatesRejected":  0,
+    "passRate":  0,
+    "status":  "NOT_EXECUTED",
+    "kinds":  [
+                  {
+                      "kind":  "composition",
+                      "total":  1
+                  },
+                  {
+                      "kind":  "constraint",
+                      "total":  1
+                  },
+                  {
+                      "kind":  "rule_induction",
+                      "total":  2
+                  },
+                  {
+                      "kind":  "structured_output",
+                      "total":  1
+                  },
+                  {
+                      "kind":  "symbolic_transform",
+                      "total":  1
+                  }
+              ],
+    "results":  [
+
+                ]
+}

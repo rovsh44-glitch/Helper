@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "helper.extension.manifest/v1",
+  "id": "playwright",
+  "displayName": "Playwright MCP",
+  "category": "experimental",
+  "providerType": "mcp",
+  "transport": "stdio",
+  "description": "Safe local experimental provider for browser automation.",
+  "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-playwright"],
+  "requiredEnv": [],
+  "capabilities": ["browser-automation", "local-runtime"],
+  "trustLevel": "experimental",
+  "defaultEnabled": false,
+  "disabledInCertificationMode": true,
+  "quietWhenUnavailable": true,
+  "toolPolicy": {
+    "allowAllTools": true
+  }
+}
