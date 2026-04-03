@@ -5,6 +5,7 @@ public partial class ArchitectureFitnessTests
     private static readonly string[] BlockedBrandTokens =
     {
         "Gem" + "ini",
+        "Gem" + "eni",
         "Gen" + "esis"
     };
 
@@ -174,10 +175,16 @@ public partial class ArchitectureFitnessTests
         var workspaceRoot = ResolveWorkspaceFile();
         var roots = new[]
         {
+            ResolveWorkspaceFile(".github"),
+            ResolveWorkspaceFile("components"),
+            ResolveWorkspaceFile("contexts"),
             ResolveWorkspaceFile("src"),
             ResolveWorkspaceFile("test"),
+            ResolveWorkspaceFile("hooks"),
             ResolveWorkspaceFile("scripts"),
-            ResolveWorkspaceFile("doc")
+            ResolveWorkspaceFile("services"),
+            ResolveWorkspaceFile("doc"),
+            ResolveWorkspaceFile("eval")
         };
         var files = roots
             .Where(Directory.Exists)
@@ -185,15 +192,10 @@ public partial class ArchitectureFitnessTests
             .Where(path =>
                 !path.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase) &&
                 !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase) &&
-                !path.Contains($"{Path.DirectorySeparatorChar}TestResults{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase))
-            .Concat(new[]
-            {
-                ResolveWorkspaceFile(".gitignore"),
-                ResolveWorkspaceFile("metadata.json"),
-                ResolveWorkspaceFile("personality.json"),
-                ResolveWorkspaceFile("docker-compose.yml"),
-                ResolveWorkspaceFile(".env.local.example")
-            })
+                !path.Contains($"{Path.DirectorySeparatorChar}TestResults{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase) &&
+                IsPublicRepoTextFile(path))
+            .Concat(Directory.GetFiles(workspaceRoot, "*", SearchOption.TopDirectoryOnly)
+                .Where(IsPublicRepoTextFile))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
@@ -246,5 +248,51 @@ public partial class ArchitectureFitnessTests
         }
 
         return BlockedBrandTokens.Any(token => text.Contains(token, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static bool IsPublicRepoTextFile(string path)
+    {
+        var fileName = Path.GetFileName(path);
+        if (string.IsNullOrWhiteSpace(fileName))
+        {
+            return false;
+        }
+
+        if (fileName.StartsWith(".env.local", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var extension = Path.GetExtension(path);
+        if (string.IsNullOrEmpty(extension))
+        {
+            return fileName.Equals(".gitignore", StringComparison.OrdinalIgnoreCase) ||
+                   fileName.Equals(".ignore", StringComparison.OrdinalIgnoreCase);
+        }
+
+        return extension.Equals(".bat", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".cjs", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".cmd", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".config", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".cs", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".csproj", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".css", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".editorconfig", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".html", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".json", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".jsx", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".md", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".mjs", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".props", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".ps1", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".sh", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".sln", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".targets", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".ts", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".tsx", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".txt", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".xml", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".yaml", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".yml", StringComparison.OrdinalIgnoreCase);
     }
 }
