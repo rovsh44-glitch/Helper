@@ -106,11 +106,6 @@ namespace Helper.Runtime.Core
         Task<ResearchResult> ResearchAsync(string topic, int depth = 1, Action<string>? onProgress = null, CancellationToken ct = default);
     }
 
-    public interface IDebateEngine
-    {
-        Task<DebateResult> DebateAsync(string prompt, CancellationToken ct = default);
-    }
-
     public interface IAutoHealer
     {
         Task<List<BuildError>> HealAsync(string projectPath, List<BuildError> initialErrors, Action<string>? onProgress = null, CancellationToken ct = default);
