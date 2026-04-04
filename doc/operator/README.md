@@ -1,7 +1,7 @@
 # HELPER Operator Guide
 
 Status: `active`
-Updated: `2026-03-28`
+Updated: `2026-04-04`
 
 ## Purpose
 
@@ -42,6 +42,18 @@ This is the operator-facing entry point for running, checking, and certifying HE
 1. ensure `HELPER_RUNTIME_SMOKE_API_BASE` points at the local API
 2. run `powershell -ExecutionPolicy Bypass -File scripts\run_ui_workflow_smoke.ps1`
 3. inspect `temp\verification\ui_workflow_smoke.md`
+
+### Run Public Test Lanes
+
+1. default public lane:
+   - `dotnet test Helper.sln -c Debug --no-build -m:1`
+2. explicit compile-path lane:
+   - `powershell -ExecutionPolicy Bypass -File scripts\run_compile_path_tests.ps1 -Configuration Debug -NoBuild`
+   - owns promotion/certification smoke plus compile-gate integration coverage
+3. explicit eval lane:
+   - `powershell -ExecutionPolicy Bypass -File scripts\run_eval_harness_tests.ps1 -Configuration Debug -NoBuild`
+   - owns heavy benchmark and pass-threshold evaluation coverage
+4. do not put compile-path or eval benchmark coverage back into `Helper.Runtime.Tests`
 
 ### Inspect Extension Registry
 

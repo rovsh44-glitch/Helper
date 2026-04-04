@@ -20,13 +20,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="Fixtures\**\*.cs" />
-    <Compile Remove="EvalHarnessTests.cs" />
-    <Compile Remove="TemplateCertificationServiceTests.cs" />
-    <Compile Remove="TemplatePromotionEndToEndAndChaosTests.cs" />
-    <Content Include="Fixtures\**\*.*">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <Compile Include="..\Helper.Runtime.Tests\TestCollectionConfig.cs" Link="TestCollectionConfig.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\EvalHarnessTests.cs" Link="EvalHarnessTests.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -37,4 +32,3 @@
   </ItemGroup>
 
 </Project>
-

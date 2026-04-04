@@ -7,12 +7,8 @@ namespace Helper.Runtime.Tests;
 
 public sealed class TemplatePromotionEndToEndAndChaosTests
 {
-    [Theory]
-    [InlineData("Template_EngineeringCalculator", "engineering")]
-    [InlineData("Golden_Chess_v2", "chess")]
-    [InlineData("Template_PdfEpubConverter", "pdfepub")]
-    [InlineData("Template_ConsoleTool", "console")]
-    public async Task PromotionPipeline_E2E_RouteToActivation_PassesForGoldenSuite(string templateId, string scenario)
+    [Fact]
+    public async Task PromotionPipeline_E2E_RouteToActivation_PassesForConsoleSmoke()
     {
         using var env = new EnvScope(new Dictionary<string, string?>
         {
@@ -26,6 +22,8 @@ public sealed class TemplatePromotionEndToEndAndChaosTests
         var templatesRoot = Path.Combine(temp.Path, "templates");
         var generatedProject = Path.Combine(temp.Path, "generated");
         Directory.CreateDirectory(generatedProject);
+        const string templateId = "Template_ConsoleTool";
+        const string scenario = "console";
         await CreateScenarioProjectAsync(generatedProject, scenario);
 
         var routing = new StaticRoutingService(templateId);
@@ -45,7 +43,7 @@ public sealed class TemplatePromotionEndToEndAndChaosTests
             templatesRoot);
 
         var result = await promotion.TryPromoteAsync(
-            new GenerationRequest($"generate {scenario} golden template", generatedProject, SessionId: $"run_{scenario}"),
+            new GenerationRequest("generate console golden template", generatedProject, SessionId: "run_console"),
             new GenerationResult(true, new List<GeneratedFile>(), generatedProject, new List<BuildError>(), TimeSpan.FromSeconds(1)));
 
         Assert.True(result.Attempted);

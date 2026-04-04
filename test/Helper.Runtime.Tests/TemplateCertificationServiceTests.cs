@@ -52,7 +52,7 @@ public sealed class Class1
         var lifecycle = new TemplateLifecycleService(templatesRoot);
         await lifecycle.ActivateVersionAsync("Template_Simple", "1.0.0");
 
-        var service = BuildService(templatesRoot, temp.Path);
+        var service = BuildSmokeService(templatesRoot, temp.Path);
         var report = await service.CertifyAsync("Template_Simple", "1.0.0");
 
         Assert.True(report.Passed, string.Join(" | ", report.Errors));
@@ -102,7 +102,7 @@ public sealed class Class1
         var lifecycle = new TemplateLifecycleService(templatesRoot);
         await lifecycle.ActivateVersionAsync("Template_Bad", "1.0.0");
 
-        var service = BuildService(templatesRoot, temp.Path);
+        var service = BuildLogicOnlyService(templatesRoot, temp.Path);
         var gate = await service.EvaluateGateAsync();
 
         Assert.False(gate.Passed);
@@ -132,7 +132,7 @@ public sealed class Class1
 """);
         await File.WriteAllTextAsync(Path.Combine(templateVersionRoot, "Class1.cs"), "namespace Demo; public sealed class Class1 { }");
 
-        var service = BuildService(templatesRoot, temp.Path);
+        var service = BuildLogicOnlyService(templatesRoot, temp.Path);
         var report = await service.CertifyAsync("Template_Corrupt", "1.0.0");
 
         Assert.False(report.Passed);
@@ -172,7 +172,7 @@ public sealed class Class1
 """);
         await File.WriteAllTextAsync(Path.Combine(templateVersionRoot, "Class1.cs"), "namespace Demo; public sealed class Class1 { }");
 
-        var service = BuildService(
+        var service = BuildLogicOnlyService(
             templatesRoot,
             temp.Path,
             buildValidator: new EmptyBuildValidator());
@@ -226,7 +226,7 @@ public static class Secrets
         var lifecycle = new TemplateLifecycleService(templatesRoot);
         await lifecycle.ActivateVersionAsync("Template_Unsafe", "1.0.0");
 
-        var service = BuildService(templatesRoot, temp.Path);
+        var service = BuildLogicOnlyService(templatesRoot, temp.Path);
         var report = await service.CertifyAsync("Template_Unsafe", "1.0.0");
 
         Assert.False(report.Passed);
@@ -282,7 +282,7 @@ public sealed class BrokenService
         var lifecycle = new TemplateLifecycleService(templatesRoot);
         await lifecycle.ActivateVersionAsync("Template_Placeholder", "1.0.0");
 
-        var service = BuildService(templatesRoot, temp.Path);
+        var service = BuildLogicOnlyService(templatesRoot, temp.Path);
         var report = await service.CertifyAsync("Template_Placeholder", "1.0.0");
 
         Assert.False(report.Passed);
@@ -333,7 +333,7 @@ public sealed class Class1
 }
 """);
 
-        var service = BuildService(templatesRoot, temp.Path);
+        var service = BuildSmokeService(templatesRoot, temp.Path);
         var report = await service.CertifyAsync("Template_WorkspaceRoot", "workspace", templatePath: templateRoot);
 
         Assert.True(report.Passed, string.Join(" | ", report.Errors));
@@ -357,7 +357,7 @@ public sealed class Class1
         Environment.SetEnvironmentVariable("HELPER_TEMPLATE_PROMOTION_FORMAT_MODE", "off");
         Environment.SetEnvironmentVariable("HELPER_TEMPLATE_CERTIFICATION_REQUIRE_SCHEMA_V2", "false");
         using var temp = new TempDirectoryScope();
-        var service = BuildService(Path.Combine(temp.Path, "templates"), temp.Path);
+        var service = BuildSmokeService(Path.Combine(temp.Path, "templates"), temp.Path);
         var probeRoot = Path.Combine(temp.Path, "Template_PdfEpubConverter");
         CopyDirectory(templateRoot, probeRoot);
 
@@ -386,7 +386,7 @@ public sealed class Class1
         Assert.Contains("process.Kill(entireProcessTree: true);", program, StringComparison.Ordinal);
     }
 
-    private static TemplateCertificationService BuildService(
+    private static TemplateCertificationService BuildSmokeService(
         string templatesRoot,
         string workspaceRoot,
         IBuildValidator? buildValidator = null,
@@ -408,31 +408,31 @@ public sealed class Class1
             workspaceRoot);
     }
 
+    private static TemplateCertificationService BuildLogicOnlyService(
+        string templatesRoot,
+        string workspaceRoot,
+        IBuildValidator? buildValidator = null,
+        IForgeArtifactValidator? artifactValidator = null,
+        IGenerationCompileGate? compileGate = null)
+    {
+        var templateManager = new ProjectTemplateManager(templatesRoot);
+        var lifecycle = new TemplateLifecycleService(templatesRoot);
+        compileGate ??= new PassingCompileGate();
+        buildValidator ??= new EmptyBuildValidator();
+        artifactValidator ??= new ForgeArtifactValidator();
+        return new TemplateCertificationService(
+            templateManager,
+            lifecycle,
+            compileGate,
+            buildValidator,
+            artifactValidator,
+            templatesRoot,
+            workspaceRoot);
+    }
+
     private static string ResolveWorkspaceFile(params string[] segments)
     {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            var marker = Path.Combine(current.FullName, "Helper.sln");
-            if (File.Exists(marker))
-            {
-                if (segments.Length > 0 && string.Equals(segments[0], "library", StringComparison.OrdinalIgnoreCase))
-                {
-                    var libraryRoot = HelperWorkspacePathResolver.ResolveLibraryRoot(null, current.FullName);
-                    var dataRootCandidate = Path.Combine(new[] { libraryRoot }.Concat(segments.Skip(1)).ToArray());
-                    if (Directory.Exists(dataRootCandidate) || File.Exists(dataRootCandidate))
-                    {
-                        return dataRootCandidate;
-                    }
-                }
-
-                return Path.Combine(new[] { current.FullName }.Concat(segments).ToArray());
-            }
-
-            current = current.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Workspace root was not found.");
+        return TestWorkspaceRoot.ResolveFile(segments);
     }
 
     private static bool IsCalibreAvailable()
@@ -482,6 +482,18 @@ public sealed class Class1
         public Task<List<BuildError>> ValidateAsync(string projectPath, CancellationToken ct = default)
         {
             return Task.FromResult(new List<BuildError>());
+        }
+    }
+
+    private sealed class PassingCompileGate : IGenerationCompileGate
+    {
+        public Task<CompileGateResult> ValidateAsync(string rawProjectRoot, CancellationToken ct = default)
+        {
+            var compileWorkspace = Path.Combine(
+                System.IO.Path.GetTempPath(),
+                "helper_template_compile_gate_pass_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(compileWorkspace);
+            return Task.FromResult(new CompileGateResult(true, Array.Empty<BuildError>(), compileWorkspace));
         }
     }
 

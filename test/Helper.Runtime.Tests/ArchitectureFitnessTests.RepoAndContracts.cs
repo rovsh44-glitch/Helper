@@ -75,9 +75,12 @@ public partial class ArchitectureFitnessTests
             .Where(Directory.Exists)
             .SelectMany(root => Directory.GetFiles(root, "*.csproj", SearchOption.AllDirectories))
             .Where(path =>
-                !path.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase) &&
-                !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase) &&
-                !path.Contains($"{Path.DirectorySeparatorChar}temp{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase))
+            {
+                var relative = Path.GetRelativePath(workspaceRoot, path);
+                return !relative.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase) &&
+                       !relative.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase) &&
+                       !relative.Contains($"{Path.DirectorySeparatorChar}temp{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase);
+            })
             .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
