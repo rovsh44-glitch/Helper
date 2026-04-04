@@ -62,7 +62,6 @@ public static partial class ServiceRegistrationExtensions
         services.AddSingleton<IArchitectMutation, ArchitectMutationService>();
         services.AddSingleton<IExpertConsultant, ExpertConsultant>();
         services.AddSingleton<IPhilosophyEngine, PhilosophyEngine>();
-        services.AddSingleton<IPersonalityManager, PersonalityManager>();
         services.AddSingleton<IConstitutionGuard, ConstitutionGuard>();
         services.AddSingleton<IntegrityAuditor>();
         services.AddSingleton(sp => new ShadowWorkspace(runtimeConfig.RootPath, sp.GetRequiredService<IDotnetService>()));

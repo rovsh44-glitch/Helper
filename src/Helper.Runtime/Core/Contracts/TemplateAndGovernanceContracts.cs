@@ -134,13 +134,6 @@ namespace Helper.Runtime.Core
         Task<ForgeVerificationResult> ValidateAsync(string projectPath, IReadOnlyList<BuildError> buildErrors, CancellationToken ct = default);
     }
 
-    public interface IPersonalityManager
-    {
-        Task<PersonalityProfile> GetProfileAsync(string id, CancellationToken ct = default);
-        Task<DriftAudit> AuditResponseAsync(string response, string personaId, CancellationToken ct = default);
-        Task SetBaselineAsync(string personaId, string referenceResponse, CancellationToken ct = default);
-    }
-
     public interface IConstitutionGuard
     {
         Task<CritiqueResult> ValidateComplianceAsync(string response, string personaId, CancellationToken ct = default);
