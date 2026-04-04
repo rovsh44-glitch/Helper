@@ -51,7 +51,7 @@ Prepared showcase surfaces:
 - [Contributing](CONTRIBUTING.md)
 - [FAQ](FAQ.md)
 
-These files are the curated export source for the public showcase. The private-core repository remains broader than the public-safe surface and should not be published as-is.
+These files are the curated public-safe surface for this repository. Broader private working material may exist outside the public repository and should not be published as-is.
 
 Supporting technical truth:
 
@@ -106,9 +106,9 @@ Runtime-only paths:
 
 The current recommended model is:
 
-1. keep this repository as the private-core baseline;
-2. keep the curated public showcase separate from the core repo, not as a blind dump of every internal artifact;
-3. use the included `.github/ISSUE_TEMPLATE/` forms as the export source for the public showcase.
+1. keep this repository as the curated public-safe baseline;
+2. keep broader private-core work outside the public repo and export only reviewed public-safe slices;
+3. use the included `.github/ISSUE_TEMPLATE/` forms as part of the public showcase and disclosure workflow.
 
 ## Contact And Next Step
 
