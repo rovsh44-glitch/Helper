@@ -1,9 +1,11 @@
 import React, { Suspense, lazy, useCallback, useState } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { ThoughtStream } from './components/ThoughtStream';
+import { PanelResizeHandle } from './components/layout/PanelResizeHandle';
 import { HUB_URL } from './services/apiConfig';
 import { getSavedResponseStyle } from './services/conversationSession';
 import { HelperHubProvider, useHelperHubContext } from './hooks/useHelperHubContext';
+import { usePersistentPanelSize } from './hooks/usePersistentPanelSize';
 import { ConversationStateProvider } from './contexts/ConversationStateContext';
 import { GoalsStateProvider } from './contexts/GoalsStateContext';
 import { WorkflowStateProvider } from './contexts/WorkflowStateContext';
@@ -29,6 +31,18 @@ export default function App() {
   const [plannerSeed, setPlannerSeed] = useState<ArchitecturePlannerSeed | null>(null);
   const [builderLaunchRequest, setBuilderLaunchRequest] = useState<BuilderLaunchRequest | null>(null);
   const initialResponseStyle = getSavedResponseStyle();
+  const { size: navigationWidth, resizeBy: resizeNavigationRail } = usePersistentPanelSize({
+    storageKey: 'app-shell.navigation-width',
+    defaultSize: 272,
+    minSize: 224,
+    maxSize: 360,
+  });
+  const { size: reasoningRailWidth, resizeBy: resizeReasoningRail } = usePersistentPanelSize({
+    storageKey: 'app-shell.reasoning-width',
+    defaultSize: 320,
+    minSize: 272,
+    maxSize: 440,
+  });
 
   const renderLazyPanel = useCallback((content: React.ReactNode) => (
     <Suspense fallback={<div className="p-8 text-sm text-slate-500">Loading panel...</div>}>
@@ -45,9 +59,16 @@ export default function App() {
               <BuilderWorkspaceProvider>
                 <ConversationRuntimeController />
                 <div className="flex h-screen bg-slate-950 text-slate-200 overflow-hidden font-sans">
-                      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
-                      <main className="flex-1 relative flex">
-                        <div className="flex-1 overflow-hidden relative">
+                      <aside className="h-full shrink-0" style={{ width: `${navigationWidth}px` }}>
+                        <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+                      </aside>
+                      <PanelResizeHandle
+                        axis="x"
+                        title="Resize navigation rail"
+                        onResizeDelta={resizeNavigationRail}
+                      />
+                      <main className="flex-1 relative flex min-w-0">
+                        <div className="flex-1 overflow-hidden relative min-w-0">
                       <AppContent
                         activeTab={activeTab}
                         plannerSeed={plannerSeed}
@@ -64,7 +85,16 @@ export default function App() {
                         renderLazyPanel={renderLazyPanel}
                       />
                         </div>
-                        <ThoughtStream />
+                        <div className="hidden xl:block">
+                          <PanelResizeHandle
+                            axis="x"
+                            title="Resize reasoning rail"
+                            onResizeDelta={(delta) => resizeReasoningRail(-delta)}
+                          />
+                        </div>
+                        <aside className="hidden xl:block h-full shrink-0" style={{ width: `${reasoningRailWidth}px` }}>
+                          <ThoughtStream />
+                        </aside>
                       </main>
                     </div>
               </BuilderWorkspaceProvider>

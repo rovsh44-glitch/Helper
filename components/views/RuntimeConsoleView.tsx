@@ -1,12 +1,20 @@
 import React, { Suspense, lazy } from 'react';
 import { useRuntimeConsoleModel } from '../../hooks/useRuntimeConsoleModel';
+import { PanelResizeHandle } from '../layout/PanelResizeHandle';
 import styles from '../runtime-console/runtimeConsole.module.css';
+import { usePersistentPanelSize } from '../../hooks/usePersistentPanelSize';
 
 const RuntimeConsoleLogsPanel = lazy(() => import('../runtime-console/RuntimeConsoleLogsPanel'));
 const RuntimeConsoleSidebar = lazy(() => import('../runtime-console/RuntimeConsoleSidebar'));
 const RuntimeConsoleTelemetryDeck = lazy(() => import('../runtime-console/RuntimeConsoleTelemetryDeck'));
 
 export default function RuntimeConsoleView() {
+  const { size: operatorSidebarWidth, resizeBy: resizeOperatorSidebar } = usePersistentPanelSize({
+    storageKey: 'runtime-console.operator-sidebar-width',
+    defaultSize: 372,
+    minSize: 304,
+    maxSize: 540,
+  });
   const {
     activeSource,
     bootStages,
@@ -64,45 +72,59 @@ export default function RuntimeConsoleView() {
           </div>
         )}
 
-        <div className={styles.layoutGrid}>
-          <Suspense fallback={<RuntimeConsolePanelFallback label="Loading log surface..." />}>
-            <RuntimeConsoleLogsPanel
-              activeSource={activeSource}
-              domainFilter={domainFilter}
-              domainOptions={domainOptions}
-              filteredEntries={filteredEntries}
-              filteredIntel={filteredIntel}
-              hasFilters={hasFilters}
-              logsSnapshot={logsSnapshot}
-              resetFilters={resetFilters}
-              scopeFilter={scopeFilter}
-              scopeOptions={scopeOptions}
-              searchTokens={searchTokens}
-              semanticsCoverage={semanticsCoverage}
-              setDomainFilter={setDomainFilter}
-              setScopeFilter={setScopeFilter}
-              setSelectedSourceId={setSelectedSourceId}
-              setSeverityFilter={setSeverityFilter}
-              setTextFilter={setTextFilter}
-              severityFilter={severityFilter}
-              severityOptions={severityOptions}
-              sourceEntries={sourceEntries}
-              sourceIntel={sourceIntel}
-              textFilter={textFilter}
+        <div className="flex min-h-0 flex-col gap-6 xl:flex-row">
+          <div className="min-h-0 min-w-0 flex-1">
+            <Suspense fallback={<RuntimeConsolePanelFallback label="Loading log surface..." />}>
+              <RuntimeConsoleLogsPanel
+                activeSource={activeSource}
+                domainFilter={domainFilter}
+                domainOptions={domainOptions}
+                filteredEntries={filteredEntries}
+                filteredIntel={filteredIntel}
+                hasFilters={hasFilters}
+                logsSnapshot={logsSnapshot}
+                resetFilters={resetFilters}
+                scopeFilter={scopeFilter}
+                scopeOptions={scopeOptions}
+                searchTokens={searchTokens}
+                semanticsCoverage={semanticsCoverage}
+                setDomainFilter={setDomainFilter}
+                setScopeFilter={setScopeFilter}
+                setSelectedSourceId={setSelectedSourceId}
+                setSeverityFilter={setSeverityFilter}
+                setTextFilter={setTextFilter}
+                severityFilter={severityFilter}
+                severityOptions={severityOptions}
+                sourceEntries={sourceEntries}
+                sourceIntel={sourceIntel}
+                textFilter={textFilter}
+              />
+            </Suspense>
+          </div>
+          <div className="hidden xl:block">
+            <PanelResizeHandle
+              axis="x"
+              title="Resize Runtime Console operator rail"
+              onResizeDelta={(delta) => resizeOperatorSidebar(-delta)}
             />
-          </Suspense>
-          <Suspense fallback={<RuntimeConsolePanelFallback label="Loading operator surfaces..." />}>
-            <RuntimeConsoleSidebar
-              activeSource={activeSource}
-              controlPlane={controlPlane}
-              filteredEntries={filteredEntries}
-              logsSnapshot={logsSnapshot}
-              semanticsCoverage={semanticsCoverage}
-              sourceEntries={sourceEntries}
-              telemetryOverview={telemetryOverview}
-              updatedLabel={updatedLabel}
-            />
-          </Suspense>
+          </div>
+          <aside
+            className="min-h-0 shrink-0 xl:overflow-y-auto"
+            style={{ width: `${operatorSidebarWidth}px` }}
+          >
+            <Suspense fallback={<RuntimeConsolePanelFallback label="Loading operator surfaces..." />}>
+              <RuntimeConsoleSidebar
+                activeSource={activeSource}
+                controlPlane={controlPlane}
+                filteredEntries={filteredEntries}
+                logsSnapshot={logsSnapshot}
+                semanticsCoverage={semanticsCoverage}
+                sourceEntries={sourceEntries}
+                telemetryOverview={telemetryOverview}
+                updatedLabel={updatedLabel}
+              />
+            </Suspense>
+          </aside>
         </div>
 
         <Suspense fallback={<RuntimeConsolePanelFallback label="Loading telemetry deck..." />}>

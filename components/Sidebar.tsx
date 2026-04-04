@@ -20,7 +20,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
   ];
 
   return (
-    <div className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col h-full shadow-2xl">
+    <div className="w-full min-h-0 bg-transparent border-r border-slate-800/80 flex flex-col h-full">
       <div className="p-6 border-b border-slate-800">
         <h1 className="text-xl font-bold text-primary-400 tracking-wider">HELPER</h1>
         <p className="text-[10px] text-slate-500 mt-1 uppercase font-bold tracking-tighter">Helper Generation Runtime</p>
@@ -31,10 +31,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
           <button
             key={item.id}
             onClick={() => setActiveTab(item.id)}
-            className={`w-full text-left px-6 py-3 text-sm font-medium transition-all flex items-center gap-3 ${
+            className={`mx-3 my-1 flex w-[calc(100%-1.5rem)] items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm font-medium transition-all ${
               activeTab === item.id
-                ? 'bg-primary-900/20 text-primary-400 border-r-4 border-primary-500'
-                : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
+                ? 'border-blue-500/60 bg-blue-500/20 text-blue-100 shadow-[0_10px_30px_rgba(37,99,235,0.18)]'
+                : 'border-blue-950/60 bg-blue-950/25 text-blue-100/85 hover:border-blue-800/80 hover:bg-blue-900/35'
             }`}
           >
             <span className="text-lg">{item.icon}</span>
@@ -43,7 +43,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
         ))}
       </nav>
 
-      <div className="p-4 border-t border-slate-800 bg-black/20">
+      <div className="p-4 border-t border-slate-800/80">
         <div className="flex items-center gap-2 text-[10px] text-green-500 font-mono">
           <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
           HELPER RUNTIME ACTIVE

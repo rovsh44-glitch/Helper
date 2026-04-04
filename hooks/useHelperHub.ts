@@ -48,6 +48,13 @@ export function useHelperHub(hubUrl: string) {
     setActiveMutation(null);
   }, []);
 
+  const clearConversationSurface = useCallback(() => {
+    setProgressEntries([]);
+    setThoughts([]);
+    setCurrentPlan(null);
+    setActiveMutation(null);
+  }, []);
+
   useEffect(() => {
     const connection = new signalR.HubConnectionBuilder()
       .withUrl(hubUrl, {
@@ -99,6 +106,7 @@ export function useHelperHub(hubUrl: string) {
     currentPlan,
     activeMutation,
     clearProgressState,
+    clearConversationSurface,
     dismissActiveMutation: () => setActiveMutation(null),
   };
 }

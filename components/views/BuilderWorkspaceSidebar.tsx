@@ -50,7 +50,7 @@ export const BuilderWorkspaceSidebar: React.FC<BuilderWorkspaceSidebarProps> = (
   onSelectFolder,
   onProposeMutation,
 }) => (
-  <div className="w-80 bg-slate-900 border-r border-slate-800 flex flex-col shadow-xl">
+  <div className="w-full h-full min-h-0 bg-slate-900 border-r border-slate-800 flex flex-col shadow-xl">
     <div className="p-4 border-b border-slate-800 bg-black/20 space-y-4">
       <div className="flex justify-between items-start gap-3">
         <div className="flex flex-col overflow-hidden">

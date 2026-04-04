@@ -4,7 +4,7 @@ import { useHelperHubContext } from '../hooks/useHelperHubContext';
 export const ThoughtStream = memo(function ThoughtStream() {
   const { thoughts } = useHelperHubContext();
   return (
-    <div className="h-full flex flex-col bg-slate-900 border-l border-slate-800 w-80">
+    <div className="h-full min-h-0 w-full flex flex-col bg-slate-900 border-l border-slate-800">
       <div className="p-4 border-b border-slate-800 bg-black/20">
         <h3 className="text-xs font-bold text-primary-400 uppercase tracking-widest flex items-center gap-2">
           <span className="w-2 h-2 bg-primary-500 rounded-full animate-pulse"></span>

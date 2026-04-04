@@ -4,9 +4,11 @@ setlocal EnableDelayedExpansion
 
 for %%I in ("%~dp0.") do set "HELPER_ROOT=%%~fI"
 set "ENV_FILE=%HELPER_ROOT%\.env.local"
+set "STOP_HELPER_SCRIPT=%HELPER_ROOT%\scripts\stop_helper_processes.ps1"
 set "DEFAULT_API_PORT=5000"
 set "DEFAULT_UI_PORT=5173"
 set "START_MODE=%~1"
+set "OPEN_UI_AFTER_START=%~2"
 if not defined START_MODE set "START_MODE=fast"
 
 echo ==========================================
@@ -20,9 +22,8 @@ if %ERRORLEVEL% NEQ 0 (
 )
 
 echo [PRECHECK] Stopping stale Helper.Api processes...
-taskkill /F /IM Helper.Api.exe /T >nul 2>&1
-powershell -Command "Get-CimInstance Win32_Process | Where-Object { $_.Name -eq 'dotnet.exe' -and $_.CommandLine -match 'Helper\\.Api' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }" >nul 2>&1
-powershell -Command "Get-CimInstance Win32_Process | Where-Object { $_.Name -eq 'node.exe' -and $_.CommandLine -match 'vite' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }" >nul 2>&1
+powershell -NoProfile -ExecutionPolicy Bypass -File "%STOP_HELPER_SCRIPT%" -SkipCli >nul 2>&1
+if %ERRORLEVEL% NEQ 0 echo [WARN] Some stale runtime processes may still be running.
 
 set "HELPER_ROOT=%HELPER_ROOT%"
 if not defined HELPER_DATA_ROOT for %%I in ("%HELPER_ROOT%\..") do set "HELPER_DATA_ROOT=%%~fI\HELPER_DATA"
@@ -57,6 +58,7 @@ echo   SYSTEMS LAUNCHED
 echo   Backend: http://localhost:!API_PORT!
 echo   Frontend: http://127.0.0.1:!UI_PORT!
 echo ==========================================
+if /I "%OPEN_UI_AFTER_START%"=="open-ui" call :OPEN_UI
 echo Keep this window open or close it (processes run in separate windows).
 pause
 exit /b 0
@@ -183,4 +185,9 @@ if /I "%START_MODE%"=="warm" (
 )
 set "HELPER_MODEL_WARMUP_MODE=minimal"
 set "HELPER_MODEL_PREFLIGHT_ENABLED=false"
+exit /b 0
+
+:OPEN_UI
+echo [OPEN] Opening HELPER UI in the default browser...
+start "" "http://127.0.0.1:!UI_PORT!"
 exit /b 0

@@ -9,6 +9,7 @@ export function HelperHubProvider({ hubUrl, children }: { hubUrl: string; childr
   const state = useHelperHub(hubUrl);
   const value = useMemo(() => state, [
     state.activeMutation,
+    state.clearConversationSurface,
     state.clearProgressState,
     state.currentPlan,
     state.dismissActiveMutation,

@@ -4,6 +4,8 @@ import { useConversationStreaming } from '../../hooks/useConversationStreaming';
 import { useConversationTurnActions } from '../../hooks/useConversationTurnActions';
 import { useFeedbackActions } from '../../hooks/useFeedbackActions';
 import { useHelperHubContext } from '../../hooks/useHelperHubContext';
+import { useConversationArchiveAction } from '../../hooks/useConversationArchiveAction';
+import { useConversationResetAction } from '../../hooks/useConversationResetAction';
 import { useResumeLastTurnAction } from '../../hooks/useConversationBootstrap';
 import { useConversationActions, useConversationRuntimeState, useConversationShellState } from '../../contexts/ConversationStateContext';
 import { readPreferredLanguage } from '../../services/conversationSession';
@@ -18,6 +20,8 @@ export function OrchestratorContainer() {
   const { handleCreateBranch, handleMergeIntoActive, handleSwitchBranch } = useConversationBranches();
   const { handleRegenerateTurn, handleRepairTurn } = useConversationTurnActions();
   const { handleRateMessage } = useFeedbackActions();
+  const { handleArchiveConversationSnapshot } = useConversationArchiveAction();
+  const { handleResetConversation } = useConversationResetAction();
   const { progressEntries, currentPlan, activeMutation, dismissActiveMutation } = useHelperHubContext();
   const resumeLastTurn = useResumeLastTurnAction();
 
@@ -44,6 +48,11 @@ export function OrchestratorContainer() {
       onCreateBranch={handleCreateBranch}
       onRepairTurn={handleRepairTurn}
       onRateMessage={handleRateMessage}
+      onArchiveConversationSnapshot={handleArchiveConversationSnapshot}
+      onResetConversation={handleResetConversation}
+      canResetConversation={runtime.messages.length > 0 || runtime.pendingAttachments.length > 0 || Boolean(runtime.conversationId)}
+      canArchiveConversation={runtime.messages.length > 0 || Boolean(runtime.conversationId)}
+      conversationSessionEpoch={runtime.sessionEpoch}
       streamingMessageId={runtime.streamingMessageId}
       startupState={shell.startupState}
       startupAlert={shell.startupAlert}

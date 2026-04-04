@@ -4,6 +4,8 @@ import type { RepairConversationDraft } from '../../services/conversationApi';
 import { projectService } from '../../services/projectService';
 import { DiffViewer } from '../DiffViewer';
 import { VoiceInterface } from '../VoiceInterface';
+import { PanelResizeHandle } from '../layout/PanelResizeHandle';
+import { usePersistentPanelSize } from '../../hooks/usePersistentPanelSize';
 import { ActiveStreamingMessage } from './ActiveStreamingMessage';
 import { InlineActionSheet } from './InlineActionSheet';
 import { MessageList } from './MessageList';
@@ -30,6 +32,11 @@ interface OrchestratorViewProps {
   onCreateBranch: (turnId: string) => void;
   onRepairTurn: (turnId: string, draft: RepairConversationDraft) => Promise<boolean>;
   onRateMessage: (turnId: string | undefined, rating: number) => void;
+  onArchiveConversationSnapshot: () => Promise<string>;
+  onResetConversation: () => Promise<string | null>;
+  canArchiveConversation?: boolean;
+  canResetConversation?: boolean;
+  conversationSessionEpoch: number;
   streamingMessageId?: string;
   startupState?: 'booting' | 'ready' | 'degraded';
   startupAlert?: string | null;
@@ -62,6 +69,11 @@ export const OrchestratorView: React.FC<OrchestratorViewProps> = ({
   onCreateBranch,
   onRepairTurn,
   onRateMessage,
+  onArchiveConversationSnapshot,
+  onResetConversation,
+  canArchiveConversation = false,
+  canResetConversation = false,
+  conversationSessionEpoch,
   streamingMessageId,
   startupState = 'ready',
   startupAlert,
@@ -76,6 +88,11 @@ export const OrchestratorView: React.FC<OrchestratorViewProps> = ({
   const [mutationError, setMutationError] = useState<string | null>(null);
   const [isApplyingMutation, setIsApplyingMutation] = useState(false);
   const [isMergeSheetOpen, setIsMergeSheetOpen] = useState(false);
+  const [isResetSheetOpen, setIsResetSheetOpen] = useState(false);
+  const [isResettingConversation, setIsResettingConversation] = useState(false);
+  const [isArchivingConversation, setIsArchivingConversation] = useState(false);
+  const [archiveConversationNotice, setArchiveConversationNotice] = useState<string | null>(null);
+  const [resetConversationNotice, setResetConversationNotice] = useState<string | null>(null);
   const [mergeSourceBranchId, setMergeSourceBranchId] = useState('');
   const lastMessageId = messages[messages.length - 1]?.id;
   const visibleProgressEntries = useMemo(
@@ -92,11 +109,22 @@ export const OrchestratorView: React.FC<OrchestratorViewProps> = ({
       .find(message => message.role === 'assistant' && message.inputMode === 'voice' && message.content.trim().length > 0),
     [messages],
   );
+  const { size: voiceRailWidth, resizeBy: resizeVoiceRail } = usePersistentPanelSize({
+    storageKey: 'helper-core.voice-rail-width',
+    defaultSize: 304,
+    minSize: 272,
+    maxSize: 420,
+  });
 
   useEffect(() => {
     setMutationError(null);
     setIsApplyingMutation(false);
   }, [activeMutation?.id]);
+
+  useEffect(() => {
+    setIsResetSheetOpen(false);
+    setIsResettingConversation(false);
+  }, [conversationSessionEpoch]);
 
   useEffect(() => {
     if (!isMergeSheetOpen) {
@@ -188,6 +216,18 @@ export const OrchestratorView: React.FC<OrchestratorViewProps> = ({
                   Resume Last Turn
                 </button>
               )}
+            </div>
+          )}
+
+          {resetConversationNotice && (
+            <div className="rounded-lg border border-amber-800 bg-amber-950/20 px-4 py-3 text-sm text-amber-200">
+              {resetConversationNotice}
+            </div>
+          )}
+
+          {archiveConversationNotice && (
+            <div className="rounded-lg border border-blue-800 bg-blue-950/20 px-4 py-3 text-sm text-blue-200">
+              {archiveConversationNotice}
             </div>
           )}
 
@@ -302,6 +342,29 @@ export const OrchestratorView: React.FC<OrchestratorViewProps> = ({
                 )}
               </>
             )}
+            <button
+              onClick={() => {
+                setArchiveConversationNotice(null);
+                setIsArchivingConversation(true);
+                void onArchiveConversationSnapshot()
+                  .then((notice) => setArchiveConversationNotice(notice))
+                  .finally(() => setIsArchivingConversation(false));
+              }}
+              disabled={isProcessing || !canArchiveConversation || isArchivingConversation}
+              className="text-[11px] px-2 py-1 rounded border border-blue-800/70 text-blue-200 hover:border-blue-500 disabled:opacity-40"
+            >
+              {isArchivingConversation ? 'Saving Snapshot...' : 'Archive / Save Snapshot'}
+            </button>
+            <button
+              onClick={() => {
+                setResetConversationNotice(null);
+                setIsResetSheetOpen(true);
+              }}
+              disabled={isProcessing || !canResetConversation || isResettingConversation}
+              className="text-[11px] px-2 py-1 rounded border border-amber-800/70 text-amber-200 hover:border-amber-500 disabled:opacity-40"
+            >
+              Reset Dialog
+            </button>
             <label className="text-[11px] uppercase tracking-wide text-slate-500">Attachments</label>
             <input
               type="file"
@@ -339,33 +402,88 @@ export const OrchestratorView: React.FC<OrchestratorViewProps> = ({
                   ? 'Keep this turn local, even if live web would help.'
                   : 'Let Helper decide when live web is needed.'}
             </div>
+            {isResetSheetOpen && (
+              <div className="basis-full">
+                <InlineActionSheet
+                  title="Reset Dialog"
+                  description="Clear the current conversation surface and start a fresh dialog. The existing backend conversation will be deleted when possible."
+                  submitLabel={isResettingConversation ? 'Resetting...' : 'Start Fresh Dialog'}
+                  submitDisabled={isResettingConversation}
+                  disabled={isResettingConversation}
+                  onSubmit={() => {
+                    setIsResettingConversation(true);
+                    setArchiveConversationNotice(null);
+                    void onResetConversation()
+                      .then((warning) => {
+                        setResetConversationNotice(warning ?? 'Started a fresh dialog.');
+                        setIsResetSheetOpen(false);
+                      })
+                      .finally(() => setIsResettingConversation(false));
+                  }}
+                  onClose={() => {
+                    if (isResettingConversation) {
+                      return;
+                    }
+
+                    setIsResetSheetOpen(false);
+                  }}
+                >
+                  <div className="rounded-xl border border-amber-900/60 bg-amber-950/20 px-3 py-3 text-xs text-amber-100">
+                    This clears visible messages, branches, attachments, pending turn state, and voice session state for the current chat surface.
+                  </div>
+                </InlineActionSheet>
+              </div>
+            )}
           </div>
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-            <div className="relative flex flex-1 gap-4">
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                placeholder={startupState === 'booting' ? 'Waiting for backend readiness...' : 'Instruct Helper...'}
-                disabled={startupState === 'booting'}
-                className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-5 py-4 text-slate-200 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all shadow-inner disabled:opacity-60"
-              />
-              <button
-                onClick={handleSendMessage}
-                disabled={startupState === 'booting' || isProcessing || !input.trim()}
-                className="bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 text-white px-8 py-3 rounded-lg font-bold uppercase tracking-wide text-xs transition-all disabled:opacity-50 shadow-lg"
-              >
-                Execute
-              </button>
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-stretch">
+            <div className="flex min-w-0 flex-1 flex-col gap-4">
+              <div className="relative flex flex-1 gap-4">
+                <input
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                  placeholder={startupState === 'booting' ? 'Waiting for backend readiness...' : 'Instruct Helper...'}
+                  disabled={startupState === 'booting'}
+                  className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-5 py-4 text-slate-200 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all shadow-inner disabled:opacity-60"
+                />
+                <button
+                  onClick={handleSendMessage}
+                  disabled={startupState === 'booting' || isProcessing || !input.trim()}
+                  className="bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 text-white px-8 py-3 rounded-lg font-bold uppercase tracking-wide text-xs transition-all disabled:opacity-50 shadow-lg"
+                >
+                  Execute
+                </button>
+              </div>
+
+              <div className="lg:hidden">
+                <VoiceInterface
+                  key={`voice-mobile-${conversationSessionEpoch}`}
+                  isProcessing={isProcessing}
+                  preferredLanguage={preferredLanguage}
+                  onInput={handleVoiceInput}
+                  lastMessage={lastVoiceAssistantMessage?.content}
+                  lastMessageInputMode={lastVoiceAssistantMessage?.inputMode}
+                />
+              </div>
             </div>
-            <VoiceInterface
-              isProcessing={isProcessing}
-              preferredLanguage={preferredLanguage}
-              onInput={handleVoiceInput}
-              lastMessage={lastVoiceAssistantMessage?.content}
-              lastMessageInputMode={lastVoiceAssistantMessage?.inputMode}
-            />
+            <div className="hidden lg:block">
+              <PanelResizeHandle
+                axis="x"
+                title="Resize Helper Core voice rail"
+                onResizeDelta={(delta) => resizeVoiceRail(-delta)}
+              />
+            </div>
+            <div className="hidden lg:block shrink-0" style={{ width: `${voiceRailWidth}px` }}>
+              <VoiceInterface
+                key={`voice-desktop-${conversationSessionEpoch}`}
+                isProcessing={isProcessing}
+                preferredLanguage={preferredLanguage}
+                onInput={handleVoiceInput}
+                lastMessage={lastVoiceAssistantMessage?.content}
+                lastMessageInputMode={lastVoiceAssistantMessage?.inputMode}
+              />
+            </div>
           </div>
         </div>
       </div>

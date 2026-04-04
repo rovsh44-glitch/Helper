@@ -14,24 +14,37 @@ public sealed class ArchitectureFitnessTestsPublicMainRuntimeLanes
     }
 
     [Fact]
-    public void CompilePath_Project_Owns_Heavy_Template_Test_Surface_And_Is_Not_In_Solution()
+    public void CompilePath_Project_Owns_Minimal_Compile_Surface_And_Is_Not_In_Solution()
     {
         var compilePathProject = ResolveWorkspaceFile("test", "Helper.Runtime.CompilePath.Tests", "Helper.Runtime.CompilePath.Tests.csproj");
         var projectText = File.ReadAllText(compilePathProject);
         var solutionText = File.ReadAllText(ResolveWorkspaceFile("Helper.sln"));
 
-        Assert.Contains("TemplateCertificationServiceTests.cs", projectText, StringComparison.Ordinal);
-        Assert.Contains("TemplatePromotionEndToEndAndChaosTests.cs", projectText, StringComparison.Ordinal);
+        Assert.DoesNotContain("TemplateCertificationServiceTests.cs", projectText, StringComparison.Ordinal);
+        Assert.DoesNotContain("TemplatePromotionEndToEndAndChaosTests.cs", projectText, StringComparison.Ordinal);
+        Assert.DoesNotContain("EvalHarnessTests.cs", projectText, StringComparison.Ordinal);
+        Assert.True(File.Exists(ResolveWorkspaceFile("test", "Helper.Runtime.CompilePath.Tests", "CompilePathTestInfrastructure.cs")));
         Assert.True(File.Exists(ResolveWorkspaceFile("test", "Helper.Runtime.CompilePath.Tests", "GenerationCompileGateIntegrationTests.cs")));
         Assert.True(File.Exists(ResolveWorkspaceFile("test", "Helper.Runtime.CompilePath.Tests", "FixLoopCompileGateSmokeTests.cs")));
+        Assert.True(File.Exists(ResolveWorkspaceFile("test", "Helper.Runtime.CompilePath.Tests", "TemplateCertificationCompileSmokeTests.cs")));
+        Assert.True(File.Exists(ResolveWorkspaceFile("test", "Helper.Runtime.CompilePath.Tests", "TemplatePromotionCompileSmokeTests.cs")));
         Assert.DoesNotContain("Helper.Runtime.CompilePath.Tests", solutionText, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void Public_CompilePath_Runner_Exists()
+    public void Public_CompilePath_Runner_Exists_And_Hardens_Cleanup()
     {
         var runnerPath = ResolveWorkspaceFile("scripts", "run_compile_path_tests.ps1");
         Assert.True(File.Exists(runnerPath));
+
+        var runnerText = File.ReadAllText(runnerPath);
+        Assert.Contains("Get-HelperMsbuildStateRoot", runnerText, StringComparison.Ordinal);
+        Assert.Contains("compile_path_lane.lock", runnerText, StringComparison.Ordinal);
+        Assert.Contains("taskkill /PID", runnerText, StringComparison.Ordinal);
+        Assert.Contains("helper_template_e2e_", runnerText, StringComparison.Ordinal);
+        Assert.Contains("helper_template_cert_test_", runnerText, StringComparison.Ordinal);
+        Assert.Contains("helper_compile_gate_", runnerText, StringComparison.Ordinal);
+        Assert.Contains("helper_fix_applier_", runnerText, StringComparison.Ordinal);
     }
 
     [Fact]

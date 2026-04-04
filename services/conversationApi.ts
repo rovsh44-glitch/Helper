@@ -179,6 +179,10 @@ export async function deleteConversationMemoryEntry(conversationId: string, memo
   return helperApi.deleteConversationMemoryItem(conversationId, memoryId);
 }
 
+export async function deleteConversation(conversationId: string) {
+  return helperApi.deleteConversation(conversationId);
+}
+
 export async function createConversationBranch(
   conversationId: string,
   body: Parameters<typeof helperApi.createBranch>[1],

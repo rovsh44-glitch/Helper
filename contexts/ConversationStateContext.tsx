@@ -21,6 +21,7 @@ type ConversationRuntimeState = {
   availableBranches: string[];
   pendingAttachments: ChatAttachment[];
   streamingMessageId?: string;
+  sessionEpoch: number;
 };
 
 type ConversationShellState = {
@@ -53,6 +54,7 @@ type ConversationAction =
   | { type: 'set_pending_attachments'; value: ChatAttachment[] }
   | { type: 'set_streaming_message'; value?: string }
   | { type: 'apply_snapshot'; value: ConversationSnapshotState }
+  | { type: 'reset_runtime_surface' }
   | { type: 'set_startup'; value: { state: StartupState; alert: string | null } }
   | { type: 'set_response_style'; value: string }
   | { type: 'set_resume_available'; value: boolean }
@@ -68,6 +70,7 @@ const initialState: ConversationState = {
     availableBranches: ['main'],
     pendingAttachments: [],
     streamingMessageId: undefined,
+    sessionEpoch: 0,
   },
   shell: {
     startupState: 'booting',
@@ -167,6 +170,14 @@ function reducer(state: ConversationState, action: ConversationAction): Conversa
           availableBranches: action.value.availableBranches,
           messages: action.value.messages,
           streamingMessageId: undefined,
+        },
+      };
+    case 'reset_runtime_surface':
+      return {
+        ...state,
+        runtime: {
+          ...initialState.runtime,
+          sessionEpoch: state.runtime.sessionEpoch + 1,
         },
       };
     case 'set_startup':
@@ -274,6 +285,7 @@ export function useConversationActions() {
     setPendingAttachments: useCallback((value: ChatAttachment[]) => dispatch({ type: 'set_pending_attachments', value }), [dispatch]),
     setStreamingMessageId: useCallback((value?: string) => dispatch({ type: 'set_streaming_message', value }), [dispatch]),
     applySnapshot: useCallback((value: ConversationSnapshotState) => dispatch({ type: 'apply_snapshot', value }), [dispatch]),
+    resetConversationRuntime: useCallback(() => dispatch({ type: 'reset_runtime_surface' }), [dispatch]),
     setStartupState: useCallback((stateValue: StartupState, alert: string | null) => dispatch({
       type: 'set_startup',
       value: { state: stateValue, alert },
