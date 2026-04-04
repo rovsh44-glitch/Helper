@@ -19,14 +19,6 @@ namespace Helper.Runtime.Infrastructure
             await _executor.ExecuteBuildAsync(projectPath, ct);
     }
 
-    public class ConstitutionGuard : IConstitutionGuard
-    {
-        private readonly ICriticService _critic;
-        public ConstitutionGuard(ICriticService critic) => _critic = critic;
-        public async Task<CritiqueResult> ValidateComplianceAsync(string response, string personaId, CancellationToken ct = default) => 
-            await _critic.CritiqueAsync("Constitution", response, $"Persona: {personaId}", ct);
-    }
-
     public class SimpleTestGenerator : ITestGenerator
     {
         private readonly AILink _ai;

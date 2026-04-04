@@ -134,11 +134,6 @@ namespace Helper.Runtime.Core
         Task<ForgeVerificationResult> ValidateAsync(string projectPath, IReadOnlyList<BuildError> buildErrors, CancellationToken ct = default);
     }
 
-    public interface IConstitutionGuard
-    {
-        Task<CritiqueResult> ValidateComplianceAsync(string response, string personaId, CancellationToken ct = default);
-    }
-
 }
 
 
