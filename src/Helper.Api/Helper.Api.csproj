@@ -29,6 +29,7 @@
     <EmbeddedResource Remove="bin\**\PROJECTS\**\*" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Helper.RuntimeLogSemantics\Helper.RuntimeLogSemantics.csproj" />
     <ProjectReference Include="..\Helper.Runtime\Helper.Runtime.csproj" />
     <ProjectReference Include="..\Helper.Runtime.WebResearch\Helper.Runtime.WebResearch.csproj" />
     <ProjectReference Include="..\Helper.Runtime.Knowledge\Helper.Runtime.Knowledge.csproj" />
