@@ -141,11 +141,6 @@ namespace Helper.Runtime.Core
         Task SetBaselineAsync(string personaId, string referenceResponse, CancellationToken ct = default);
     }
 
-    public interface IConstitutionGuard
-    {
-        Task<CritiqueResult> ValidateComplianceAsync(string response, string personaId, CancellationToken ct = default);
-    }
-
 }
 
 
