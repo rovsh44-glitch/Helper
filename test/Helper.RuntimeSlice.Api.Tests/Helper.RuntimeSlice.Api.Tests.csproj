@@ -19,6 +19,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\Helper.Runtime.Tests\TestWorkspaceRoot.cs" Link="TestWorkspaceRoot.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\Helper.RuntimeSlice.Api\Helper.RuntimeSlice.Api.csproj" />
     <ProjectReference Include="..\..\src\Helper.RuntimeSlice.Contracts\Helper.RuntimeSlice.Contracts.csproj" />
   </ItemGroup>

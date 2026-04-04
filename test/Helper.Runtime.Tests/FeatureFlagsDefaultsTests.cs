@@ -1,6 +1,6 @@
 namespace Helper.Runtime.Tests;
 
-public class UnitTest1
+public class FeatureFlagsDefaultsTests
 {
     [Fact]
     public void FeatureFlags_DefaultToEnabled()
@@ -11,4 +11,3 @@ public class UnitTest1
         Assert.True(flags.BranchingEnabled);
     }
 }
-

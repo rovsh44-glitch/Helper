@@ -1,0 +1,9 @@
+2026-03-25T09:10:00Z info: Indexing started for sanitized runtime review corpus
+2026-03-25T09:10:04Z info: parser=fixture-parser-v1 current-section=Runtime review sample corpus page=19-24
+2026-03-25T09:10:08Z info: processed 64 of 160 files in 830 ms
+2026-03-25T09:10:13Z info: processed 92 of 160 files in 790 ms
+2026-03-25T09:10:19Z warn: queue delay exceeded expected threshold by 220 ms
+2026-03-25T09:10:23Z info: processed 124 of 160 files in 810 ms
+2026-03-25T09:10:29Z info: fixture root C:/REDACTED_RUNTIME/runtime-review/sample_data is healthy
+2026-03-25T09:10:33Z warn: degraded mode activated for library queue freshness
+2026-03-25T09:10:39Z info: route=/api/evolution/library status=200 correlation-id=rt-review-003
