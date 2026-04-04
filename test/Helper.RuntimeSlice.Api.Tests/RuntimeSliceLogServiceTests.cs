@@ -1,5 +1,6 @@
 using Helper.RuntimeSlice.Api;
 using Helper.RuntimeSlice.Api.Services;
+using Helper.Runtime.Tests;
 
 namespace Helper.RuntimeSlice.Api.Tests;
 
@@ -21,7 +22,7 @@ public sealed class RuntimeSliceLogServiceTests
 
     private static RuntimeSliceOptions CreateOptions()
     {
-        var repoRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+        var repoRoot = TestWorkspaceRoot.ResolveRoot();
         return new RuntimeSliceOptions(
             RepoRoot: repoRoot,
             FixtureRoot: Path.Combine(repoRoot, "slice", "runtime-review", "sample_data"),

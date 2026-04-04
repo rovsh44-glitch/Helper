@@ -1,6 +1,5 @@
 using Helper.Api.Conversation;
 using Helper.Runtime.Core;
-using Helper.Runtime.Infrastructure;
 
 namespace Helper.Runtime.Tests;
 
@@ -62,7 +61,7 @@ public class ConversationStylePolicyTests
     [Fact]
     public void PersonalityJson_UsesPreciseCalmHumanCommunicationStyle()
     {
-        var path = HelperWorkspacePathResolver.ResolveWorkspaceFile("personality.json");
+        var path = TestWorkspaceRoot.ResolveFile("personality.json");
         var json = File.ReadAllText(path);
 
         Assert.Contains("Precise, calm, respectful, and naturally conversational", json, StringComparison.Ordinal);
