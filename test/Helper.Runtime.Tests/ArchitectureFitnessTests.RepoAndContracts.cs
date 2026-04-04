@@ -152,7 +152,6 @@ public partial class ArchitectureFitnessTests
             ResolveWorkspaceFile("src", "Helper.Runtime", "WindowsSandboxProvider.cs"),
             ResolveWorkspaceFile("src", "Helper.Runtime", "HelperOrchestrator.cs"),
             ResolveWorkspaceFile("src", "Helper.Runtime", "Core", "Contracts", "ConversationContracts.cs"),
-            ResolveWorkspaceFile("src", "Helper.Runtime", "PersonalityManager.cs"),
             ResolveWorkspaceFile("src", "Helper.Api", "Conversation", "ChatTurnImmediateService.cs")
         };
 
