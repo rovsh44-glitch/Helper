@@ -27,14 +27,6 @@ namespace Helper.Runtime.Infrastructure
             await _critic.CritiqueAsync("Constitution", response, $"Persona: {personaId}", ct);
     }
 
-    public class SimpleDebater : IDebateEngine
-    {
-        private readonly AILink _ai;
-        public SimpleDebater(AILink ai) => _ai = ai;
-        public async Task<DebateResult> DebateAsync(string prompt, CancellationToken ct = default) => 
-            new DebateResult("Summary", await _ai.AskAsync($"Debate: {prompt}", ct), new List<string> { "Arg 1" });
-    }
-
     public class SimpleTestGenerator : ITestGenerator
     {
         private readonly AILink _ai;
