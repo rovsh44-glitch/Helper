@@ -24,6 +24,18 @@ public partial class ArchitectureFitnessTests
     }
 
     [Fact]
+    public void RuntimeLogSemanticDerivation_Uses_Shared_Source_Of_Truth()
+    {
+        var sharedDeriverPath = ResolveWorkspaceFile("src", "Helper.RuntimeLogSemantics", "RuntimeLogSemanticDeriver.cs");
+        var apiHostCopyPath = ResolveWorkspaceFile("src", "Helper.Api", "Hosting", "RuntimeLogSemanticDeriver.cs");
+        var runtimeSliceCopyPath = ResolveWorkspaceFile("src", "Helper.RuntimeSlice.Api", "Services", "RuntimeLogSemanticDeriver.cs");
+
+        Assert.True(File.Exists(sharedDeriverPath));
+        Assert.False(File.Exists(apiHostCopyPath));
+        Assert.False(File.Exists(runtimeSliceCopyPath));
+    }
+
+    [Fact]
     public void WorkspaceRoot_And_SourceTree_StayFreeOfAccidentalFolders_And_BuildArtifacts()
     {
         var workspaceRoot = ResolveWorkspaceFile();

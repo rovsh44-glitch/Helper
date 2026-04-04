@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using SharedRuntimeLogSemantics = Helper.RuntimeLogSemantics;
 
 namespace Helper.Api.Hosting;
 
@@ -65,7 +66,7 @@ public sealed class RuntimeLogService : IRuntimeLogService
                         Severity: severity,
                         TimestampLabel: ResolveTimestampLabel(line),
                         IsContinuation: isContinuation,
-                        Semantics: RuntimeLogSemanticDeriver.Derive(line, severity, displayPath, isContinuation)));
+                        Semantics: MapSemantics(SharedRuntimeLogSemantics.RuntimeLogSemanticDeriver.Derive(line, severity, displayPath, isContinuation))));
                 }
             }
             catch (Exception ex)
@@ -272,6 +273,22 @@ public sealed class RuntimeLogService : IRuntimeLogService
         }
 
         return line[..MaxRenderedLineLength].TrimEnd() + " ...";
+    }
+
+    private static RuntimeLogSemanticsDto MapSemantics(SharedRuntimeLogSemantics.RuntimeLogSemanticSnapshot semantics)
+    {
+        return new RuntimeLogSemanticsDto(
+            Scope: semantics.Scope,
+            Domain: semantics.Domain,
+            OperationKind: semantics.OperationKind,
+            Summary: semantics.Summary,
+            Route: semantics.Route,
+            CorrelationId: semantics.CorrelationId,
+            LatencyMs: semantics.LatencyMs,
+            LatencyBucket: semantics.LatencyBucket,
+            DegradationReason: semantics.DegradationReason,
+            Markers: semantics.Markers,
+            Structured: semantics.Structured);
     }
 
     private sealed record DiscoveredLogSource(

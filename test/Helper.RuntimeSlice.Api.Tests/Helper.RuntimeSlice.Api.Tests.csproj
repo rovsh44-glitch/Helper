@@ -23,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Helper.RuntimeLogSemantics\Helper.RuntimeLogSemantics.csproj" />
     <ProjectReference Include="..\..\src\Helper.RuntimeSlice.Api\Helper.RuntimeSlice.Api.csproj" />
     <ProjectReference Include="..\..\src\Helper.RuntimeSlice.Contracts\Helper.RuntimeSlice.Contracts.csproj" />
   </ItemGroup>
