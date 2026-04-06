@@ -73,6 +73,7 @@ internal sealed class WebSearchFetchEnricher : IWebSearchFetchEnricher
         trace.AddRange(stability.Trace);
         var enrichedDocuments = new List<WebSearchDocument>(documents.Count);
         var successfulFetchCount = 0;
+        var projectedSearchHitCount = 0;
         var attemptedFetchCount = 0;
         var fetchDiagnostics = new List<WebSearchFetchDiagnosticEntry>();
         var baseFetchBudget = Math.Min(WebPageFetchSettings.ReadMaxFetchesPerSearch(), documents.Count);
@@ -112,6 +113,29 @@ internal sealed class WebSearchFetchEnricher : IWebSearchFetchEnricher
 
             if (!fetchResult.Success || fetchResult.ExtractedPage is null)
             {
+                if (TryProjectSearchHitEvidence(request, document, fetchResult, index + 1, trace, out var projectedDocument))
+                {
+                    enrichedDocuments.Add(projectedDocument);
+                    successfulFetchCount++;
+                    projectedSearchHitCount++;
+                    if (stability.BackfillEnabled && successfulFetchCount >= stability.SuccessTarget)
+                    {
+                        if (index + 1 < documents.Count)
+                        {
+                            trace.Add($"web_page_fetch.success_target_reached count={successfulFetchCount} attempts={index + 1}");
+                        }
+
+                        for (var remaining = index + 1; remaining < documents.Count; remaining++)
+                        {
+                            enrichedDocuments.Add(documents[remaining]);
+                        }
+
+                        break;
+                    }
+
+                    continue;
+                }
+
                 enrichedDocuments.Add(document);
                 continue;
             }
@@ -172,11 +196,146 @@ internal sealed class WebSearchFetchEnricher : IWebSearchFetchEnricher
 
         trace.Add($"web_page_fetch.attempted_count={attemptedFetchCount}");
         trace.Add($"web_page_fetch.extracted_count={successfulFetchCount}");
+        trace.Add($"web_page_fetch.search_hit_projection_count={projectedSearchHitCount}");
         trace.AddRange(_diagnosticsSummarizer.Summarize(fetchDiagnostics));
 
         return new WebSearchFetchEnrichmentResult(
             enrichedDocuments.ToArray(),
             trace);
+    }
+
+    private bool TryProjectSearchHitEvidence(
+        WebSearchRequest request,
+        WebSearchDocument document,
+        WebPageFetchResult fetchResult,
+        int documentOrdinal,
+        List<string> trace,
+        out WebSearchDocument projectedDocument)
+    {
+        projectedDocument = document;
+
+        if (fetchResult.Diagnostics?.TransportFailureObserved != true)
+        {
+            return false;
+        }
+
+        var queryProfile = Ranking.SourceAuthorityScorer.BuildQueryProfile(request.Query, null);
+        var projectionSensitive =
+            queryProfile.EvidenceHeavy ||
+            queryProfile.MedicalEvidenceHeavy ||
+            queryProfile.CurrentnessHeavy ||
+            queryProfile.OfficialBias;
+        if (!projectionSensitive || !LooksLikeProjectableSearchHit(document))
+        {
+            return false;
+        }
+
+        var projectedPage = BuildProjectedSearchHitPage(document, fetchResult);
+        var projection = _evidenceBoundaryProjector.Project(projectedPage);
+        trace.AddRange(projection.Trace.Select(message => $"{message} document={documentOrdinal}"));
+
+        var projectedPageResult = projection.Page;
+        var normalizedUrl = WebSearchDocumentPipelineSupport.IsHttpUrl(projectedPageResult.CanonicalUrl)
+            ? projectedPageResult.CanonicalUrl
+            : fetchResult.ResolvedUrl ?? document.Url;
+        var snippet = WebSearchDocumentPipelineSupport.BuildSnippetFromPage(projectedPageResult, document.Snippet);
+        var candidate = document with
+        {
+            Url = normalizedUrl,
+            Title = string.IsNullOrWhiteSpace(projectedPageResult.Title) ? document.Title : projectedPageResult.Title,
+            Snippet = snippet,
+            IsFallback = false,
+            ExtractedPage = projectedPageResult
+        };
+
+        var quality = _documentQualityPolicy.Evaluate(candidate, "search_hit_projection", request.Query);
+        trace.AddRange(quality.Trace.Select(message => $"{message} document={documentOrdinal}"));
+        if (!quality.Allowed)
+        {
+            trace.Add($"web_page_fetch.search_hit_projection applied=no reason=quality_rejected document={documentOrdinal} url={document.Url}");
+            return false;
+        }
+
+        trace.Add($"web_page_fetch.search_hit_projection applied=yes document={documentOrdinal} url={document.Url}");
+        projectedDocument = candidate;
+        return true;
+    }
+
+    private static ExtractedWebPage BuildProjectedSearchHitPage(WebSearchDocument document, WebPageFetchResult fetchResult)
+    {
+        var resolvedUrl = fetchResult.ResolvedUrl ?? document.Url;
+        var canonicalUrl = WebSearchDocumentPipelineSupport.IsHttpUrl(resolvedUrl) ? resolvedUrl : document.Url;
+        var title = string.IsNullOrWhiteSpace(document.Title) ? canonicalUrl : document.Title.Trim();
+        var snippet = string.IsNullOrWhiteSpace(document.Snippet)
+            ? title
+            : document.Snippet.Trim();
+        var decodedUrlCorpus = TryBuildDecodedUrlCorpus(canonicalUrl);
+        var body = string.IsNullOrWhiteSpace(decodedUrlCorpus)
+            ? $"{title}\n\n{snippet}"
+            : $"{title}\n\n{snippet}\n\n{decodedUrlCorpus}";
+
+        return new ExtractedWebPage(
+            RequestedUrl: document.Url,
+            ResolvedUrl: resolvedUrl,
+            CanonicalUrl: canonicalUrl,
+            Title: title,
+            PublishedAt: null,
+            Body: body,
+            Passages:
+            [
+                new ExtractedWebPassage(1, $"{title}. {snippet}", TrustLevel: "search_hit_projection")
+            ],
+            ContentType: "text/search-hit-projection",
+            TrustLevel: "search_hit_projection");
+    }
+
+    private static bool LooksLikeProjectableSearchHit(WebSearchDocument document)
+    {
+        if (string.IsNullOrWhiteSpace(document.Snippet) || document.Snippet.Trim().Length < 80)
+        {
+            return false;
+        }
+
+        if (!Uri.TryCreate(document.Url, UriKind.Absolute, out var uri))
+        {
+            return false;
+        }
+
+        var descriptor = $"{uri.Host} {uri.AbsolutePath} {document.Title} {document.Snippet}";
+        return uri.Host.EndsWith(".gov", StringComparison.OrdinalIgnoreCase) ||
+               uri.Host.EndsWith(".int", StringComparison.OrdinalIgnoreCase) ||
+               uri.Host.Contains("who.int", StringComparison.OrdinalIgnoreCase) ||
+               uri.Host.Contains("nih.gov", StringComparison.OrdinalIgnoreCase) ||
+               uri.Host.Contains("cdc.gov", StringComparison.OrdinalIgnoreCase) ||
+               uri.Host.Contains("pubmed.ncbi.nlm.nih.gov", StringComparison.OrdinalIgnoreCase) ||
+               uri.Host.Contains("pmc.ncbi.nlm.nih.gov", StringComparison.OrdinalIgnoreCase) ||
+               uri.Host.Contains("medelement.com", StringComparison.OrdinalIgnoreCase) ||
+               uri.Host.Contains("consultant.ru", StringComparison.OrdinalIgnoreCase) ||
+               uri.Host.Contains("garant.ru", StringComparison.OrdinalIgnoreCase) ||
+               uri.Host.Contains("cyberleninka.ru", StringComparison.OrdinalIgnoreCase) ||
+               descriptor.Contains("/article/", StringComparison.OrdinalIgnoreCase) ||
+               descriptor.Contains("/articles/", StringComparison.OrdinalIgnoreCase) ||
+               descriptor.Contains("/guideline", StringComparison.OrdinalIgnoreCase) ||
+               descriptor.Contains("/recommendation", StringComparison.OrdinalIgnoreCase) ||
+               descriptor.Contains("systematic review", StringComparison.OrdinalIgnoreCase) ||
+               descriptor.Contains("meta-analysis", StringComparison.OrdinalIgnoreCase) ||
+               descriptor.Contains("clinical", StringComparison.OrdinalIgnoreCase) ||
+               descriptor.Contains("guideline", StringComparison.OrdinalIgnoreCase) ||
+               descriptor.Contains("recommendation", StringComparison.OrdinalIgnoreCase) ||
+               descriptor.Contains("клиничес", StringComparison.OrdinalIgnoreCase) ||
+               descriptor.Contains("рекомендац", StringComparison.OrdinalIgnoreCase) ||
+               descriptor.Contains("обзор", StringComparison.OrdinalIgnoreCase) ||
+               descriptor.Contains("исследован", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string? TryBuildDecodedUrlCorpus(string? url)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+        {
+            return null;
+        }
+
+        return $"{Uri.UnescapeDataString(uri.Host)} {Uri.UnescapeDataString(uri.AbsolutePath)}";
     }
 }
 

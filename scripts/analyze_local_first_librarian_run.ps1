@@ -219,6 +219,70 @@ function Get-SearchTraceSources {
     return @($Result.searchTrace.sources)
 }
 
+function Get-EpistemicAnswerMode {
+    param(
+        [Parameter(Mandatory = $true)]$Result
+    )
+
+    $mode = ""
+    if (Test-ObjectProperty -Object $Result -Name "epistemicAnswerMode") {
+        $mode = [string]$Result.epistemicAnswerMode
+    }
+
+    if ([string]::IsNullOrWhiteSpace($mode) -and
+        (Test-ObjectProperty -Object $Result -Name "epistemicRisk") -and
+        $null -ne $Result.epistemicRisk -and
+        (Test-ObjectProperty -Object $Result.epistemicRisk -Name "answerMode")) {
+        $mode = [string]$Result.epistemicRisk.answerMode
+    }
+
+    return $mode.Trim().ToLowerInvariant()
+}
+
+function Get-InteractionStateValue {
+    param(
+        [Parameter(Mandatory = $true)]$Result,
+        [Parameter(Mandatory = $true)][string]$PropertyName
+    )
+
+    if (-not (Test-ObjectProperty -Object $Result -Name "interactionState") -or
+        $null -eq $Result.interactionState -or
+        -not (Test-ObjectProperty -Object $Result.interactionState -Name $PropertyName)) {
+        return ""
+    }
+
+    return [string]$Result.interactionState.$PropertyName
+}
+
+function Test-InteractionLevelAtLeastModerate {
+    param(
+        [Parameter(Mandatory = $true)][string]$Value
+    )
+
+    return [string]::Equals($Value, "moderate", [System.StringComparison]::OrdinalIgnoreCase) -or
+        [string]::Equals($Value, "high", [System.StringComparison]::OrdinalIgnoreCase)
+}
+
+function Test-ReassuranceLanguagePresent {
+    param(
+        [Parameter(Mandatory = $true)][string]$Text
+    )
+
+    $patterns = @(
+        '(?i)\bwe can\b',
+        '(?i)\bit''s okay\b',
+        '(?i)\byou''re not stuck\b',
+        '(?i)\bthat''s manageable\b',
+        '(?i)\bпонимаю\b',
+        '(?i)\bспокойно\b',
+        '(?i)\bэто поправимо\b',
+        '(?i)\bне переживай\b',
+        '(?i)\bне страшно\b'
+    )
+
+    return Test-ContainsRegexAny -Text $Text -Patterns $patterns
+}
+
 function Get-SearchTraceEvents {
     param(
         [Parameter(Mandatory = $true)]$Result
@@ -801,6 +865,8 @@ foreach ($result in $results) {
         sourcesCount = [int]$result.sourcesCount
         citationCoverage = [double]$result.citationCoverage
         groundingStatus = [string]$result.groundingStatus
+        epistemicAnswerMode = Get-EpistemicAnswerMode -Result $result
+        repairDriver = if (Test-ObjectProperty -Object $result -Name "repairDriver") { [string]$result.repairDriver } else { "" }
         issues = [string[]]$issues
     })
 }
@@ -865,6 +931,98 @@ $worstCases = $perCase |
     Sort-Object -Property @{ Expression = { @($_.issues).Count }; Descending = $true }, @{ Expression = "id"; Descending = $false } |
     Select-Object -First 20
 
+$unsupportedAssertionCases = 0
+$abstainCases = 0
+$abstainAppropriateCases = 0
+$abstainPotentialOveruseCases = 0
+$bestEffortHypothesisCases = 0
+$bestEffortPotentialOveruseCases = 0
+$interactionPressureCases = 0
+$reassuranceUnderuseCases = 0
+$reassuranceOveruseCases = 0
+$repairDriverCounts = [ordered]@{
+    interaction = 0
+    epistemic = 0
+    structural = 0
+}
+
+foreach ($case in $perCase) {
+    $mode = [string]$case.epistemicAnswerMode
+    $issueList = @($case.issues)
+    $strongAssertionMode = @("direct", "grounded") -contains $mode
+    $weakEvidenceIssue = @($issueList | Where-Object {
+            $_ -in @(
+                "no_sources_in_mandatory_web_case",
+                "low_citation_coverage_for_web_case",
+                "grounded_without_passage_evidence",
+                "weak_grounding_status",
+                "fetch_failure_despite_relevant_search_hits"
+            )
+        }).Count -gt 0
+    if ($strongAssertionMode -and $weakEvidenceIssue) {
+        $unsupportedAssertionCases++
+    }
+
+    if ($mode -eq "abstain") {
+        $abstainCases++
+        if (
+            $case.groundingStatus -in @("unverified", "grounded_with_contradictions", "grounded_with_limits") -or
+            [int]$case.sourcesCount -eq 0 -or
+            [double]$case.citationCoverage -lt 0.5
+        ) {
+            $abstainAppropriateCases++
+        }
+        elseif ([int]$case.sourcesCount -gt 0 -and [double]$case.citationCoverage -ge 0.5) {
+            $abstainPotentialOveruseCases++
+        }
+    }
+
+    if ($mode -eq "best_effort_hypothesis") {
+        $bestEffortHypothesisCases++
+        if ([int]$case.sourcesCount -gt 0 -and [double]$case.citationCoverage -ge 0.5) {
+            $bestEffortPotentialOveruseCases++
+        }
+    }
+
+    $interactionPressure = Get-InteractionStateValue -Result ($results | Where-Object { [string]$_.id -eq [string]$case.id } | Select-Object -First 1) -PropertyName "assistantPressureRisk"
+    if (Test-InteractionLevelAtLeastModerate -Value $interactionPressure) {
+        $interactionPressureCases++
+    }
+
+    $reassuranceNeed = Get-InteractionStateValue -Result ($results | Where-Object { [string]$_.id -eq [string]$case.id } | Select-Object -First 1) -PropertyName "reassuranceNeed"
+    $fullResult = $results | Where-Object { [string]$_.id -eq [string]$case.id } | Select-Object -First 1
+    $responseText = if ($null -ne $fullResult) { [string]$fullResult.response } else { "" }
+    $hasReassuranceLanguage = Test-ReassuranceLanguagePresent -Text $responseText
+    if (Test-InteractionLevelAtLeastModerate -Value $reassuranceNeed) {
+        if (-not $hasReassuranceLanguage) {
+            $reassuranceUnderuseCases++
+        }
+    }
+    elseif ($hasReassuranceLanguage) {
+        $reassuranceOveruseCases++
+    }
+
+    $repairDriver = [string]$case.repairDriver
+    if ($repairDriverCounts.Contains($repairDriver)) {
+        $repairDriverCounts[$repairDriver]++
+    }
+}
+
+$epistemicAndInteractionMetrics = [ordered]@{
+    unsupportedAssertionCases = $unsupportedAssertionCases
+    unsupportedAssertionRate = [math]::Round((Rate $unsupportedAssertionCases $results.Count), 3)
+    abstainCases = $abstainCases
+    abstainAppropriateCases = $abstainAppropriateCases
+    abstainPotentialOveruseCases = $abstainPotentialOveruseCases
+    bestEffortHypothesisCases = $bestEffortHypothesisCases
+    bestEffortPotentialOveruseCases = $bestEffortPotentialOveruseCases
+    clarificationInsteadOfAnswerCases = if ($issueCounts.ContainsKey("clarification_instead_of_answer")) { [int]$issueCounts["clarification_instead_of_answer"] } else { 0 }
+    interactionPressureCases = $interactionPressureCases
+    reassuranceUnderuseCases = $reassuranceUnderuseCases
+    reassuranceOveruseCases = $reassuranceOveruseCases
+    repairDriverCounts = $repairDriverCounts
+}
+
 $validationModes = @(
     $results |
         ForEach-Object {
@@ -886,6 +1044,7 @@ $summary = [ordered]@{
     totalCases = $results.Count
     okCases = @($results | Where-Object { $_.status -eq "ok" }).Count
     errorCases = @($results | Where-Object { $_.status -ne "ok" }).Count
+    epistemicAndInteractionMetrics = $epistemicAndInteractionMetrics
     issueCounts = $sortedIssues
     byEvidenceMode = $byEvidenceMode
     byTaskType = $byTaskType
@@ -906,6 +1065,16 @@ if (@($validationModes).Count -gt 0) {
 $mdLines.Add([string]::Format('- Total cases: `{0}`', $summary.totalCases))
 $mdLines.Add([string]::Format('- OK cases: `{0}`', $summary.okCases))
 $mdLines.Add([string]::Format('- Error cases: `{0}`', $summary.errorCases))
+$mdLines.Add("")
+$mdLines.Add("## Epistemic And Interaction Metrics")
+$mdLines.Add("")
+$mdLines.Add([string]::Format('- Unsupported assertion rate: `{0}` ({1}/{2})', $summary.epistemicAndInteractionMetrics.unsupportedAssertionRate, $summary.epistemicAndInteractionMetrics.unsupportedAssertionCases, $summary.totalCases))
+$mdLines.Add([string]::Format('- Abstain cases: `{0}` | appropriate: `{1}` | potential overuse: `{2}`', $summary.epistemicAndInteractionMetrics.abstainCases, $summary.epistemicAndInteractionMetrics.abstainAppropriateCases, $summary.epistemicAndInteractionMetrics.abstainPotentialOveruseCases))
+$mdLines.Add([string]::Format('- Best-effort hypothesis cases: `{0}` | potential overuse: `{1}`', $summary.epistemicAndInteractionMetrics.bestEffortHypothesisCases, $summary.epistemicAndInteractionMetrics.bestEffortPotentialOveruseCases))
+$mdLines.Add([string]::Format('- Clarification instead of answer cases: `{0}`', $summary.epistemicAndInteractionMetrics.clarificationInsteadOfAnswerCases))
+$mdLines.Add([string]::Format('- Interaction pressure cases: `{0}`', $summary.epistemicAndInteractionMetrics.interactionPressureCases))
+$mdLines.Add([string]::Format('- Reassurance underuse cases: `{0}` | overuse cases: `{1}`', $summary.epistemicAndInteractionMetrics.reassuranceUnderuseCases, $summary.epistemicAndInteractionMetrics.reassuranceOveruseCases))
+$mdLines.Add([string]::Format('- Repair driver counts: `interaction={0}`, `epistemic={1}`, `structural={2}`', $summary.epistemicAndInteractionMetrics.repairDriverCounts.interaction, $summary.epistemicAndInteractionMetrics.repairDriverCounts.epistemic, $summary.epistemicAndInteractionMetrics.repairDriverCounts.structural))
 $mdLines.Add("")
 $mdLines.Add("## Top Issues")
 $mdLines.Add("")

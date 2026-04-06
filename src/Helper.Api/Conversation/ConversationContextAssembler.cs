@@ -21,15 +21,24 @@ public sealed class ConversationContextAssembler : IConversationContextAssembler
     private readonly IReflectionService _reflectionService;
     private readonly IRetrievalContextAssembler _retrievalAssembler;
     private readonly IReasoningAwareRetrievalPolicy _retrievalPolicy;
+    private readonly ISharedUnderstandingService _sharedUnderstandingService;
+    private readonly IProjectInstructionPolicy _projectInstructionPolicy;
+    private readonly IProjectMemoryBoundaryPolicy _projectMemoryBoundaryPolicy;
 
     public ConversationContextAssembler(
         IReflectionService reflectionService,
         IRetrievalContextAssembler retrievalAssembler,
-        IReasoningAwareRetrievalPolicy retrievalPolicy)
+        IReasoningAwareRetrievalPolicy retrievalPolicy,
+        ISharedUnderstandingService? sharedUnderstandingService = null,
+        IProjectInstructionPolicy? projectInstructionPolicy = null,
+        IProjectMemoryBoundaryPolicy? projectMemoryBoundaryPolicy = null)
     {
         _reflectionService = reflectionService;
         _retrievalAssembler = retrievalAssembler;
         _retrievalPolicy = retrievalPolicy;
+        _sharedUnderstandingService = sharedUnderstandingService ?? new SharedUnderstandingService();
+        _projectInstructionPolicy = projectInstructionPolicy ?? new ProjectInstructionPolicy();
+        _projectMemoryBoundaryPolicy = projectMemoryBoundaryPolicy ?? new ProjectMemoryBoundaryPolicy();
     }
 
     public async Task<ConversationPromptAssembly> AssembleAsync(ChatTurnContext context, CancellationToken ct)
@@ -50,6 +59,8 @@ public sealed class ConversationContextAssembler : IConversationContextAssembler
         }
 
         AppendSystemContextBlocks(context.History, selection, contextBlocks, usedLayers);
+        AppendSharedUnderstandingBlock(context, selection, contextBlocks, usedLayers);
+        AppendProjectContextBlock(context, contextBlocks, usedLayers);
         var proceduralLessons = await TryLoadLessonsAsync(context, selection, contextBlocks, usedLayers, ct).ConfigureAwait(false);
         var retrievalChunks = await TryLoadRetrievalAsync(context, selection, contextBlocks, usedLayers, ct).ConfigureAwait(false);
 
@@ -60,6 +71,21 @@ public sealed class ConversationContextAssembler : IConversationContextAssembler
             recentMessages.Count,
             proceduralLessons,
             retrievalChunks);
+    }
+
+    private void AppendProjectContextBlock(
+        ChatTurnContext context,
+        List<string> contextBlocks,
+        List<string> usedLayers)
+    {
+        var block = _projectInstructionPolicy.BuildContextBlock(context.Conversation.ProjectContext, context);
+        if (string.IsNullOrWhiteSpace(block))
+        {
+            return;
+        }
+
+        contextBlocks.Add(block);
+        usedLayers.Add("project_memory");
     }
 
     private static void AppendSystemContextBlocks(
@@ -93,6 +119,27 @@ public sealed class ConversationContextAssembler : IConversationContextAssembler
                 usedLayers.Add("conversation_profile");
             }
         }
+    }
+
+    private void AppendSharedUnderstandingBlock(
+        ChatTurnContext context,
+        MemoryLayerSelection selection,
+        List<string> contextBlocks,
+        List<string> usedLayers)
+    {
+        if (!selection.Layers.Contains("shared_understanding", StringComparer.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var block = _sharedUnderstandingService.BuildContextBlock(context.Conversation, context);
+        if (string.IsNullOrWhiteSpace(block))
+        {
+            return;
+        }
+
+        contextBlocks.Add(block);
+        usedLayers.Add("shared_understanding");
     }
 
     private async Task<int> TryLoadLessonsAsync(

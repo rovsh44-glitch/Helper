@@ -191,7 +191,7 @@ internal static class TransportExceptionClassifier
         }
 
         var category = diagnostics.FinalFailureCategory ?? "unknown_transport";
-        var renderRecoverable = category is "connection_refused" or "connection_reset" or "timeout" or "tls_handshake" or "connectivity_failure";
+        var renderRecoverable = category is "connection_refused" or "connection_reset" or "timeout" or "tls_handshake" or "connectivity_failure" or "unknown_transport";
         if (!renderRecoverable)
         {
             return false;

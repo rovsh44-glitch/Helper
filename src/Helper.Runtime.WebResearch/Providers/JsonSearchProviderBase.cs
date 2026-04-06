@@ -17,14 +17,15 @@ public abstract class JsonSearchProviderBase : IWebSearchProvider
         TimeSpan timeout,
         IWebFetchSecurityPolicy? securityPolicy = null,
         IRedirectGuard? redirectGuard = null,
-        bool allowTrustedLoopback = false)
+        bool allowTrustedLoopback = false,
+        HttpMessageHandler? handler = null)
     {
         ProviderId = providerId;
         _baseUrl = NormalizeBaseUrl(baseUrl);
         _securityPolicy = securityPolicy ?? new WebFetchSecurityPolicy();
         _redirectGuard = redirectGuard ?? new RedirectGuard(_securityPolicy);
         _allowTrustedLoopback = allowTrustedLoopback;
-        _httpClient = new HttpClient(HttpFetchSupport.CreateDefaultHandler())
+        _httpClient = new HttpClient(handler ?? HttpFetchSupport.CreateDefaultHandler())
         {
             Timeout = timeout
         };
@@ -36,6 +37,11 @@ public abstract class JsonSearchProviderBase : IWebSearchProvider
     public bool IsEnabled => !string.IsNullOrWhiteSpace(_baseUrl);
 
     protected string BaseUrl => _baseUrl;
+
+    protected internal virtual SearchProviderTimeoutRecoveryDecision? BuildTimeoutRecoveryDecision(WebSearchPlan plan)
+    {
+        return null;
+    }
 
     public async Task<WebSearchProviderClientResponse> SearchAsync(WebSearchPlan plan, CancellationToken ct = default)
     {
@@ -56,58 +62,55 @@ public abstract class JsonSearchProviderBase : IWebSearchProvider
         }
 
         var trace = new List<string>(Trace("attempt", requestUri, securityDecision.Trace));
-        var currentUri = requestUri;
-        var redirectHop = 0;
 
         try
         {
-            while (true)
-            {
-                var response = await _httpClient.GetAsync(currentUri, ct).ConfigureAwait(false);
-                if (HttpFetchSupport.IsRedirect(response.StatusCode))
-                {
-                    var location = response.Headers.Location;
-                    if (location is null)
-                    {
-                        trace.Add($"{ProviderId}:redirect_missing_location uri={currentUri}");
-                        return new WebSearchProviderClientResponse(Array.Empty<WebSearchDocument>(), trace);
-                    }
-
-                    var redirectUri = location.IsAbsoluteUri
-                        ? location
-                        : new Uri(currentUri, location);
-                    redirectHop++;
-                    var redirectDecision = await _redirectGuard.EvaluateAsync(
-                        currentUri,
-                        redirectUri,
-                        redirectHop,
-                        _allowTrustedLoopback,
-                        ct).ConfigureAwait(false);
-                    trace.AddRange(redirectDecision.Trace.Select(message => $"{ProviderId}:{message}"));
-                    if (!redirectDecision.Allowed)
-                    {
-                        return new WebSearchProviderClientResponse(Array.Empty<WebSearchDocument>(), trace);
-                    }
-
-                    currentUri = redirectUri;
-                    continue;
-                }
-
-                response.EnsureSuccessStatusCode();
-                var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-                var documents = ParseDocuments(json, plan.MaxResults);
-                trace.Add($"{ProviderId}:{(documents.Count > 0 ? "results" : "empty")} uri={currentUri} count={documents.Count}");
-                return new WebSearchProviderClientResponse(documents, trace);
-            }
+            return await ExecuteSearchRequestAsync(plan, requestUri, trace, ct).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (!ct.IsCancellationRequested)
         {
-            trace.Add($"{ProviderId}:timeout uri={currentUri}");
+            trace.Add($"{ProviderId}:timeout uri={requestUri}");
+
+            var recovery = BuildTimeoutRecoveryDecision(plan);
+            if (recovery is not null)
+            {
+                var recoveryUri = BuildSearchUri(recovery.Plan);
+                if (!UriEquals(requestUri, recoveryUri))
+                {
+                    trace.AddRange(recovery.Trace.Select(message => $"{ProviderId}:{message}"));
+                    var recoverySecurityDecision = await _securityPolicy.EvaluateAsync(
+                        recoveryUri,
+                        WebFetchTargetKind.SearchProvider,
+                        _allowTrustedLoopback,
+                        ct).ConfigureAwait(false);
+                    if (!recoverySecurityDecision.Allowed)
+                    {
+                        trace.AddRange(Trace("blocked", recoveryUri, recoverySecurityDecision.Trace));
+                        return new WebSearchProviderClientResponse(Array.Empty<WebSearchDocument>(), trace);
+                    }
+
+                    trace.AddRange(Trace("attempt", recoveryUri, recoverySecurityDecision.Trace));
+
+                    try
+                    {
+                        return await ExecuteSearchRequestAsync(recovery.Plan, recoveryUri, trace, ct).ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+                    {
+                        trace.Add($"{ProviderId}:timeout uri={recoveryUri}");
+                    }
+                    catch
+                    {
+                        trace.Add($"{ProviderId}:error uri={recoveryUri}");
+                    }
+                }
+            }
+
             return new WebSearchProviderClientResponse(Array.Empty<WebSearchDocument>(), trace);
         }
         catch
         {
-            trace.Add($"{ProviderId}:error uri={currentUri}");
+            trace.Add($"{ProviderId}:error uri={requestUri}");
             return new WebSearchProviderClientResponse(Array.Empty<WebSearchDocument>(), trace);
         }
     }
@@ -115,6 +118,55 @@ public abstract class JsonSearchProviderBase : IWebSearchProvider
     protected virtual Uri BuildSearchUri(WebSearchPlan plan)
     {
         return new Uri($"{_baseUrl}/search?q={Uri.EscapeDataString(plan.Query)}&format=json");
+    }
+
+    private async Task<WebSearchProviderClientResponse> ExecuteSearchRequestAsync(
+        WebSearchPlan plan,
+        Uri requestUri,
+        List<string> trace,
+        CancellationToken ct)
+    {
+        var currentUri = requestUri;
+        var redirectHop = 0;
+
+        while (true)
+        {
+            var response = await _httpClient.GetAsync(currentUri, ct).ConfigureAwait(false);
+            if (HttpFetchSupport.IsRedirect(response.StatusCode))
+            {
+                var location = response.Headers.Location;
+                if (location is null)
+                {
+                    trace.Add($"{ProviderId}:redirect_missing_location uri={currentUri}");
+                    return new WebSearchProviderClientResponse(Array.Empty<WebSearchDocument>(), trace);
+                }
+
+                var redirectUri = location.IsAbsoluteUri
+                    ? location
+                    : new Uri(currentUri, location);
+                redirectHop++;
+                var redirectDecision = await _redirectGuard.EvaluateAsync(
+                    currentUri,
+                    redirectUri,
+                    redirectHop,
+                    _allowTrustedLoopback,
+                    ct).ConfigureAwait(false);
+                trace.AddRange(redirectDecision.Trace.Select(message => $"{ProviderId}:{message}"));
+                if (!redirectDecision.Allowed)
+                {
+                    return new WebSearchProviderClientResponse(Array.Empty<WebSearchDocument>(), trace);
+                }
+
+                currentUri = redirectUri;
+                continue;
+            }
+
+            response.EnsureSuccessStatusCode();
+            var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+            var documents = ParseDocuments(json, plan.MaxResults);
+            trace.Add($"{ProviderId}:{(documents.Count > 0 ? "results" : "empty")} uri={currentUri} count={documents.Count}");
+            return new WebSearchProviderClientResponse(documents, trace);
+        }
     }
 
     private static IReadOnlyList<WebSearchDocument> ParseDocuments(string json, int maxResults)
@@ -162,6 +214,11 @@ public abstract class JsonSearchProviderBase : IWebSearchProvider
         }
 
         return trace.ToArray();
+    }
+
+    private static bool UriEquals(Uri left, Uri right)
+    {
+        return string.Equals(left.AbsoluteUri, right.AbsoluteUri, StringComparison.OrdinalIgnoreCase);
     }
 }
 

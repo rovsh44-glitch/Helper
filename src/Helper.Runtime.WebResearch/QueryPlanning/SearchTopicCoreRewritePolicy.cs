@@ -18,7 +18,7 @@ public sealed partial class SearchTopicCoreRewritePolicy : ISearchTopicCoreRewri
     {
         "please", "helper", "tell", "give", "provide", "opinion", "your", "simple", "simply",
         "пожалуйста", "хелпер", "предоставь", "мнение", "свое", "своё", "простыми", "словами",
-        "изменилось", "уточнилось", "что", "обычно"
+        "изменилось", "уточнилось", "что", "обычно", "мой", "моя", "мое", "моё"
     };
 
     public SearchTopicCoreRewriteDecision Rewrite(string query)
@@ -108,10 +108,27 @@ public sealed partial class SearchTopicCoreRewritePolicy : ISearchTopicCoreRewri
         var rewritten = value;
         if (string.Equals(language, "ru", StringComparison.OrdinalIgnoreCase))
         {
+            if (LooksLikeMixedLanguageTaxDeadlinePrompt(rewritten))
+            {
+                return "налоговые пороги лимиты сроки отчетности официальные требования";
+            }
+
+            if (LooksLikeRussianMigraineGuidelinePrompt(rewritten))
+            {
+                return "мигрень профилактика клинические рекомендации";
+            }
+
+            if (LooksLikeRussianPrediabetesNutritionPrompt(rewritten))
+            {
+                return "преддиабет питание рацион официальные рекомендации";
+            }
+
             rewritten = RussianCurrentKnowledgeRegex().Replace(rewritten, string.Empty);
             rewritten = RussianBuildGuidanceRegex().Replace(rewritten, string.Empty);
             rewritten = RussianEvidencePersuasivenessRegex().Replace(rewritten, string.Empty);
             rewritten = RussianDoesItHelpRegex().Replace(rewritten, string.Empty);
+            rewritten = RussianTaxThresholdsDeadlinesRegex().Replace(rewritten, " налоговые пороги лимиты сроки отчетности filing deadline ");
+            rewritten = RussianUserCurrentUseClauseRegex().Replace(rewritten, string.Empty);
             rewritten = RussianIntermittentFastingLeanMassRegex().Replace(rewritten, " intermittent fasting time-restricted eating lean mass body composition weight loss ");
             rewritten = RussianRedLightRecoveryEvidenceRegex().Replace(rewritten, " photobiomodulation red light therapy muscle recovery after training ");
             rewritten = RussianLatestGuidelinesFollowupRegex().Replace(rewritten, " последние ");
@@ -121,6 +138,11 @@ public sealed partial class SearchTopicCoreRewritePolicy : ISearchTopicCoreRewri
         }
         else
         {
+            if (LooksLikeEnglishPrediabetesNutritionPrompt(rewritten))
+            {
+                return "prediabetes diet nutrition official recommendations";
+            }
+
             rewritten = EnglishCurrentKnowledgeRegex().Replace(rewritten, string.Empty);
             rewritten = EnglishEvidencePersuasivenessRegex().Replace(rewritten, string.Empty);
             rewritten = EnglishIntermittentFastingLeanMassRegex().Replace(rewritten, " intermittent fasting time-restricted eating lean mass body composition weight loss ");
@@ -132,6 +154,37 @@ public sealed partial class SearchTopicCoreRewritePolicy : ISearchTopicCoreRewri
         }
 
         return SearchQueryIntentProfileClassifier.NormalizeWhitespace(rewritten);
+    }
+
+    private static bool LooksLikeMixedLanguageTaxDeadlinePrompt(string value)
+    {
+        return value.Contains("налог", StringComparison.OrdinalIgnoreCase) &&
+               (value.Contains("threshold", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("deadline", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("reporting", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static bool LooksLikeRussianMigraineGuidelinePrompt(string value)
+    {
+        return value.Contains("мигрен", StringComparison.OrdinalIgnoreCase) &&
+               value.Contains("профилакти", StringComparison.OrdinalIgnoreCase) &&
+               value.Contains("рекомендац", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool LooksLikeRussianPrediabetesNutritionPrompt(string value)
+    {
+        return value.Contains("преддиаб", StringComparison.OrdinalIgnoreCase) &&
+               (value.Contains("рацион", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("питани", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("диет", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static bool LooksLikeEnglishPrediabetesNutritionPrompt(string value)
+    {
+        return value.Contains("prediabet", StringComparison.OrdinalIgnoreCase) &&
+               (value.Contains("diet", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("nutrition", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("meal", StringComparison.OrdinalIgnoreCase));
     }
 
     private static string CleanupMetaTokens(string value)
@@ -164,10 +217,10 @@ public sealed partial class SearchTopicCoreRewritePolicy : ISearchTopicCoreRewri
     [GeneratedRegex(@"https?://[^\s\)\]\}>]+", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
     private static partial Regex UrlRegex();
 
-    [GeneratedRegex(@"^(?:объясни|расскажи|опиши|разбери|проанализируй|сравни|проверь|уточни|покажи)\b[\s,:-]*", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+    [GeneratedRegex(@"^(?:объясни|расскажи|опиши|разбери|проанализируй|сравни|проверь|уточни|покажи|оцени)\b[\s,:-]*", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
     private static partial Regex RussianLeadInstructionRegex();
 
-    [GeneratedRegex(@"^(?:please\s+)?(?:explain|describe|analyze|review|compare|check|verify|summarize)\b[\s,:-]*", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+    [GeneratedRegex(@"^(?:please\s+)?(?:explain|describe|analyze|review|compare|check|verify|summarize|evaluate|assess)\b[\s,:-]*", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
     private static partial Regex EnglishLeadInstructionRegex();
 
     [GeneratedRegex(@"\b(?:простыми\s+словами|предостав(?:ь|ьте)\s+(?:сво[её]\s+)?мнение|сво[её]\s+мнение)\b", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
@@ -205,6 +258,12 @@ public sealed partial class SearchTopicCoreRewritePolicy : ISearchTopicCoreRewri
 
     [GeneratedRegex(@"\bпомогает\s+ли\b", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
     private static partial Regex RussianDoesItHelpRegex();
+
+    [GeneratedRegex(@"\bналог\w*\s+thresholds?\b|\bthresholds?\b|\breporting\s+deadlines?\b|\bfilling?\s+deadlines?\b", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+    private static partial Regex RussianTaxThresholdsDeadlinesRegex();
+
+    [GeneratedRegex(@"\bкотор\w*\s+я\s+пользуюсь\s+сегодня\b|\bкотор\w*\s+я\s+использую\s+сегодня\b", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+    private static partial Regex RussianUserCurrentUseClauseRegex();
 
     [GeneratedRegex(@"\bинтервальн\w*\s+голодан\w*.*(?:сниж\w*\s+вес|похуд\w*).*(?:без\s+потер\w+\s+мыш\w*|мыш\w+\s+мас\w*|состав\w+\s+тел\w*)", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
     private static partial Regex RussianIntermittentFastingLeanMassRegex();

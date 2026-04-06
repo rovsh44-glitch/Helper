@@ -66,5 +66,47 @@ public sealed class SearchEvidenceSufficiencyPolicyTests
         Assert.False(decision.IsSufficient);
         Assert.Equal("need_paper_focus_query", decision.Reason);
     }
+
+    [Fact]
+    public void Evaluate_RequiresStructuredFollowUp_ForFreshMedicalGuidelinePrompt_AfterPrimaryHitsOnly()
+    {
+        var policy = new SearchEvidenceSufficiencyPolicy();
+        var request = new WebSearchRequest("Объясни, как обычно строят профилактику мигрени, а затем проверь, что изменилось или уточнилось в последних клинических рекомендациях.");
+        var executedPlans = new[]
+        {
+            new WebSearchPlan("профилактику мигрени последние клинических рекомендациях", 5, 1, "research", "standard", true, "primary")
+        };
+        var aggregate = new[]
+        {
+            new WebSearchDocument("https://diseases.medelement.com/disease/migraine", "Guideline", "Clinical guidance."),
+            new WebSearchDocument("https://legalacts.ru/doc/migraine-guideline", "Official", "Official document.")
+        };
+
+        var decision = policy.Evaluate(request, executedPlans, aggregate);
+
+        Assert.False(decision.IsSufficient);
+        Assert.Equal("need_freshness_query", decision.Reason);
+    }
+
+    [Fact]
+    public void Evaluate_RequiresPaperFocusCoverage_ForLiteratureReviewPrompt_AfterFreshnessWithSingleSource()
+    {
+        var policy = new SearchEvidenceSufficiencyPolicy();
+        var request = new WebSearchRequest("Оцени мой метод literature review и проверь его по актуальным guidance для systematic reviews.");
+        var executedPlans = new[]
+        {
+            new WebSearchPlan("literature review guidance systematic reviews", 5, 1, "research", "standard", true, "primary"),
+            new WebSearchPlan("literature review guidance systematic reviews latest update", 5, 1, "research", "freshness", true, "freshness")
+        };
+        var aggregate = new[]
+        {
+            new WebSearchDocument("https://cyberleninka.ru/article/n/review-guidance", "Review guidance", "Single science reference.")
+        };
+
+        var decision = policy.Evaluate(request, executedPlans, aggregate);
+
+        Assert.False(decision.IsSufficient);
+        Assert.Equal("need_paper_focus_query", decision.Reason);
+    }
 }
 

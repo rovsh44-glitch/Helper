@@ -24,7 +24,14 @@ public sealed class UserProfileService : IUserProfileService
                 NormalizeEnthusiasm(state.Enthusiasm),
                 NormalizeDirectness(state.Directness),
                 NormalizeAnswerShape(state.DefaultAnswerShape),
-                NormalizeSearchLocalityHint(state.SearchLocalityHint));
+                NormalizeSearchLocalityHint(state.SearchLocalityHint),
+                NormalizeDecisionAssertiveness(state.DecisionAssertiveness),
+                NormalizeClarificationTolerance(state.ClarificationTolerance),
+                NormalizeCitationPreference(state.CitationPreference),
+                NormalizeRepairStyle(state.RepairStyle),
+                NormalizeReasoningStyle(state.ReasoningStyle),
+                NormalizeReasoningEffort(state.ReasoningEffort),
+                NormalizePersonaBundleId(state.PersonaBundleId));
         }
     }
 
@@ -89,6 +96,83 @@ public sealed class UserProfileService : IUserProfileService
             {
                 state.SearchLocalityHint = NormalizeSearchLocalityHint(dto.SearchLocalityHint);
             }
+
+            if (!string.IsNullOrWhiteSpace(dto.DecisionAssertiveness))
+            {
+                state.DecisionAssertiveness = NormalizeDecisionAssertiveness(dto.DecisionAssertiveness);
+            }
+
+            if (!string.IsNullOrWhiteSpace(dto.ClarificationTolerance))
+            {
+                state.ClarificationTolerance = NormalizeClarificationTolerance(dto.ClarificationTolerance);
+            }
+
+            if (!string.IsNullOrWhiteSpace(dto.CitationPreference))
+            {
+                state.CitationPreference = NormalizeCitationPreference(dto.CitationPreference);
+            }
+
+            if (!string.IsNullOrWhiteSpace(dto.RepairStyle))
+            {
+                state.RepairStyle = NormalizeRepairStyle(dto.RepairStyle);
+            }
+
+            if (!string.IsNullOrWhiteSpace(dto.ReasoningStyle))
+            {
+                state.ReasoningStyle = NormalizeReasoningStyle(dto.ReasoningStyle);
+            }
+
+            if (!string.IsNullOrWhiteSpace(dto.ReasoningEffort))
+            {
+                state.ReasoningEffort = NormalizeReasoningEffort(dto.ReasoningEffort);
+            }
+
+            if (dto.PersonaBundleId is not null)
+            {
+                state.PersonaBundleId = NormalizePersonaBundleId(dto.PersonaBundleId);
+            }
+
+            if (dto.BackgroundResearchEnabled.HasValue)
+            {
+                state.BackgroundResearchEnabled = dto.BackgroundResearchEnabled.Value;
+            }
+
+            if (dto.ProactiveUpdatesEnabled.HasValue)
+            {
+                state.ProactiveUpdatesEnabled = dto.ProactiveUpdatesEnabled.Value;
+            }
+
+            if (!string.IsNullOrWhiteSpace(dto.ProjectId))
+            {
+                state.ProjectContext = (state.ProjectContext ?? ProjectContextState.Empty(dto.ProjectId)) with
+                {
+                    ProjectId = dto.ProjectId.Trim(),
+                    Label = dto.ProjectLabel is null ? state.ProjectContext?.Label : NormalizeProjectField(dto.ProjectLabel),
+                    Instructions = dto.ProjectInstructions is null ? state.ProjectContext?.Instructions : NormalizeProjectField(dto.ProjectInstructions),
+                    MemoryEnabled = dto.ProjectMemoryEnabled ?? state.ProjectContext?.MemoryEnabled ?? true,
+                    UpdatedAtUtc = DateTimeOffset.UtcNow
+                };
+            }
+            else if ((dto.ProjectLabel is not null || dto.ProjectInstructions is not null || dto.ProjectMemoryEnabled.HasValue) && state.ProjectContext is not null)
+            {
+                state.ProjectContext = state.ProjectContext with
+                {
+                    Label = dto.ProjectLabel is null ? state.ProjectContext.Label : NormalizeProjectField(dto.ProjectLabel),
+                    Instructions = dto.ProjectInstructions is null ? state.ProjectContext.Instructions : NormalizeProjectField(dto.ProjectInstructions),
+                    MemoryEnabled = dto.ProjectMemoryEnabled ?? state.ProjectContext.MemoryEnabled,
+                    UpdatedAtUtc = DateTimeOffset.UtcNow
+                };
+            }
+
+            state.PersonalizationProfile = new PersonalizationProfile(
+                ExplanationDepth: state.DetailLevel,
+                DecisionAssertiveness: state.DecisionAssertiveness,
+                ClarificationTolerance: state.ClarificationTolerance,
+                CitationPreference: state.CitationPreference,
+                RepairStyle: state.RepairStyle,
+                ReasoningStyle: state.ReasoningStyle,
+                ReasoningEffort: state.ReasoningEffort,
+                PersonaBundleId: state.PersonaBundleId);
 
             state.UpdatedAt = DateTimeOffset.UtcNow;
         }
@@ -281,6 +365,85 @@ public sealed class UserProfileService : IUserProfileService
                normalized.Equals("рядом", StringComparison.OrdinalIgnoreCase)
             ? null
             : normalized;
+    }
+
+    private static string NormalizeDecisionAssertiveness(string? value)
+    {
+        return value?.Trim().ToLowerInvariant() switch
+        {
+            "low" or "cautious" => "low",
+            "high" or "decisive" => "high",
+            _ => "balanced"
+        };
+    }
+
+    private static string NormalizeClarificationTolerance(string? value)
+    {
+        return value?.Trim().ToLowerInvariant() switch
+        {
+            "low" => "low",
+            "high" => "high",
+            _ => "balanced"
+        };
+    }
+
+    private static string NormalizeCitationPreference(string? value)
+    {
+        return value?.Trim().ToLowerInvariant() switch
+        {
+            "prefer" or "always" => "prefer",
+            "avoid" => "avoid",
+            _ => "adaptive"
+        };
+    }
+
+    private static string NormalizeRepairStyle(string? value)
+    {
+        return value?.Trim().ToLowerInvariant() switch
+        {
+            "explain_first" => "explain_first",
+            "gentle_reset" => "gentle_reset",
+            _ => "direct_fix"
+        };
+    }
+
+    private static string NormalizeReasoningStyle(string? value)
+    {
+        return value?.Trim().ToLowerInvariant() switch
+        {
+            "exploratory" => "exploratory",
+            _ => "concise"
+        };
+    }
+
+    private static string NormalizeReasoningEffort(string? value)
+    {
+        return value?.Trim().ToLowerInvariant() switch
+        {
+            "fast" => "fast",
+            "deep" => "deep",
+            _ => "balanced"
+        };
+    }
+
+    private static string? NormalizePersonaBundleId(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        return value.Trim();
+    }
+
+    private static string? NormalizeProjectField(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        return value.Trim();
     }
 }
 

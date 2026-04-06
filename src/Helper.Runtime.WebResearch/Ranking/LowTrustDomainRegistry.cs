@@ -97,6 +97,11 @@ internal static class LowTrustDomainRegistry
             ["wsj.com"] = new("major_business_news", 0.14d, IsAuthoritative: true, IsLowTrust: false),
             ["nytimes.com"] = new("major_news", 0.12d, IsAuthoritative: true, IsLowTrust: false),
             ["coindesk.com"] = new("specialized_news", 0.10d, IsAuthoritative: true, IsLowTrust: false)
+            ,
+            ["wikileaks.org"] = new("low_trust_leak_archive", -0.42d, IsAuthoritative: false, IsLowTrust: true),
+            ["www.wikileaks.org"] = new("low_trust_leak_archive", -0.42d, IsAuthoritative: false, IsLowTrust: true),
+            ["cont.ws"] = new("low_trust_opinion_aggregator", -0.36d, IsAuthoritative: false, IsLowTrust: true),
+            ["www.cont.ws"] = new("low_trust_opinion_aggregator", -0.36d, IsAuthoritative: false, IsLowTrust: true)
         };
 
     private static readonly string[] LowTrustTokens =

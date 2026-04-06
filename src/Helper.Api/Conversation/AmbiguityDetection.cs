@@ -55,7 +55,18 @@ public sealed class HybridAmbiguityDetector : IAmbiguityDetector
 
     private static readonly string[] ConstraintTokens =
     {
-        "constraint", "огранич", "deadline", "срок", "budget", "бюджет", "без ", "must", "нельзя"
+        "constraint", "constraints", "deadline", "budget", "stack",
+        "ограничение", "ограничения", "срок", "бюджет", "стек",
+        "must", "strict", "exactly", "нельзя", "строго", "обязательно", "только"
+    };
+
+    private static readonly string[] WorkRequestTokens =
+    {
+        "build", "generate", "write", "implement", "fix", "deploy", "configure", "update",
+        "refactor", "patch", "plan", "создай", "создать", "реализуй", "реализовать",
+        "исправь", "исправить", "обнови", "обновить", "настрой", "настроить",
+        "собери", "собрать", "запусти", "запустить", "подготовь", "подготовить",
+        "сделай", "напиши", "написать", "спланируй", "удали"
     };
 
     private static readonly string[] SafetyTokens =
@@ -113,7 +124,7 @@ public sealed class HybridAmbiguityDetector : IAmbiguityDetector
                 "Output format requested but not concretely specified.");
         }
 
-        if (ContainsAny(text, ConstraintTokens) && !HasConcreteConstraints(text))
+        if (LooksLikeConstraintGap(text))
         {
             return new AmbiguityDecision(
                 true,
@@ -174,6 +185,21 @@ public sealed class HybridAmbiguityDetector : IAmbiguityDetector
             || text.Contains("react", StringComparison.OrdinalIgnoreCase)
             || text.Contains("typescript", StringComparison.OrdinalIgnoreCase)
             || text.Contains("python", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool LooksLikeConstraintGap(string text)
+    {
+        if (!ContainsAny(text, ConstraintTokens))
+        {
+            return false;
+        }
+
+        if (!ContainsAny(text, WorkRequestTokens))
+        {
+            return false;
+        }
+
+        return !HasConcreteConstraints(text);
     }
 
     private static bool LooksLikeMissingData(string text)

@@ -5,6 +5,7 @@ internal interface INextStepComposer
     string SelectNextStepHeader(ChatTurnContext context, ComposerLocalization localization);
     string SelectNextStepBridge(ChatTurnContext context);
     string? ResolveEffectiveNextStep(ChatTurnContext context, string solution, ComposerLocalization localization, ResponseCompositionMode mode);
+    bool ShouldRender(ChatTurnContext context, string solution, string? nextStep);
 }
 
 internal sealed class NextStepComposer : INextStepComposer
@@ -55,6 +56,29 @@ internal sealed class NextStepComposer : INextStepComposer
         return IntentAwareNextStepPolicy.ShouldRender(context, solution, effective)
             ? effective
             : null;
+    }
+
+    public bool ShouldRender(ChatTurnContext context, string solution, string? nextStep)
+    {
+        if (!IntentAwareNextStepPolicy.ShouldRender(context, solution, nextStep))
+        {
+            return false;
+        }
+
+        if ((context.CommunicationQualitySnapshot?.GenericNextStepPressure ?? 0) >= 2 &&
+            IntentAwareNextStepPolicy.IsGenericTemplate(nextStep))
+        {
+            return false;
+        }
+
+        if (context.CollaborationIntent.PrefersAnswerOverClarification &&
+            solution.Length < 260 &&
+            IntentAwareNextStepPolicy.IsGenericTemplate(nextStep))
+        {
+            return false;
+        }
+
+        return true;
     }
 
     private static string? NormalizeOptional(string? value)

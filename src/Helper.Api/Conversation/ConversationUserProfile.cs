@@ -10,5 +10,12 @@ public sealed record ConversationUserProfile(
     string Enthusiasm = "balanced",
     string Directness = "balanced",
     string DefaultAnswerShape = "auto",
-    string? SearchLocalityHint = null);
+    string? SearchLocalityHint = null,
+    string DecisionAssertiveness = "balanced",
+    string ClarificationTolerance = "balanced",
+    string CitationPreference = "adaptive",
+    string RepairStyle = "direct_fix",
+    string ReasoningStyle = "concise",
+    string ReasoningEffort = "balanced",
+    string? PersonaBundleId = null);
 

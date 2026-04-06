@@ -166,8 +166,8 @@ internal sealed class SourceAuthorityScorer : ISourceAuthorityScorer
             "документац", "справк", "api", "sdk", "релиз", "версия", "поддержк");
         var currentnessHeavy = ContainsAny(
             text,
-            "latest", "current", "today", "right now", "news", "update", "price", "forecast", "score", "schedule",
-            "послед", "текущ", "сегодня", "сейчас", "новост", "обновл", "цена", "погод", "счёт", "распис");
+            "latest", "current", "today", "right now", "news", "update", "price", "forecast", "score", "schedule", "fresh", "freshness",
+            "послед", "текущ", "сегодня", "сейчас", "новост", "обновл", "цена", "погод", "счёт", "распис", "свеж");
         var comparisonHeavy = ContainsAny(
             text,
             "compare", "versus", " vs ", "difference", "сравни", "сопостав", "разниц");
@@ -180,17 +180,23 @@ internal sealed class SourceAuthorityScorer : ISourceAuthorityScorer
             "guideline", "guidelines", "recommendation", "recommendations", "clinical", "trial", "study",
             "systematic review", "meta-analysis", "consensus", "practice advisory", "public health",
             "клиничес", "рекомендац", "испытан", "исследован", "систематичес", "мета-анализ", "консенсус",
-            "профилактик", "лечение", "вакцин", "вспышк", "эпидеми", "официальные меры", "официальные рекомендации") ||
+            "профилактик", "лечение", "вакцин", "вспышк", "эпидеми", "официальные меры", "официальные рекомендации",
+            "prediabetes", "nutrition", "diet", "meal", "glycemic", "glucose", "insulin", "carbohydrate",
+            "преддиаб", "рацион", "питани", "диет", "гликем", "глюкоз", "инсулин", "углевод") ||
             evidenceBoundaryHeavy ||
             recoveryTherapyEvidenceHeavy;
+        var regulationFreshnessHeavy = LooksLikeRegulationFreshnessQuery(text);
         var medicalEvidenceHeavy = ContainsAny(
             text,
             "migraine", "measles", "vaccine", "vaccination", "outbreak", "disease", "treatment", "prevention",
             "guideline", "clinical", "muscle", "weight loss", "trial", "fasting", "time-restricted eating",
-            "мигрен", "корь", "вакцин", "вакцинац", "вспышк", "болезн", "лечение", "профилактик", "мышц", "мышеч", "вес", "голодан") ||
+            "prediabetes", "nutrition", "diet", "meal", "glycemic", "glucose", "insulin", "carbohydrate",
+            "мигрен", "корь", "вакцин", "вакцинац", "вспышк", "болезн", "лечение", "профилактик", "мышц", "мышеч", "вес", "голодан",
+            "преддиаб", "рацион", "питани", "диет", "гликем", "глюкоз", "инсулин", "углевод") ||
             recoveryTherapyEvidenceHeavy;
         var officialBias = documentationHeavy ||
                            evidenceHeavy ||
+                           regulationFreshnessHeavy ||
                            ContainsAny(
                                text,
                                "official", "guidance", "sec", "ftc", "irs", "act", "law", "regulation",
@@ -263,8 +269,8 @@ internal sealed class SourceAuthorityScorer : ISourceAuthorityScorer
                uri.AbsolutePath.Contains("/release", StringComparison.OrdinalIgnoreCase) ||
                ContainsAny(
                    $"{document.Title} {document.Snippet}",
-                   "latest", "today", "current", "announced", "release", "update",
-                   "послед", "сегодня", "текущ", "обновл", "релиз");
+                   "latest", "today", "current", "announced", "release", "update", "fresh",
+                   "послед", "сегодня", "текущ", "обновл", "релиз", "свеж");
     }
 
     private static bool LooksLikeEvidenceOrReferenceSource(Uri uri, WebSearchDocument document)
@@ -498,6 +504,14 @@ internal sealed class SourceAuthorityScorer : ISourceAuthorityScorer
             "red light", "red-light", "light therapy", "phototherapy", "photobiomodulation", "recovery after training",
             "exercise recovery", "post-workout", "muscle recovery", "recovery after exercise", "therapy for recovery",
             "красн свет", "красным свет", "светотерап", "фототерап", "фотобиомодуляц", "восстановлен", "после трениров", "терапи");
+    }
+
+    private static bool LooksLikeRegulationFreshnessQuery(string text)
+    {
+        return ContainsAny(
+            text,
+            "tax", "taxes", "threshold", "thresholds", "deadline", "deadlines", "reporting", "filing", "compliance", "regulation",
+            "налог", "налоги", "налогов", "порог", "пороги", "лимит", "лимиты", "срок", "сроки", "отчетност", "отчётност", "регуляц");
     }
 
     private static bool ContainsAny(string text, params string[] markers)

@@ -152,6 +152,10 @@ internal static class IntentAwareNextStepPolicy
         }
 
         return normalized.StartsWith("tell me if you want", StringComparison.Ordinal) ||
+               normalized.StartsWith("if you want, i can next", StringComparison.Ordinal) ||
+               normalized.StartsWith("if you want, i can keep going", StringComparison.Ordinal) ||
+               normalized.StartsWith("если хотите, дальше могу", StringComparison.Ordinal) ||
+               normalized.StartsWith("если продолжим, следующим шагом могу", StringComparison.Ordinal) ||
                normalized.StartsWith("if you need stronger verification", StringComparison.Ordinal) ||
                normalized.StartsWith("retry with narrower scope", StringComparison.Ordinal) ||
                normalized.StartsWith("provide required clarification", StringComparison.Ordinal) ||
@@ -201,7 +205,7 @@ internal static class IntentAwareNextStepPolicy
             return ContextualNextStepRoute.Memory;
         }
 
-        if (!context.IsCritiqueApproved || !string.IsNullOrWhiteSpace(context.CritiqueFeedback))
+        if (!context.IsCritiqueApproved)
         {
             return ContextualNextStepRoute.Repair;
         }

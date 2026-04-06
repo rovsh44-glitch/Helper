@@ -11,9 +11,6 @@ public static class ChatPromptFormatter
     public static string BuildConversationPrompt(IReadOnlyList<ChatMessageDto> history, IReadOnlyList<string>? contextBlocks)
     {
         var prompt = new StringBuilder();
-        prompt.AppendLine("You are Helper. Answer clearly, concisely, and with actionable steps when useful.");
-        prompt.AppendLine();
-
         if (contextBlocks is { Count: > 0 })
         {
             prompt.AppendLine("Additional context:");

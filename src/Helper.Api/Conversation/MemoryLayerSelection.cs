@@ -41,6 +41,11 @@ public sealed record MemoryLayerSelection(
             layers.Add("conversation_profile");
         }
 
+        if (context.Conversation.SharedUnderstanding is not null)
+        {
+            layers.Add("shared_understanding");
+        }
+
         if (context.Intent.Intent is IntentType.Research or IntentType.Generate || context.ExecutionMode == TurnExecutionMode.Deep)
         {
             layers.Add("procedural_lessons");

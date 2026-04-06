@@ -36,6 +36,7 @@ public sealed class SearchIterationPolicy : ISearchIterationPolicy
         if (request.Depth >= 3 ||
             intentProfile.ComparisonSensitive ||
             intentProfile.ContradictionSensitive ||
+            (intentProfile.PaperAnalysisLike && intentProfile.FreshnessSensitive) ||
             (intentProfile.PaperAnalysisLike && queryProfile.OfficialBias) ||
             (intentProfile.BroadPromptLike && queryProfile.OfficialBias) ||
             queryProfile.MedicalEvidenceHeavy)
@@ -44,6 +45,7 @@ public sealed class SearchIterationPolicy : ISearchIterationPolicy
             reasons.Add(
                 request.Depth >= 3 ? "deep_request" :
                 intentProfile.ContradictionSensitive ? "contradiction_sensitive" :
+                (intentProfile.PaperAnalysisLike && intentProfile.FreshnessSensitive) ? "paper_freshness_multibranch" :
                 (intentProfile.PaperAnalysisLike && queryProfile.OfficialBias) ? "paper_multi_branch" :
                 (intentProfile.BroadPromptLike && queryProfile.OfficialBias) ? "broad_multi_branch" :
                 queryProfile.MedicalEvidenceHeavy ? "medical_evidence_query" :
