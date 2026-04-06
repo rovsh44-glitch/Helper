@@ -1,0 +1,4 @@
+<Project>
+  <!-- Legacy placeholder retained only because some sandboxed sessions deny file deletion.
+       Runtime test lane stability is enforced by Directory.Build.props and Directory.Build.rsp. -->
+</Project>

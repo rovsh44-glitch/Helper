@@ -8,8 +8,7 @@
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
 
-  <Import Project="Helper.Runtime.Tests.RuntimeLane.props" />
-  <Import Project="Helper.Runtime.Tests.ApiLane.props" />
+  <Import Project="..\Helper.Runtime.Tests\Helper.Runtime.Tests.ApiLane.props" />
 
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.2" />
@@ -24,19 +23,25 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="**\*.cs" Exclude="$(RuntimeLaneExcludedCompile)" />
-    <Compile Remove="@(RuntimeApiLaneCompile)" />
-    <Content Include="Fixtures\**\*.*">
+    <ProjectReference Include="..\Helper.Testing\Helper.Testing.csproj" />
+    <ProjectReference Include="..\Helper.Testing.Evals\Helper.Testing.Evals.csproj" />
+    <ProjectReference Include="..\..\src\Helper.Runtime\Helper.Runtime.csproj" />
+    <ProjectReference Include="..\..\src\Helper.Runtime.Knowledge\Helper.Runtime.Knowledge.csproj" />
+    <ProjectReference Include="..\..\src\Helper.Runtime.Evolution\Helper.Runtime.Evolution.csproj" />
+    <ProjectReference Include="..\..\src\Helper.Api\Helper.Api.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Helper.Runtime.Tests\TestCollectionConfig.cs" Link="TestCollectionConfig.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\TestInfrastructure\ProcessEnvironmentCollection.cs" Link="TestInfrastructure\ProcessEnvironmentCollection.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\TestWorkspaceRoot.cs" Link="TestWorkspaceRoot.cs" />
+    <Compile Include="@(RuntimeApiLaneCompile)" Link="%(Link)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\Helper.Runtime.Tests\Fixtures\**\*.*" Link="Fixtures\%(RecursiveDir)%(Filename)%(Extension)">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Helper.Testing\Helper.Testing.csproj" />
-    <ProjectReference Include="..\..\src\Helper.Runtime\Helper.Runtime.csproj" />
-    <ProjectReference Include="..\..\src\Helper.Runtime.Knowledge\Helper.Runtime.Knowledge.csproj" />
-    <ProjectReference Include="..\..\src\Helper.Runtime.Evolution\Helper.Runtime.Evolution.csproj" />
-  </ItemGroup>
-
 </Project>
-

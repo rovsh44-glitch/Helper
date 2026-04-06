@@ -217,7 +217,7 @@ internal static class HttpFetchSupport
         return lastSegment.Length >= 10;
     }
 
-    public static async Task<byte[]?> ReadBytesWithinBudgetAsync(HttpContent content, int maxBytes, CancellationToken ct)
+    public static async Task<BudgetedContentReadResult> ReadBytesWithinBudgetAsync(HttpContent content, int maxBytes, CancellationToken ct)
     {
         await using var stream = await content.ReadAsStreamAsync(ct).ConfigureAwait(false);
         using var buffer = new MemoryStream();
@@ -242,12 +242,14 @@ internal static class HttpFetchSupport
             var overflowRead = await stream.ReadAsync(sentinel.AsMemory(), ct).ConfigureAwait(false);
             if (overflowRead > 0)
             {
-                return null;
+                return new BudgetedContentReadResult(buffer.ToArray(), Truncated: true);
             }
         }
 
-        return buffer.ToArray();
+        return new BudgetedContentReadResult(buffer.ToArray(), Truncated: false);
     }
+
+    public readonly record struct BudgetedContentReadResult(byte[] Bytes, bool Truncated);
 
     private static bool ReadBooleanEnvironmentVariable(string name, bool defaultValue)
     {

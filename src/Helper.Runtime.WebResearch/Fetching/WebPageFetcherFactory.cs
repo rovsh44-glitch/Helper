@@ -19,7 +19,8 @@ public static class WebPageFetcherFactory
         HttpMessageHandler? handler = null,
         HttpMessageHandler? tlsCompatibilityHandler = null,
         HttpMessageHandler? proxyAwareHandler = null,
-        HttpMessageHandler? proxyTlsCompatibilityHandler = null)
+        HttpMessageHandler? proxyTlsCompatibilityHandler = null,
+        int? maxResponseBytes = null)
     {
         return new WebPageFetcher(
             securityPolicy,
@@ -34,7 +35,8 @@ public static class WebPageFetcherFactory
             handler,
             tlsCompatibilityHandler,
             proxyAwareHandler,
-            proxyTlsCompatibilityHandler);
+            proxyTlsCompatibilityHandler,
+            maxResponseBytes);
     }
 }
 

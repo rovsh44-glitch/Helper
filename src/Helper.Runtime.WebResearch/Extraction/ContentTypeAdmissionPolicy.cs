@@ -34,6 +34,15 @@ public sealed class ContentTypeAdmissionPolicy : IContentTypeAdmissionPolicy
         var normalizedContentType = NormalizeMediaType(contentType);
         if (contentLength is > 0 && contentLength > _maxResponseBytes)
         {
+            if (AllowsPartialRead(normalizedContentType))
+            {
+                return Allow(
+                    "content_length_over_budget_partial_read",
+                    requestUri,
+                    normalizedContentType,
+                    contentLength);
+            }
+
             return Block(
                 "content_length_exceeded",
                 requestUri,
@@ -64,6 +73,11 @@ public sealed class ContentTypeAdmissionPolicy : IContentTypeAdmissionPolicy
             requestUri,
             normalizedContentType,
             contentLength is > 0 ? $"web_page_fetch.content_length={contentLength}" : null);
+    }
+
+    private static bool AllowsPartialRead(string? normalizedContentType)
+    {
+        return normalizedContentType is null or "text/html" or "application/xhtml+xml" or "text/plain";
     }
 
     private ContentTypeAdmissionDecision Allow(string reason, Uri requestUri, string? contentType, long? contentLength)

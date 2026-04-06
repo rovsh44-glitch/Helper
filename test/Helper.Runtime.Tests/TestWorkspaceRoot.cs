@@ -24,6 +24,11 @@ internal static class TestWorkspaceRoot
             : Path.Combine(workspaceRoot, Path.Combine(segments));
     }
 
+    public static string ReadAllText(params string[] segments)
+    {
+        return File.ReadAllText(ResolveFile(segments));
+    }
+
     public static string ResolveRoot()
     {
         foreach (var root in EnumerateRoots())

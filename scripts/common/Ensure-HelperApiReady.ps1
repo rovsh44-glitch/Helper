@@ -108,6 +108,85 @@ function Get-ReadinessProbe {
     }
 }
 
+function Get-HelperMsbuildStateRoot {
+    if (-not [string]::IsNullOrWhiteSpace($env:HELPER_MSBUILD_INTERMEDIATE_ROOT)) {
+        return [System.IO.Path]::GetFullPath((Join-Path $env:HELPER_MSBUILD_INTERMEDIATE_ROOT "repo"))
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($env:CODEX_THREAD_ID) -or $env:CODEX_SANDBOX_NETWORK_DISABLED -eq "1") {
+        return [System.IO.Path]::GetFullPath((Join-Path $env:USERPROFILE ".codex\memories\msbuild-intermediate\repo"))
+    }
+
+    return ""
+}
+
+function Resolve-LocalHelperApiLaunchSpec {
+    param(
+        [Parameter(Mandatory = $true)][string]$HelperRoot,
+        [switch]$SkipBuild
+    )
+
+    $dotnet = Get-Command dotnet -ErrorAction Stop
+    if (-not $SkipBuild.IsPresent) {
+        return [PSCustomObject]@{
+            FilePath = $dotnet.Source
+            Arguments = @("run", "--project", "src/Helper.Api", "--no-launch-profile")
+            Description = "dotnet run --project src/Helper.Api --no-launch-profile"
+        }
+    }
+
+    $stateRoot = Get-HelperMsbuildStateRoot
+    $candidateDlls = New-Object System.Collections.Generic.List[string]
+    if (-not [string]::IsNullOrWhiteSpace($stateRoot)) {
+        $candidateDlls.Add((Join-Path $stateRoot "bin\src\Helper.Api\Debug\net8.0\Helper.Api.dll"))
+    }
+
+    $candidateDlls.Add((Join-Path $HelperRoot "src\Helper.Api\bin\Debug\net8.0\Helper.Api.dll"))
+
+    foreach ($candidateDll in $candidateDlls) {
+        if (Test-Path -LiteralPath $candidateDll) {
+            return [PSCustomObject]@{
+                FilePath = $dotnet.Source
+                Arguments = @($candidateDll)
+                Description = ("dotnet {0}" -f $candidateDll)
+            }
+        }
+    }
+
+    $candidateList = ($candidateDlls | ForEach-Object { " - $_" }) -join [Environment]::NewLine
+    throw "Unable to locate a built Helper.Api.dll for --no-build launch. Checked:$([Environment]::NewLine)$candidateList"
+}
+
+function Get-LaunchLogTail {
+    param(
+        [Parameter(Mandatory = $true)][string]$Path,
+        [int]$TailLines = 30
+    )
+
+    if (-not (Test-Path -LiteralPath $Path)) {
+        return ""
+    }
+
+    $lines = Get-Content -LiteralPath $Path -Tail $TailLines -ErrorAction SilentlyContinue
+    if ($null -eq $lines) {
+        return ""
+    }
+
+    return ($lines -join [Environment]::NewLine)
+}
+
+function Test-LaunchProcessRunning {
+    param(
+        [Parameter(Mandatory = $true)]$Launch
+    )
+
+    if ($null -eq $Launch -or $null -eq $Launch.ProcessId) {
+        return $false
+    }
+
+    return $null -ne (Get-Process -Id $Launch.ProcessId -ErrorAction SilentlyContinue)
+}
+
 function Start-LocalHelperApi {
     param(
         [Parameter(Mandatory = $true)][string]$ApiBaseUrl,
@@ -130,11 +209,6 @@ function Start-LocalHelperApi {
 
     New-Item -ItemType Directory -Force -Path $runtimeLogsRoot | Out-Null
 
-    $pwsh = Get-Command pwsh -ErrorAction SilentlyContinue
-    if ($null -eq $pwsh) {
-        $pwsh = Get-Command powershell -ErrorAction Stop
-    }
-
     $envFile = Join-Path $HelperRoot ".env.local"
     Import-HelperEnvFile -Path $envFile
     $resolvedApiKey = $env:HELPER_API_KEY
@@ -155,41 +229,28 @@ function Start-LocalHelperApi {
         $apiPort = 0
     }
 
-    $escapedRoot = $HelperRoot.Replace("'", "''")
-    $escapedApiBase = $ApiBaseUrl.Replace("'", "''")
-    $escapedApiKey = if ([string]::IsNullOrWhiteSpace($resolvedApiKey)) { "" } else { $resolvedApiKey.Replace("'", "''") }
-    $escapedSessionSigningKey = if ([string]::IsNullOrWhiteSpace($resolvedSessionSigningKey)) { "" } else { $resolvedSessionSigningKey.Replace("'", "''") }
-    $escapedRuntimeLogsRoot = $runtimeLogsRoot.Replace("'", "''")
-    $escapedRuntimeAuthKeysPath = $runtimeAuthKeysPath.Replace("'", "''")
-    $dotnetArgs = "run --project src/Helper.Api"
-    if ($SkipBuild.IsPresent) {
-        $dotnetArgs += " --no-build"
-    }
+    $launchSpec = Resolve-LocalHelperApiLaunchSpec -HelperRoot $HelperRoot -SkipBuild:$SkipBuild.IsPresent
 
-    $commandParts = New-Object System.Collections.Generic.List[string]
-    $commandParts.Add("`$env:ASPNETCORE_URLS = '$escapedApiBase'")
+    $env:ASPNETCORE_URLS = $ApiBaseUrl
     if ($apiPort -gt 0) {
-        $commandParts.Add("`$env:HELPER_API_PORT = '$apiPort'")
+        $env:HELPER_API_PORT = [string]$apiPort
     }
-    $commandParts.Add("`$env:HELPER_LOGS_ROOT = '$escapedRuntimeLogsRoot'")
-    $commandParts.Add("`$env:HELPER_AUTH_KEYS_PATH = '$escapedRuntimeAuthKeysPath'")
+    $env:HELPER_LOGS_ROOT = $runtimeLogsRoot
+    $env:HELPER_AUTH_KEYS_PATH = $runtimeAuthKeysPath
     if ($StrictAuditMode.IsPresent) {
-        $commandParts.Add("`$env:HELPER_POST_TURN_AUDIT_STRICT = 'true'")
-        $commandParts.Add("`$env:HELPER_POST_TURN_AUDIT_MAX_OUTSTANDING = '$([Math]::Max(1, $StrictAuditMaxOutstanding))'")
+        $env:HELPER_POST_TURN_AUDIT_STRICT = "true"
+        $env:HELPER_POST_TURN_AUDIT_MAX_OUTSTANDING = [string][Math]::Max(1, $StrictAuditMaxOutstanding)
     }
-    if (-not [string]::IsNullOrWhiteSpace($escapedApiKey)) {
-        $commandParts.Add("`$env:HELPER_API_KEY = '$escapedApiKey'")
+    if (-not [string]::IsNullOrWhiteSpace($resolvedApiKey)) {
+        $env:HELPER_API_KEY = $resolvedApiKey
     }
-    if (-not [string]::IsNullOrWhiteSpace($escapedSessionSigningKey)) {
-        $commandParts.Add("`$env:HELPER_SESSION_SIGNING_KEY = '$escapedSessionSigningKey'")
+    if (-not [string]::IsNullOrWhiteSpace($resolvedSessionSigningKey)) {
+        $env:HELPER_SESSION_SIGNING_KEY = $resolvedSessionSigningKey
     }
-    $commandParts.Add("Set-Location '$escapedRoot'")
-    $commandParts.Add("dotnet $dotnetArgs")
-    $command = $commandParts -join "; "
 
     $process = Start-Process `
-        -FilePath $pwsh.Source `
-        -ArgumentList @("-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", $command) `
+        -FilePath $launchSpec.FilePath `
+        -ArgumentList $launchSpec.Arguments `
         -WorkingDirectory $HelperRoot `
         -RedirectStandardOutput $stdoutPath `
         -RedirectStandardError $stderrPath `
@@ -208,6 +269,7 @@ function Start-LocalHelperApi {
 
     return [PSCustomObject]@{
         ProcessId = $process.Id
+        Description = $launchSpec.Description
         StdoutPath = $stdoutPath
         StderrPath = $stderrPath
         PidPath = $pidPath
@@ -359,6 +421,58 @@ while ([DateTimeOffset]::UtcNow -lt $deadline) {
             -StrictAuditMaxOutstanding $StrictAuditMaxOutstandingTurns
         $launchReason = "local_api_started_after_unreachable_probe"
         $alerts.Add("API was unreachable; started local Helper.Api process.")
+    }
+
+    if (($null -ne $launch) -and -not (Test-LaunchProcessRunning -Launch $launch)) {
+        $stdoutTail = Get-LaunchLogTail -Path $launch.StdoutPath
+        $stderrTail = Get-LaunchLogTail -Path $launch.StderrPath
+        $launchFailureMessage = "Local Helper.Api process exited before readiness."
+        if (-not [string]::IsNullOrWhiteSpace($launch.Description)) {
+            $launchFailureMessage += " Launch: $($launch.Description)"
+        }
+        if (-not [string]::IsNullOrWhiteSpace($stderrTail)) {
+            $launchFailureMessage += " STDERR: $stderrTail"
+        }
+        elseif (-not [string]::IsNullOrWhiteSpace($stdoutTail)) {
+            $launchFailureMessage += " STDOUT: $stdoutTail"
+        }
+
+        $failureResult = [PSCustomObject]@{
+            ApiBase = $normalizedApiBase
+            Result = "FAIL"
+            Category = "local_process_exited_before_readiness"
+            Endpoint = $probe.Endpoint
+            ReadyForChat = $false
+            Status = $probe.Status
+            Phase = $probe.Phase
+            ElapsedSec = [math]::Round(([DateTimeOffset]::UtcNow - $startedAt).TotalSeconds, 2)
+            Attempts = $attempts
+            LaunchReason = $launchReason
+            ProcessId = $launch.ProcessId
+            RuntimeRoot = $launch.RuntimeRoot
+            LogsRoot = $launch.LogsRoot
+            AuditTracePath = $launch.AuditTracePath
+            RuntimeMetadataPath = $launch.RuntimeMetadataPath
+            StdoutPath = $launch.StdoutPath
+            StderrPath = $launch.StderrPath
+            Alerts = @($alerts + $launchFailureMessage) | Select-Object -Unique
+        }
+
+        Write-HelperRuntimeMetadata -Path $failureResult.RuntimeMetadataPath -Payload (New-HelperRuntimeMetadataPayload `
+            -ApiBase $normalizedApiBase `
+            -RuntimeRoot $failureResult.RuntimeRoot `
+            -LogsRoot $failureResult.LogsRoot `
+            -AuditTracePath $failureResult.AuditTracePath `
+            -ApiPid $failureResult.ProcessId `
+            -LauncherMode "local_process_started" `
+            -Status "failed" `
+            -Source "Ensure-HelperApiReady")
+
+        if (-not [string]::IsNullOrWhiteSpace($ReportPath)) {
+            Write-ApiReadyReport -Path $ReportPath -Result $failureResult
+        }
+
+        throw "[HelperApiReady] local_process_exited_before_readiness: $launchFailureMessage"
     }
 
     Start-Sleep -Milliseconds ([Math]::Max(250, $PollIntervalMs))

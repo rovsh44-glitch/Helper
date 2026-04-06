@@ -3,9 +3,22 @@
     <HelperProjectRelativeDirectory Condition="'$(HelperProjectRelativeDirectory)' == ''">$([System.String]::Copy('$(MSBuildProjectDirectory)').Replace('$(MSBuildThisFileDirectory)', ''))</HelperProjectRelativeDirectory>
     <HelperMsbuildStateRoot Condition="'$(HelperMsbuildStateRoot)' == '' and '$(HELPER_MSBUILD_INTERMEDIATE_ROOT)' != ''">$(HELPER_MSBUILD_INTERMEDIATE_ROOT)\repo\</HelperMsbuildStateRoot>
     <HelperMsbuildStateRoot Condition="'$(HelperMsbuildStateRoot)' == '' and ('$(CODEX_THREAD_ID)' != '' or '$(CODEX_SANDBOX_NETWORK_DISABLED)' == '1')">$(USERPROFILE)\.codex\memories\msbuild-intermediate\repo\</HelperMsbuildStateRoot>
+    <BaseOutputPath Condition="'$(HelperMsbuildStateRoot)' != '' and '$(BaseOutputPath)' == ''">$(HelperMsbuildStateRoot)bin\$(HelperProjectRelativeDirectory)\</BaseOutputPath>
     <BaseIntermediateOutputPath Condition="'$(HelperMsbuildStateRoot)' != '' and '$(BaseIntermediateOutputPath)' == ''">$(HelperMsbuildStateRoot)obj\$(HelperProjectRelativeDirectory)\</BaseIntermediateOutputPath>
     <MSBuildProjectExtensionsPath Condition="'$(HelperMsbuildStateRoot)' != '' and '$(MSBuildProjectExtensionsPath)' == ''">$(BaseIntermediateOutputPath)</MSBuildProjectExtensionsPath>
     <DefaultItemExcludesInProjectFolder Condition="'$(HelperMsbuildStateRoot)' != ''">$(DefaultItemExcludesInProjectFolder);obj/**;bin/**</DefaultItemExcludesInProjectFolder>
     <NuGetAudit Condition="'$(HelperMsbuildStateRoot)' != '' and '$(NuGetAudit)' == ''">false</NuGetAudit>
+  </PropertyGroup>
+
+  <!-- Keep the runtime test graph single-threaded inside project evaluation.
+       The outer dotnet CLI orchestration is stabilized via Directory.Build.rsp. -->
+  <PropertyGroup Condition="
+    '$(MSBuildProjectName)' == 'Helper.Runtime.Tests' or
+    '$(MSBuildProjectName)' == 'Helper.Runtime.Api.Tests' or
+    '$(MSBuildProjectName)' == 'Helper.Runtime.Browser.Tests' or
+    '$(MSBuildProjectName)' == 'Helper.Runtime.Integration.Tests' or
+    '$(MSBuildProjectName)' == 'Helper.Runtime.Certification.Tests' or
+    '$(MSBuildProjectName)' == 'Helper.Runtime.Certification.Compile.Tests'">
+    <BuildInParallel>false</BuildInParallel>
   </PropertyGroup>
 </Project>
