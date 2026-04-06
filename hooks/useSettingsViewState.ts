@@ -9,21 +9,27 @@ import {
   WARMTH_KEY,
 } from '../services/conversationSession';
 import {
+  cancelConversationBackgroundTask,
   deleteConversationMemoryEntry,
   getConversationMemorySnapshot,
   getConversationSnapshot,
+  setConversationProactiveTopicEnabled,
   setConversationPreferences,
 } from '../services/conversationApi';
 import { useCapabilityCatalog } from './useCapabilityCatalog';
 import { useControlPlaneTelemetry } from './useControlPlaneTelemetry';
 import { useHumanLikeConversationDashboard } from './useHumanLikeConversationDashboard';
 import { buildRouteTelemetryOverview } from '../services/runtimeTelemetry';
+import { navigateToTab } from '../services/appShellRoute';
 import { buildConversationStylePreview } from '../utils/conversationStylePreview';
 import { readActiveConversationId, readStoredPreference, writeStoredPreference } from '../services/settingsPreferenceStorage';
+import type { SettingsAlertItem } from '../components/settings/SettingsAlertsPanel';
+import type { ContinuityBackgroundTask, ContinuityLiveVoiceSession, ContinuityProactiveTopic } from '../services/settingsContinuityContracts';
 
 type ConversationPreferenceOverride = Partial<Parameters<typeof setConversationPreferences>[1]>;
 
 export function useSettingsViewState() {
+  const [actionStatus, setActionStatus] = useState<string | null>(null);
   const [responseStyle, setResponseStyle] = useState(() => readStoredPreference(RESPONSE_STYLE_KEY, 'balanced'));
   const [memoryEnabled, setMemoryEnabled] = useState(true);
   const [personalConsent, setPersonalConsent] = useState(false);
@@ -32,6 +38,23 @@ export function useSettingsViewState() {
   const [enthusiasm, setEnthusiasm] = useState(() => readStoredPreference(ENTHUSIASM_KEY, 'balanced'));
   const [directness, setDirectness] = useState(() => readStoredPreference(DIRECTNESS_KEY, 'balanced'));
   const [defaultAnswerShape, setDefaultAnswerShape] = useState(() => readStoredPreference(DEFAULT_ANSWER_SHAPE_KEY, 'auto'));
+  const [decisionAssertiveness, setDecisionAssertiveness] = useState('balanced');
+  const [clarificationTolerance, setClarificationTolerance] = useState('balanced');
+  const [citationPreference, setCitationPreference] = useState('adaptive');
+  const [repairStyle, setRepairStyle] = useState('direct_fix');
+  const [reasoningStyle, setReasoningStyle] = useState('concise');
+  const [reasoningEffort, setReasoningEffort] = useState('balanced');
+  const [personaBundleId, setPersonaBundleId] = useState('');
+  const [projectId, setProjectId] = useState('');
+  const [projectLabel, setProjectLabel] = useState('');
+  const [projectInstructions, setProjectInstructions] = useState('');
+  const [projectMemoryEnabled, setProjectMemoryEnabled] = useState(true);
+  const [backgroundResearchEnabled, setBackgroundResearchEnabled] = useState(true);
+  const [proactiveUpdatesEnabled, setProactiveUpdatesEnabled] = useState(false);
+  const [projectReferenceArtifacts, setProjectReferenceArtifacts] = useState<string[]>([]);
+  const [backgroundTasks, setBackgroundTasks] = useState<ContinuityBackgroundTask[]>([]);
+  const [proactiveTopics, setProactiveTopics] = useState<ContinuityProactiveTopic[]>([]);
+  const [liveVoiceSession, setLiveVoiceSession] = useState<ContinuityLiveVoiceSession | null>(null);
   const [sessionTtlMinutes, setSessionTtlMinutes] = useState(720);
   const [taskTtlHours, setTaskTtlHours] = useState(336);
   const [longTermTtlDays, setLongTermTtlDays] = useState(180);
@@ -68,6 +91,15 @@ export function useSettingsViewState() {
     directness,
     defaultAnswerShape,
   }), [defaultAnswerShape, directness, enthusiasm, preferredLanguage, responseStyle, warmth]);
+
+  useEffect(() => {
+    if (!actionStatus) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => setActionStatus(null), 2500);
+    return () => window.clearTimeout(timeoutId);
+  }, [actionStatus]);
 
   const reloadMemory = async () => {
     if (!conversationId) {
@@ -140,6 +172,49 @@ export function useSettingsViewState() {
           setDefaultAnswerShape(data.preferences.defaultAnswerShape);
           writeStoredPreference(DEFAULT_ANSWER_SHAPE_KEY, data.preferences.defaultAnswerShape);
         }
+        if (data.preferences.decisionAssertiveness) {
+          setDecisionAssertiveness(data.preferences.decisionAssertiveness);
+        }
+        if (data.preferences.clarificationTolerance) {
+          setClarificationTolerance(data.preferences.clarificationTolerance);
+        }
+        if (data.preferences.citationPreference) {
+          setCitationPreference(data.preferences.citationPreference);
+        }
+        if (data.preferences.repairStyle) {
+          setRepairStyle(data.preferences.repairStyle);
+        }
+        if (data.preferences.reasoningStyle) {
+          setReasoningStyle(data.preferences.reasoningStyle);
+        }
+        if (data.preferences.reasoningEffort) {
+          setReasoningEffort(data.preferences.reasoningEffort);
+        }
+        if (typeof data.preferences.personaBundleId === 'string') {
+          setPersonaBundleId(data.preferences.personaBundleId);
+        }
+        if (typeof data.preferences.projectId === 'string') {
+          setProjectId(data.preferences.projectId);
+        }
+        if (typeof data.preferences.projectLabel === 'string') {
+          setProjectLabel(data.preferences.projectLabel);
+        }
+        if (typeof data.preferences.projectInstructions === 'string') {
+          setProjectInstructions(data.preferences.projectInstructions);
+        }
+        if (typeof data.preferences.projectMemoryEnabled === 'boolean') {
+          setProjectMemoryEnabled(data.preferences.projectMemoryEnabled);
+        }
+        if (typeof data.preferences.backgroundResearchEnabled === 'boolean') {
+          setBackgroundResearchEnabled(data.preferences.backgroundResearchEnabled);
+        }
+        if (typeof data.preferences.proactiveUpdatesEnabled === 'boolean') {
+          setProactiveUpdatesEnabled(data.preferences.proactiveUpdatesEnabled);
+        }
+        setProjectReferenceArtifacts(data.projectContext?.referenceArtifacts ?? []);
+        setBackgroundTasks(data.backgroundTasks ?? []);
+        setProactiveTopics(data.proactiveTopics ?? []);
+        setLiveVoiceSession(data.liveVoiceSession ?? null);
         if (data.preferences.sessionMemoryTtlMinutes) {
           setSessionTtlMinutes(data.preferences.sessionMemoryTtlMinutes);
         }
@@ -186,6 +261,19 @@ export function useSettingsViewState() {
         enthusiasm: override?.enthusiasm ?? enthusiasm,
         directness: override?.directness ?? directness,
         defaultAnswerShape: override?.defaultAnswerShape ?? defaultAnswerShape,
+        decisionAssertiveness: override?.decisionAssertiveness ?? decisionAssertiveness,
+        clarificationTolerance: override?.clarificationTolerance ?? clarificationTolerance,
+        citationPreference: override?.citationPreference ?? citationPreference,
+        repairStyle: override?.repairStyle ?? repairStyle,
+        reasoningStyle: override?.reasoningStyle ?? reasoningStyle,
+        reasoningEffort: override?.reasoningEffort ?? reasoningEffort,
+        personaBundleId: override?.personaBundleId ?? (personaBundleId.trim() || undefined),
+        projectId: override?.projectId ?? (projectId.trim() || undefined),
+        projectLabel: override?.projectLabel ?? (projectLabel.trim() || undefined),
+        projectInstructions: override?.projectInstructions ?? (projectInstructions.trim() || undefined),
+        projectMemoryEnabled: override?.projectMemoryEnabled ?? projectMemoryEnabled,
+        backgroundResearchEnabled: override?.backgroundResearchEnabled ?? backgroundResearchEnabled,
+        proactiveUpdatesEnabled: override?.proactiveUpdatesEnabled ?? proactiveUpdatesEnabled,
         personalMemoryConsentGranted: override?.personalMemoryConsentGranted ?? personalConsent,
         sessionMemoryTtlMinutes: override?.sessionMemoryTtlMinutes ?? sessionTtlMinutes,
         taskMemoryTtlHours: override?.taskMemoryTtlHours ?? taskTtlHours,
@@ -238,6 +326,57 @@ export function useSettingsViewState() {
     void savePreferences({ defaultAnswerShape: value });
   };
 
+  const saveDecisionAssertiveness = (value: string) => {
+    setDecisionAssertiveness(value);
+    void savePreferences({ decisionAssertiveness: value });
+  };
+
+  const saveClarificationTolerance = (value: string) => {
+    setClarificationTolerance(value);
+    void savePreferences({ clarificationTolerance: value });
+  };
+
+  const saveCitationPreference = (value: string) => {
+    setCitationPreference(value);
+    void savePreferences({ citationPreference: value });
+  };
+
+  const saveRepairStyle = (value: string) => {
+    setRepairStyle(value);
+    void savePreferences({ repairStyle: value });
+  };
+
+  const saveReasoningStyle = (value: string) => {
+    setReasoningStyle(value);
+    void savePreferences({ reasoningStyle: value });
+  };
+
+  const saveReasoningEffort = (value: string) => {
+    setReasoningEffort(value);
+    void savePreferences({ reasoningEffort: value });
+  };
+
+  const savePersonaBundleId = (value: string) => {
+    setPersonaBundleId(value);
+    void savePreferences({ personaBundleId: value.trim() || undefined });
+  };
+
+  const saveProjectContext = (override?: ConversationPreferenceOverride) => {
+    void savePreferences({
+      projectId: override?.projectId ?? (projectId.trim() || undefined),
+      projectLabel: override?.projectLabel ?? (projectLabel.trim() || undefined),
+      projectInstructions: override?.projectInstructions ?? (projectInstructions.trim() || undefined),
+      projectMemoryEnabled: override?.projectMemoryEnabled ?? projectMemoryEnabled,
+    });
+  };
+
+  const saveContinuityControls = (override?: ConversationPreferenceOverride) => {
+    void savePreferences({
+      backgroundResearchEnabled: override?.backgroundResearchEnabled ?? backgroundResearchEnabled,
+      proactiveUpdatesEnabled: override?.proactiveUpdatesEnabled ?? proactiveUpdatesEnabled,
+    });
+  };
+
   const deleteMemoryItem = async (memoryId: string) => {
     if (!conversationId) {
       setMemoryError('Start a conversation before deleting memory items.');
@@ -258,6 +397,38 @@ export function useSettingsViewState() {
     }
   };
 
+  const cancelBackgroundTask = async (taskId: string) => {
+    if (!conversationId) {
+      setActionStatus('Start a conversation before canceling background work.');
+      return;
+    }
+
+    try {
+      await cancelConversationBackgroundTask(conversationId, taskId, 'Canceled from settings project context.');
+      const snapshot = await getConversationSnapshot(conversationId);
+      setBackgroundTasks(snapshot.backgroundTasks ?? []);
+      setActionStatus('Background task canceled.');
+    } catch (error) {
+      setActionStatus(mapSettingsApiError(error));
+    }
+  };
+
+  const setProactiveTopicEnabled = async (topicId: string, enabled: boolean) => {
+    if (!conversationId) {
+      setActionStatus('Start a conversation before editing proactive topics.');
+      return;
+    }
+
+    try {
+      await setConversationProactiveTopicEnabled(conversationId, topicId, enabled);
+      const snapshot = await getConversationSnapshot(conversationId);
+      setProactiveTopics(snapshot.proactiveTopics ?? []);
+      setActionStatus(enabled ? 'Proactive topic enabled.' : 'Proactive topic disabled.');
+    } catch (error) {
+      setActionStatus(mapSettingsApiError(error));
+    }
+  };
+
   const infrastructureCards = useMemo(() => {
     if (!controlPlane) {
       return [
@@ -273,7 +444,7 @@ export function useSettingsViewState() {
       {
         label: 'Active model',
         value: controlPlane.modelGateway.currentModel || 'Not reported',
-        note: `${controlPlane.modelGateway.availableModels.length} model(s) visible to the gateway`,
+        note: `${controlPlane.modelGateway.availableModels.length} model(s) visible to the gateway${controlPlane.modelGateway.activeProfileId ? ` · profile ${controlPlane.modelGateway.activeProfileId}` : ''}`,
       },
       {
         label: 'Readiness',
@@ -307,7 +478,226 @@ export function useSettingsViewState() {
     ];
   }, [controlPlane, routeTelemetry, runtimeError]);
 
+  const navigateToRuntimeConsole = () => {
+    navigateToTab('runtime');
+  };
+
+  const navigateToHelperCore = () => {
+    navigateToTab('orchestrator');
+  };
+
+  const focusSettingsSection = (sectionId: string) => {
+    const target = document.getElementById(sectionId);
+    if (!target) {
+      setActionStatus(`Section ${sectionId} is unavailable.`);
+      return;
+    }
+
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    window.history.replaceState({}, '', `${window.location.pathname}${window.location.search}#${sectionId}`);
+    setActionStatus(`Focused ${sectionId.replace('settings-', '').replace(/-/g, ' ')}.`);
+  };
+
+  const governanceSnapshot = useMemo(() => ({
+    exportedAtUtc: new Date().toISOString(),
+    conversationId,
+    runtimeStatus: status,
+    routeTelemetry,
+    controlPlaneReadiness: controlPlane?.readiness ?? null,
+    capabilityCatalog,
+    conversationQualityDashboard,
+    memoryStatus,
+    memoryPolicy: {
+      memoryEnabled,
+      personalConsent,
+      sessionTtlMinutes,
+      taskTtlHours,
+      longTermTtlDays,
+    },
+    personalization: {
+      decisionAssertiveness,
+      clarificationTolerance,
+      citationPreference,
+      repairStyle,
+      reasoningStyle,
+      reasoningEffort,
+      personaBundleId: personaBundleId.trim() || null,
+    },
+    projectContext: {
+      projectId: projectId.trim() || null,
+      projectLabel: projectLabel.trim() || null,
+      projectInstructions: projectInstructions.trim() || null,
+      projectMemoryEnabled,
+      referenceArtifacts: projectReferenceArtifacts,
+    },
+    continuity: {
+      backgroundResearchEnabled,
+      proactiveUpdatesEnabled,
+      backgroundTasks,
+      proactiveTopics,
+      liveVoiceSession,
+    },
+    memoryItems: memoryItems.slice(0, 20).map(item => ({
+      id: item.id,
+      type: item.type,
+      scope: item.scope,
+      retention: item.retention,
+      whyRemembered: item.whyRemembered,
+      priority: item.priority,
+      isPersonal: item.isPersonal,
+      createdAt: item.createdAt,
+      expiresAt: item.expiresAt,
+      content: item.content,
+      sourceProjectId: item.sourceProjectId,
+    })),
+  }), [
+    capabilityCatalog,
+    citationPreference,
+    controlPlane?.readiness,
+    conversationId,
+    conversationQualityDashboard,
+    decisionAssertiveness,
+    clarificationTolerance,
+    longTermTtlDays,
+    memoryEnabled,
+    memoryItems,
+    memoryStatus,
+    personalConsent,
+    personaBundleId,
+    projectId,
+    projectInstructions,
+    projectLabel,
+    projectMemoryEnabled,
+    projectReferenceArtifacts,
+    backgroundResearchEnabled,
+    proactiveUpdatesEnabled,
+    backgroundTasks,
+    proactiveTopics,
+    liveVoiceSession,
+    reasoningEffort,
+    reasoningStyle,
+    repairStyle,
+    routeTelemetry,
+    sessionTtlMinutes,
+    status,
+    taskTtlHours,
+  ]);
+
+  const copyGovernanceSnapshot = async () => {
+    try {
+      if (!navigator.clipboard?.writeText) {
+        throw new Error('Clipboard API unavailable');
+      }
+
+      await navigator.clipboard.writeText(JSON.stringify(governanceSnapshot, null, 2));
+      setActionStatus('Governance snapshot copied.');
+    } catch {
+      setActionStatus('Governance snapshot copy failed.');
+    }
+  };
+
+  const exportGovernanceSnapshot = () => {
+    try {
+      const payload = JSON.stringify(governanceSnapshot, null, 2);
+      const blob = new Blob([payload], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `helper-settings-governance-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+      setActionStatus('Governance snapshot exported.');
+    } catch {
+      setActionStatus('Governance snapshot export failed.');
+    }
+  };
+
+  const settingsAlerts = useMemo<SettingsAlertItem[]>(() => {
+    const items: SettingsAlertItem[] = [];
+
+    if (runtimeError) {
+      items.push({
+        id: 'runtime-error',
+        title: 'Runtime',
+        message: runtimeError,
+        tone: 'critical',
+        actionLabel: 'Open Runtime',
+        onAction: navigateToRuntimeConsole,
+      });
+    }
+
+    if (capabilityError) {
+      items.push({
+        id: 'capability-error',
+        title: 'Capability Coverage',
+        message: capabilityError,
+        tone: 'warning',
+        actionLabel: 'Open Coverage',
+        onAction: () => focusSettingsSection('settings-capability-coverage'),
+      });
+    }
+
+    if (conversationQualityError) {
+      items.push({
+        id: 'conversation-quality-error',
+        title: 'Conversation Quality',
+        message: conversationQualityError,
+        tone: 'warning',
+        actionLabel: 'Open Quality',
+        onAction: () => focusSettingsSection('settings-conversation-quality'),
+      });
+    }
+
+    if (memoryError) {
+      items.push({
+        id: 'memory-error',
+        title: 'Conversation Memory',
+        message: memoryError,
+        tone: 'critical',
+        actionLabel: 'Open Memory',
+        onAction: () => focusSettingsSection('settings-memory-policy'),
+      });
+    }
+
+    routeTelemetry.alerts.slice(0, 2).forEach((alert, index) => {
+      items.push({
+        id: `telemetry-alert-${index}`,
+        title: 'Route Telemetry',
+        message: alert,
+        tone: 'info',
+        actionLabel: 'Open Infrastructure',
+        onAction: () => focusSettingsSection('settings-infrastructure'),
+      });
+    });
+
+    conversationQualityDashboard?.alerts.slice(0, 2).forEach((alert, index) => {
+      items.push({
+        id: `quality-alert-${index}`,
+        title: 'Conversation Quality Alert',
+        message: alert,
+        tone: 'info',
+        actionLabel: 'Open Quality',
+        onAction: () => focusSettingsSection('settings-conversation-quality'),
+      });
+    });
+
+    return items;
+  }, [
+    capabilityError,
+    conversationQualityDashboard?.alerts,
+    conversationQualityError,
+    memoryError,
+    routeTelemetry.alerts,
+    runtimeError,
+  ]);
+
   return {
+    actionStatus,
+    copyGovernanceSnapshot,
+    exportGovernanceSnapshot,
+    focusSettingsSection,
     responseStyle,
     memoryEnabled,
     personalConsent,
@@ -316,6 +706,23 @@ export function useSettingsViewState() {
     enthusiasm,
     directness,
     defaultAnswerShape,
+    decisionAssertiveness,
+    clarificationTolerance,
+    citationPreference,
+    repairStyle,
+    reasoningStyle,
+    reasoningEffort,
+    personaBundleId,
+    projectId,
+    projectLabel,
+    projectInstructions,
+    projectMemoryEnabled,
+    backgroundResearchEnabled,
+    proactiveUpdatesEnabled,
+    projectReferenceArtifacts,
+    backgroundTasks,
+    proactiveTopics,
+    liveVoiceSession,
     sessionTtlMinutes,
     taskTtlHours,
     longTermTtlDays,
@@ -338,19 +745,39 @@ export function useSettingsViewState() {
     routeTelemetry,
     stylePreview,
     infrastructureCards,
+    settingsAlerts,
+    navigateToRuntimeConsole,
+    navigateToHelperCore,
     saveStyle,
     saveLanguage,
     saveWarmthPreference,
     saveEnthusiasmPreference,
     saveDirectnessPreference,
     saveDefaultAnswerShapePreference,
+    saveDecisionAssertiveness,
+    saveClarificationTolerance,
+    saveCitationPreference,
+    saveRepairStyle,
+    saveReasoningStyle,
+    saveReasoningEffort,
+    savePersonaBundleId,
+    saveProjectContext,
+    saveContinuityControls,
     setMemoryEnabled,
     setPersonalConsent,
+    setProjectId,
+    setProjectLabel,
+    setProjectInstructions,
+    setProjectMemoryEnabled,
+    setBackgroundResearchEnabled,
+    setProactiveUpdatesEnabled,
     setSessionTtlMinutes,
     setTaskTtlHours,
     setLongTermTtlDays,
     savePreferences,
     deleteMemoryItem,
+    cancelBackgroundTask,
+    setProactiveTopicEnabled,
   };
 }
 

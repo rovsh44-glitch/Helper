@@ -6,6 +6,7 @@ using Helper.Api.Backend.Configuration;
 using Helper.Api.Backend.ControlPlane;
 using Helper.Api.Backend.ModelGateway;
 using Helper.Api.Backend.Persistence;
+using Helper.Api.Backend.Providers;
 using Helper.Api.Hosting;
 using Helper.Runtime.Core;
 using Microsoft.AspNetCore.RateLimiting;
@@ -210,8 +211,10 @@ builder.Services.AddHostedService<PrometheusBroadcastService>();
 builder.Services.AddHostedService<ModelWarmupService>();
 builder.Services.AddHostedService<ConversationPersistenceWorker>();
 builder.Services.AddHostedService<Helper.Api.Conversation.PostTurnAuditWorker>();
+builder.Services.AddHostedService<Helper.Api.Conversation.ConversationFollowThroughWorker>();
 
 var app = builder.Build();
+await app.Services.GetRequiredService<IProviderProfileActivationService>().EnsureRuntimeSynchronizedAsync(CancellationToken.None);
 var configValidation = app.Services.GetRequiredService<IBackendConfigValidator>().Validate();
 var optionsCatalog = app.Services.GetRequiredService<IBackendOptionsCatalog>();
 var fatalValidationAlerts = StartupValidationGuards.GetFatalAlerts(optionsCatalog, runtimeConfig);

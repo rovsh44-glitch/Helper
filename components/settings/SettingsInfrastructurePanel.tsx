@@ -21,7 +21,7 @@ export const SettingsInfrastructurePanel: React.FC<SettingsInfrastructurePanelPr
   <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
     <h3 className="text-sm font-bold text-primary-400 uppercase mb-4">Infrastructure</h3>
     <p className="text-[11px] text-slate-500 mb-4">
-      This section reflects the live backend control plane and structured route telemetry. No static product claims are shown here.
+      This section reflects the live backend control plane and structured route telemetry. Provider switching and runtime doctor probes live in the dedicated settings panels below.
     </p>
     <div className="mb-4 rounded-xl border border-cyan-500/20 bg-cyan-500/5 px-4 py-3 text-[11px] text-cyan-100/90">
       {isRefreshingRuntime ? 'Refreshing runtime telemetry...' : 'Runtime telemetry is polled live from the backend control plane.'}

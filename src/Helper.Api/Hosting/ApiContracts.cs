@@ -1,4 +1,6 @@
 using Helper.Api.Conversation;
+using Helper.Api.Conversation.Epistemic;
+using Helper.Api.Conversation.InteractionState;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Helper.Api.Hosting;
@@ -223,10 +225,48 @@ public record ConversationPreferenceDto(
     string? Directness = null,
     string? DefaultAnswerShape = null,
     string? SearchLocalityHint = null,
+    string? DecisionAssertiveness = null,
+    string? ClarificationTolerance = null,
+    string? CitationPreference = null,
+    string? RepairStyle = null,
+    string? ReasoningStyle = null,
+    string? ReasoningEffort = null,
+    string? PersonaBundleId = null,
+    string? ProjectId = null,
+    string? ProjectLabel = null,
+    string? ProjectInstructions = null,
+    bool? ProjectMemoryEnabled = null,
+    bool? BackgroundResearchEnabled = null,
+    bool? ProactiveUpdatesEnabled = null,
     bool? PersonalMemoryConsentGranted = null,
     int? SessionMemoryTtlMinutes = null,
     int? TaskMemoryTtlHours = null,
     int? LongTermMemoryTtlDays = null);
+public record BackgroundTaskActionRequestDto(string? Reason = null);
+public record ProactiveTopicActionRequestDto(bool Enabled);
+public record LiveVoiceSessionSyncRequestDto(
+    string SessionId,
+    string Language,
+    string RuntimeKind,
+    string Status,
+    bool IsHeld,
+    string? Transcript = null,
+    IReadOnlyList<string>? TranscriptSegments = null,
+    int AttachedReferenceCount = 0,
+    string? LastReferenceSummary = null,
+    IReadOnlyList<string>? ReferenceArtifacts = null,
+    bool? InterruptionsEnabled = null);
+public record LiveVoiceChunkSyncRequestDto(
+    string SessionId,
+    int Sequence,
+    int DurationMs,
+    int ByteCount,
+    string? Transcript = null,
+    string? Language = null,
+    string? RuntimeKind = null,
+    int AttachedReferenceCount = 0,
+    string? LastReferenceSummary = null,
+    IReadOnlyList<string>? ReferenceArtifacts = null);
 public record ReasoningEfficiencyMetricsDto(
     bool PathActive,
     bool BranchingApplied,
@@ -275,6 +315,27 @@ public record SearchTraceDto(
     IReadOnlyList<string>? Events = null,
     IReadOnlyList<SearchTraceSourceDto>? Sources = null,
     string? InputMode = null);
+public record EpistemicRiskSnapshotDto(
+    string AnswerMode,
+    string GroundingStatus,
+    double CitationCoverage,
+    double VerifiedClaimRatio,
+    bool HasContradictions,
+    bool HasWeakEvidence,
+    bool HighRiskDomain,
+    bool FreshnessSensitive,
+    double ConfidenceCeiling,
+    double CalibrationThreshold,
+    bool AbstentionRecommended,
+    IReadOnlyList<string>? Trace = null);
+public record InteractionStateSnapshotDto(
+    string FrustrationLevel,
+    string UrgencyLevel,
+    string OverloadRisk,
+    string ReassuranceNeed,
+    int ClarificationToleranceShift,
+    string AssistantPressureRisk,
+    IReadOnlyList<string>? Signals = null);
 public record ChatResponseDto(
     string ConversationId,
     string Response,
@@ -303,10 +364,17 @@ public record ChatResponseDto(
     IReadOnlyList<string>? ExecutionTrace = null,
     IReadOnlyList<string>? LifecycleTrace = null,
     ReasoningEfficiencyMetricsDto? ReasoningMetrics = null,
+    string? ReasoningEffort = null,
+    string? DecisionExplanation = null,
+    string? RepairClass = null,
+    string? RepairDriver = null,
     PostTurnAuditStatusDto? AuditStatus = null,
     ConversationStyleTelemetryDto? StyleTelemetry = null,
     SearchTraceDto? SearchTrace = null,
-    string? InputMode = null);
+    string? InputMode = null,
+    string? EpistemicAnswerMode = null,
+    EpistemicRiskSnapshotDto? EpistemicRisk = null,
+    InteractionStateSnapshotDto? InteractionState = null);
 
 public record ConversationFeedbackSnapshot(
     int TotalVotes,

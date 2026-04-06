@@ -2,6 +2,7 @@ using System.Text.Json;
 using Helper.Api.Backend.Capabilities;
 using Helper.Api.Backend.Configuration;
 using Helper.Api.Backend.ModelGateway;
+using Helper.Testing;
 using Helper.Runtime.Core;
 using Helper.Runtime.Generation;
 using Helper.Runtime.Infrastructure;
@@ -239,29 +240,5 @@ public sealed class CapabilityCatalogTests
         public BackendRuntimePolicies Policies { get; } = new(true, true, true, true, false, true);
     }
 
-    private sealed class TempDirectoryScope : IDisposable
-    {
-        public TempDirectoryScope()
-        {
-            Path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "helper-capabilities-" + Guid.NewGuid().ToString("N"));
-            Directory.CreateDirectory(Path);
-        }
-
-        public string Path { get; }
-
-        public void Dispose()
-        {
-            try
-            {
-                if (Directory.Exists(Path))
-                {
-                    Directory.Delete(Path, recursive: true);
-                }
-            }
-            catch
-            {
-            }
-        }
-    }
 }
 
