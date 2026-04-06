@@ -22,6 +22,11 @@ internal sealed record ComposerLocalization(
     string ConfidenceLabel,
     string OkStatus,
     string DegradedStatus,
+    string BestEffortLead,
+    string BestEffortLabel,
+    string NeedsVerificationNotice,
+    string AbstentionLead,
+    string AbstentionNextMove,
     IReadOnlyList<string> OperatorSummaryHeaders,
     IReadOnlyList<string> NextStepHeaders)
 {
@@ -60,6 +65,11 @@ internal sealed record ComposerLocalization(
         ConfidenceLabel: "confidence",
         OkStatus: "ok",
         DegradedStatus: "degraded",
+        BestEffortLead: "Best-effort hypothesis:",
+        BestEffortLabel: "Best-effort mode",
+        NeedsVerificationNotice: "Verification status: this answer remains provisional and should be checked against stronger evidence before being treated as settled fact.",
+        AbstentionLead: "I cannot responsibly assert this as established fact yet.",
+        AbstentionNextMove: "Provide stronger evidence, let me run a deeper verification path, or narrow the claim that needs confirmation.",
         OperatorSummaryHeaders: new[] { "Execution Summary:", "Run Summary:", "What Happened:" },
         NextStepHeaders: new[] { "Next step:", "Useful follow-up:", "If you want to continue:" });
 
@@ -77,6 +87,11 @@ internal sealed record ComposerLocalization(
         ConfidenceLabel: "уверенность",
         OkStatus: "норма",
         DegradedStatus: "ограничен",
+        BestEffortLead: "Гипотеза с разумными допущениями:",
+        BestEffortLabel: "Режим разумных допущений",
+        NeedsVerificationNotice: "Статус проверки: ответ пока предварительный и требует дополнительной сверки, прежде чем считать его установленным фактом.",
+        AbstentionLead: "Сейчас я не могу ответственно утверждать это как установленный факт.",
+        AbstentionNextMove: "Нужны более сильные источники, более глубокая проверка или сужение утверждения, которое нужно подтвердить.",
         OperatorSummaryHeaders: new[] { "Сводка выполнения:", "Итог по ходу:", "Коротко по выполнению:" },
         NextStepHeaders: new[] { "Следующий шаг:", "Что можно сделать дальше:", "Если продолжим, следующий шаг:" });
 }

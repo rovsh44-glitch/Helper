@@ -32,6 +32,7 @@ internal sealed class BenchmarkResponseFormatter : IBenchmarkResponseFormatter
             return false;
         }
 
+        var clarificationFallback = context.RequiresClarification;
         var normalized = _structurePolicy.StripFollowUpTail(solution).TrimEnd();
         var sanitized = _qualityPolicy.StripMetaFallbackContent(normalized).Trim();
         var hasHeadings = _structurePolicy.ContainsAllSections(normalized);
@@ -40,6 +41,11 @@ internal sealed class BenchmarkResponseFormatter : IBenchmarkResponseFormatter
         var topicalBody = _topicalBodyExtractor.TryExtract(context, sanitized, out var extractedBody)
             ? extractedBody
             : null;
+        if (clarificationFallback && string.IsNullOrWhiteSpace(topicalBody) && !string.IsNullOrWhiteSpace(sanitized))
+        {
+            topicalBody = sanitized;
+        }
+
         if (string.IsNullOrWhiteSpace(topicalBody) &&
             BenchmarkEvidenceFallbackSummaryBuilder.TryBuild(context, out var evidenceBody))
         {
@@ -48,17 +54,17 @@ internal sealed class BenchmarkResponseFormatter : IBenchmarkResponseFormatter
 
         if (hasHeadings)
         {
-            if (!rawLowQuality && !rawFallback)
+            if (!rawLowQuality && !rawFallback && !clarificationFallback)
             {
                 formatted = normalized;
                 return true;
             }
 
-            formatted = _sectionRenderer.BuildResponse(context, normalized, isFallback: true, topicalBody: null);
+            formatted = _sectionRenderer.BuildResponse(context, normalized, isFallback: true, topicalBody);
             return true;
         }
 
-        var isFallback = rawFallback || rawLowQuality || _qualityPolicy.ContainsMetaUncertainty(normalized);
+        var isFallback = clarificationFallback || rawFallback || rawLowQuality || _qualityPolicy.ContainsMetaUncertainty(normalized);
         formatted = _sectionRenderer.BuildResponse(context, normalized, isFallback, topicalBody);
         return true;
     }

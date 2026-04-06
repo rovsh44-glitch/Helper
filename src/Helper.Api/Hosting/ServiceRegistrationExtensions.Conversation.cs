@@ -1,4 +1,6 @@
 using Helper.Api.Conversation;
+using Helper.Api.Conversation.Epistemic;
+using Helper.Api.Conversation.InteractionState;
 using Helper.Api.Backend.Application;
 using Helper.Api.Backend.Configuration;
 using Helper.Api.Backend.Persistence;
@@ -9,6 +11,8 @@ public static partial class ServiceRegistrationExtensions
 {
     private static IServiceCollection AddHelperConversationServices(this IServiceCollection services)
     {
+        services.AddSingleton<IMemoryPriorityPolicy, MemoryPriorityPolicy>();
+        services.AddSingleton<IMemoryInspectionService, MemoryInspectionService>();
         services.AddSingleton<IMemoryPolicyService, MemoryPolicyService>();
         services.AddSingleton<IConversationSummarizer, ConversationSummarizer>();
         services.AddSingleton<IConversationPersistenceEngine>(sp =>
@@ -47,6 +51,31 @@ public static partial class ServiceRegistrationExtensions
         services.AddSingleton<ICitationLineageStore, CitationLineageStore>();
         services.AddSingleton<IChatResiliencePolicy, ChatResiliencePolicy>();
         services.AddSingleton<IConversationStylePolicy, ConversationStylePolicy>();
+        services.AddSingleton<ICollaborationIntentDetector, CollaborationIntentDetector>();
+        services.AddSingleton<IClarificationQualityPolicy, ClarificationQualityPolicy>();
+        services.AddSingleton<ISharedUnderstandingService, SharedUnderstandingService>();
+        services.AddSingleton<IBehavioralCalibrationPolicy, BehavioralCalibrationPolicy>();
+        services.AddSingleton<IEpistemicAnswerModePolicy, EpistemicAnswerModePolicy>();
+        services.AddSingleton<IInteractionStateAnalyzer, InteractionStateAnalyzer>();
+        services.AddSingleton<IInteractionPolicyProjector, InteractionPolicyProjector>();
+        services.AddSingleton<IProjectInstructionPolicy, ProjectInstructionPolicy>();
+        services.AddSingleton<IProjectMemoryBoundaryPolicy, ProjectMemoryBoundaryPolicy>();
+        services.AddSingleton<IPersonalizationMergePolicy, PersonalizationMergePolicy>();
+        services.AddSingleton<IConversationPromptPolicy, ConversationPromptPolicy>();
+        services.AddSingleton<ICommunicationQualityPolicy, CommunicationQualityPolicy>();
+        services.AddSingleton<IMisunderstandingRepairPolicy, MisunderstandingRepairPolicy>();
+        services.AddSingleton<IReasoningEffortPolicy, ReasoningEffortPolicy>();
+        services.AddSingleton<IDecisionExplanationProjector, DecisionExplanationProjector>();
+        services.AddSingleton<IRepairClassifiers, RepairClassifiers>();
+        services.AddSingleton<IProactiveTopicPolicy, ProactiveTopicPolicy>();
+        services.AddSingleton<IFollowThroughScheduler, FollowThroughScheduler>();
+        services.AddSingleton<IConversationFollowThroughProcessor, ConversationFollowThroughProcessor>();
+        services.AddSingleton<IConversationModelCapabilityCatalog, ConversationModelCapabilityCatalog>();
+        services.AddSingleton<IConversationModelSelectionPolicy, ConversationModelSelectionPolicy>();
+        services.AddSingleton<ILiveVoiceTurnCoordinator, LiveVoiceTurnCoordinator>();
+        services.AddSingleton<IConversationLiveVoiceSessionService, ConversationLiveVoiceSessionService>();
+        services.AddSingleton<IMultimodalReferenceProjector, MultimodalReferenceProjector>();
+        services.AddSingleton<IConversationContinuityCoordinator, ConversationContinuityCoordinator>();
         services.AddSingleton<ITurnLanguageResolver, TurnLanguageResolver>();
         services.AddSingleton<IDialogActPlanner, DialogActPlanner>();
         services.AddSingleton<ILiveWebRequirementPolicy, LiveWebRequirementPolicy>();
@@ -76,12 +105,12 @@ public static partial class ServiceRegistrationExtensions
         services.AddSingleton<IOutputExfiltrationGuard, OutputExfiltrationGuardV2>();
         services.AddSingleton<IResponseComposerService>(sp => new ResponseComposerService(
             sp.GetRequiredService<IDialogActPlanner>(),
-            sp.GetRequiredService<IConversationVariationPolicy>(),
-            sp.GetRequiredService<IResponseTextDeduplicator>(),
-            sp.GetRequiredService<IAnswerShapePolicy>(),
-            sp.GetRequiredService<INextStepComposer>(),
-            sp.GetRequiredService<IComposerLocalizationResolver>(),
-            sp.GetRequiredService<IBenchmarkResponseFormatter>()));
+                sp.GetRequiredService<IConversationVariationPolicy>(),
+                sp.GetRequiredService<IResponseTextDeduplicator>(),
+                sp.GetRequiredService<IAnswerShapePolicy>(),
+                sp.GetRequiredService<INextStepComposer>(),
+                sp.GetRequiredService<IComposerLocalizationResolver>(),
+                sp.GetRequiredService<IBenchmarkResponseFormatter>()));
         services.AddSingleton<IConversationStyleTelemetryAnalyzer, ConversationStyleTelemetryAnalyzer>();
         services.AddSingleton<IPublisherCompliancePolicy, PublisherCompliancePolicy>();
         services.AddSingleton<IExcerptBudgetPolicy, ExcerptBudgetPolicy>();
@@ -121,7 +150,10 @@ public static partial class ServiceRegistrationExtensions
                 sp.GetRequiredService<ITurnExecutionStateMachine>(),
                 sp.GetRequiredService<ITurnRouteTelemetryRecorder>(),
                 sp.GetRequiredService<IConversationStyleTelemetryAnalyzer>(),
-                sp.GetRequiredService<IWebSearchTraceProjector>()));
+                sp.GetRequiredService<IWebSearchTraceProjector>(),
+                sp.GetRequiredService<ISharedUnderstandingService>(),
+                sp.GetRequiredService<ICommunicationQualityPolicy>(),
+                sp.GetRequiredService<IFollowThroughScheduler>()));
         services.AddSingleton<IConversationCommandIdempotencyStore, ConversationCommandIdempotencyStore>();
         services.AddSingleton<IConversationBranchService, ConversationBranchService>();
         services.AddSingleton<IPostTurnAuditScheduler, PostTurnAuditScheduler>();
@@ -136,6 +168,13 @@ public static partial class ServiceRegistrationExtensions
         services.AddSingleton<IReasoningVerifier, ReasoningVerifier>();
         services.AddSingleton<ReasoningSelectionPolicy>();
         services.AddSingleton<IReasoningBranchExecutor, ReasoningBranchExecutor>();
+        services.AddSingleton<TurnIntentAnalysisStep>();
+        services.AddSingleton<TurnPersonalizationStep>();
+        services.AddSingleton<TurnReasoningSelectionStep>();
+        services.AddSingleton<TurnLatencyBudgetStep>();
+        services.AddSingleton<TurnLiveWebDecisionStep>();
+        services.AddSingleton<TurnAmbiguityResolutionStep>();
+        services.AddSingleton<TurnIntentOverrideStep>();
         services.AddSingleton<IChatTurnPlanner, ChatTurnPlanner>();
         services.AddSingleton<IChatTurnExecutor, ChatTurnExecutor>();
         services.AddSingleton<IChatTurnCritic, ChatTurnCritic>();

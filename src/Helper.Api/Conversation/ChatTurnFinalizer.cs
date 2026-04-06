@@ -1,5 +1,6 @@
 using System.Text;
 using Helper.Api.Backend.Configuration;
+using Helper.Api.Conversation.Epistemic;
 
 namespace Helper.Api.Conversation;
 
@@ -10,19 +11,37 @@ public sealed class ChatTurnFinalizer : IChatTurnFinalizer
     private readonly IBackendRuntimePolicyProvider _policyProvider;
     private readonly ITurnLanguageResolver _turnLanguageResolver;
     private readonly IConversationVariationPolicy _variationPolicy;
+    private readonly ICommunicationQualityPolicy _communicationQualityPolicy;
+    private readonly IMisunderstandingRepairPolicy _misunderstandingRepairPolicy;
+    private readonly IDecisionExplanationProjector _decisionExplanationProjector;
+    private readonly IRepairClassifiers _repairClassifiers;
+    private readonly IBehavioralCalibrationPolicy _behavioralCalibrationPolicy;
+    private readonly IEpistemicAnswerModePolicy _epistemicAnswerModePolicy;
 
     public ChatTurnFinalizer(
         ICitationGroundingService grounding,
         IResponseComposerService? responseComposer = null,
         IBackendRuntimePolicyProvider? policyProvider = null,
         ITurnLanguageResolver? turnLanguageResolver = null,
-        IConversationVariationPolicy? variationPolicy = null)
+        IConversationVariationPolicy? variationPolicy = null,
+        ICommunicationQualityPolicy? communicationQualityPolicy = null,
+        IMisunderstandingRepairPolicy? misunderstandingRepairPolicy = null,
+        IDecisionExplanationProjector? decisionExplanationProjector = null,
+        IRepairClassifiers? repairClassifiers = null,
+        IBehavioralCalibrationPolicy? behavioralCalibrationPolicy = null,
+        IEpistemicAnswerModePolicy? epistemicAnswerModePolicy = null)
     {
         _grounding = grounding;
         _responseComposer = responseComposer ?? ResponseComposerServiceFactory.CreateDefault();
         _policyProvider = policyProvider ?? new BackendOptionsCatalog(new Hosting.ApiRuntimeConfig("root", "data", "projects", "library", "logs", "templates", "dev-key"));
         _turnLanguageResolver = turnLanguageResolver ?? new TurnLanguageResolver();
         _variationPolicy = variationPolicy ?? new ConversationVariationPolicy();
+        _communicationQualityPolicy = communicationQualityPolicy ?? new CommunicationQualityPolicy();
+        _misunderstandingRepairPolicy = misunderstandingRepairPolicy ?? new MisunderstandingRepairPolicy();
+        _decisionExplanationProjector = decisionExplanationProjector ?? new DecisionExplanationProjector();
+        _repairClassifiers = repairClassifiers ?? new RepairClassifiers();
+        _behavioralCalibrationPolicy = behavioralCalibrationPolicy ?? new BehavioralCalibrationPolicy();
+        _epistemicAnswerModePolicy = epistemicAnswerModePolicy ?? new EpistemicAnswerModePolicy();
     }
 
     public Task FinalizeAsync(ChatTurnContext context, CancellationToken ct)
@@ -30,13 +49,14 @@ public sealed class ChatTurnFinalizer : IChatTurnFinalizer
         var language = context.ResolvedTurnLanguage
             ?? _turnLanguageResolver.Resolve(context.Conversation.PreferredLanguage, context.Request.Message, context.History);
         context.ResolvedTurnLanguage = language;
+        context.CommunicationQualitySnapshot ??= _communicationQualityPolicy.GetSnapshot(context.Conversation);
         var isRussian = string.Equals(language, "ru", StringComparison.OrdinalIgnoreCase);
         var softBestEffortEntry = IsSoftBestEffortEntry(context);
 
         if (context.RequiresClarification)
         {
             context.Confidence = context.RequiresConfirmation ? 0.32 : 0.4;
-            context.FinalResponse = context.ClarifyingQuestion ?? (isRussian
+            context.ExecutionOutput = context.ClarifyingQuestion ?? (isRussian
                 ? "Пожалуйста, дайте чуть больше контекста, чтобы я помог точно."
                 : "Please provide more details so I can help accurately.");
             context.NextStep = isRussian
@@ -44,6 +64,8 @@ public sealed class ChatTurnFinalizer : IChatTurnFinalizer
                 : "Provide required clarification.";
             context.GroundingStatus = "clarification_required";
             context.CitationCoverage = 0;
+            ApplyEpistemicPolicies(context);
+            context.FinalResponse = _responseComposer.Compose(context, context.ExecutionOutput);
             return Task.CompletedTask;
         }
 
@@ -122,6 +144,14 @@ public sealed class ChatTurnFinalizer : IChatTurnFinalizer
             context.UncertaintyFlags.Add("grounding_disabled");
         }
 
+        if (ResearchResponseQualityGuard.TryRewrite(context, output, isRussian, out var guardedOutput, out var guardedNextStep))
+        {
+            output = guardedOutput;
+            context.NextStep = guardedNextStep;
+            context.Confidence = Math.Min(context.Confidence, 0.34);
+            context.UncertaintyFlags.Add("meta_only_research_output_rewritten");
+        }
+
         if (!context.Sources.Any())
         {
             if (context.IsFactualPrompt)
@@ -136,29 +166,52 @@ public sealed class ChatTurnFinalizer : IChatTurnFinalizer
                 context.Confidence = Math.Min(context.Confidence, 0.52);
                 context.UncertaintyFlags.Add("factual_without_sources");
             }
-
-            if (context.History.Count >= 10)
-            {
-                output = isRussian
-                    ? $"{output}\n\nСводка действия: продолжил текущую ветку разговора и сохранил недавний контекст."
-                    : $"{output}\n\nAction summary: continued the existing thread while preserving recent context.";
-            }
-        }
-        else if (context.History.Count >= 10)
-        {
-            output = isRussian
-                ? $"{output}\n\nСводка действия: ответ собран с переносом контекста и явными источниками."
-                : $"{output}\n\nAction summary: response generated with context carry-over and explicit sources.";
         }
 
         context.NextStep = IntentAwareNextStepPolicy.Resolve(context, output, isRussian, _variationPolicy);
+        context.NextStep = _communicationQualityPolicy.FilterNextStep(context, context.NextStep, isRussian);
         if (softBestEffortEntry)
         {
             context.NextStep = BuildSoftBestEffortNextStep(context, context.NextStep, isRussian);
         }
 
+        if (!context.IsCritiqueApproved)
+        {
+            context.NextStep = _misunderstandingRepairPolicy.BuildRepairNextStep(context, isRussian) ?? context.NextStep;
+        }
+
+        ApplyEpistemicPolicies(context);
+        context.DecisionExplanation = _decisionExplanationProjector.BuildSummary(context, isRussian);
+        context.RepairClass = _repairClassifiers.Classify(context);
+        context.RepairDriver = ResolveRepairDriver(context);
         context.FinalResponse = _responseComposer.Compose(context, output);
         return Task.CompletedTask;
+    }
+
+    private void ApplyEpistemicPolicies(ChatTurnContext context)
+    {
+        var snapshot = _behavioralCalibrationPolicy.BuildSnapshot(context);
+        context.EpistemicRiskSnapshot = snapshot;
+        context.Confidence = Math.Min(context.Confidence, snapshot.ConfidenceCeiling);
+        context.EpistemicAnswerMode = _epistemicAnswerModePolicy.Resolve(context, snapshot);
+    }
+
+    private static string? ResolveRepairDriver(ChatTurnContext context)
+    {
+        if (context.IsCritiqueApproved)
+        {
+            return null;
+        }
+
+        if (context.InteractionPolicy?.NarrowRepairScope == true ||
+            context.InteractionPolicy?.IncreaseReassurance == true)
+        {
+            return "interaction";
+        }
+
+        return context.EpistemicAnswerMode is EpistemicAnswerMode.NeedsVerification or EpistemicAnswerMode.Abstain
+            ? "epistemic"
+            : "structural";
     }
 
     private static bool ContainsUnverifiedSourceNote(string output)

@@ -1,4 +1,6 @@
 using Helper.Api.Conversation;
+using Helper.Api.Conversation.Epistemic;
+using Helper.Api.Conversation.InteractionState;
 using Helper.Api.Hosting;
 using Helper.Runtime.Core;
 
@@ -20,6 +22,9 @@ public sealed class TurnResponseWriter : ITurnResponseWriter
     private readonly ITurnRouteTelemetryRecorder _telemetryRecorder;
     private readonly IConversationStyleTelemetryAnalyzer _styleTelemetryAnalyzer;
     private readonly IWebSearchTraceProjector _webSearchTraceProjector;
+    private readonly ISharedUnderstandingService _sharedUnderstandingService;
+    private readonly ICommunicationQualityPolicy _communicationQualityPolicy;
+    private readonly IFollowThroughScheduler _followThroughScheduler;
 
     public TurnResponseWriter(
         IConversationStore store,
@@ -37,7 +42,10 @@ public sealed class TurnResponseWriter : ITurnResponseWriter
             executionStateMachine,
             telemetryRecorder,
             styleTelemetryAnalyzer,
-            new WebSearchTraceProjector())
+            new WebSearchTraceProjector(),
+            new SharedUnderstandingService(),
+            new CommunicationQualityPolicy(),
+            new FollowThroughScheduler())
     {
     }
 
@@ -49,7 +57,10 @@ public sealed class TurnResponseWriter : ITurnResponseWriter
         ITurnExecutionStateMachine executionStateMachine,
         ITurnRouteTelemetryRecorder telemetryRecorder,
         IConversationStyleTelemetryAnalyzer? styleTelemetryAnalyzer,
-        IWebSearchTraceProjector webSearchTraceProjector)
+        IWebSearchTraceProjector webSearchTraceProjector,
+        ISharedUnderstandingService? sharedUnderstandingService,
+        ICommunicationQualityPolicy? communicationQualityPolicy,
+        IFollowThroughScheduler? followThroughScheduler)
     {
         _store = store;
         _checkpointManager = checkpointManager;
@@ -59,6 +70,9 @@ public sealed class TurnResponseWriter : ITurnResponseWriter
         _telemetryRecorder = telemetryRecorder;
         _styleTelemetryAnalyzer = styleTelemetryAnalyzer ?? new ConversationStyleTelemetryAnalyzer(new SourceNormalizationService());
         _webSearchTraceProjector = webSearchTraceProjector;
+        _sharedUnderstandingService = sharedUnderstandingService ?? new SharedUnderstandingService();
+        _communicationQualityPolicy = communicationQualityPolicy ?? new CommunicationQualityPolicy();
+        _followThroughScheduler = followThroughScheduler ?? new FollowThroughScheduler();
     }
 
     public ChatResponseDto PersistCompletedTurn(
@@ -85,7 +99,13 @@ public sealed class TurnResponseWriter : ITurnResponseWriter
         var reasoningMetrics = BuildReasoningMetrics(context);
         var styleTelemetry = _styleTelemetryAnalyzer.Analyze(context);
         var searchTrace = _webSearchTraceProjector.Build(context);
+        var answerMode = ToApiValue(context.EpistemicAnswerMode);
+        var epistemicRisk = ToDto(context.EpistemicRiskSnapshot, answerMode);
+        var interactionState = ToDto(context.InteractionState);
         context.StyleTelemetry = styleTelemetry;
+        _sharedUnderstandingService.CaptureTurnOutcome(state, context, DateTimeOffset.UtcNow);
+        _communicationQualityPolicy.RecordCompletedTurn(state, context, styleTelemetry, DateTimeOffset.UtcNow);
+        _followThroughScheduler.QueueResearchFollowThrough(state, context, DateTimeOffset.UtcNow);
         var response = new ChatResponseDto(
             state.Id,
             context.FinalResponse,
@@ -114,9 +134,16 @@ public sealed class TurnResponseWriter : ITurnResponseWriter
             ExecutionTrace: context.ExecutionTrace.Select(x => x.ToString()).ToArray(),
             LifecycleTrace: context.LifecycleTrace.Select(x => x.ToString()).ToArray(),
             ReasoningMetrics: reasoningMetrics,
+            ReasoningEffort: context.ReasoningEffort,
+            DecisionExplanation: context.DecisionExplanation,
+            RepairClass: context.RepairClass,
+            RepairDriver: context.RepairDriver,
             StyleTelemetry: ToDto(styleTelemetry),
             SearchTrace: searchTrace,
-            InputMode: ConversationInputMode.Normalize(context.Request.InputMode));
+            InputMode: ConversationInputMode.Normalize(context.Request.InputMode),
+            EpistemicAnswerMode: answerMode,
+            EpistemicRisk: epistemicRisk,
+            InteractionState: interactionState);
 
         if (_auditScheduler.TrySchedule(context, response))
         {
@@ -133,7 +160,10 @@ public sealed class TurnResponseWriter : ITurnResponseWriter
             ReasoningMetrics = reasoningMetrics,
             AuditStatus = auditStatus,
             StyleTelemetry = ToDto(styleTelemetry),
-            SearchTrace = searchTrace
+            SearchTrace = searchTrace,
+            EpistemicAnswerMode = answerMode,
+            EpistemicRisk = epistemicRisk,
+            InteractionState = interactionState
         };
     }
 
@@ -175,6 +205,9 @@ public sealed class TurnResponseWriter : ITurnResponseWriter
             AvailableBranches: _store.GetBranchIds(state),
             Intent: IntentType.Unknown.ToString().ToLowerInvariant(),
             IntentConfidence: 0.1,
+            ReasoningEffort: null,
+            DecisionExplanation: "blocked_by_safety_policy",
+            RepairClass: null,
             InputMode: ConversationInputMode.Normalize(request.InputMode));
     }
 
@@ -240,6 +273,60 @@ public sealed class TurnResponseWriter : ITurnResponseWriter
             telemetry.GenericNextStepDetected,
             telemetry.MemoryAckTemplateDetected,
             telemetry.SourceFingerprint);
+    }
+
+    private static EpistemicRiskSnapshotDto? ToDto(EpistemicRiskSnapshot? snapshot, string answerMode)
+    {
+        if (snapshot is null)
+        {
+            return null;
+        }
+
+        return new EpistemicRiskSnapshotDto(
+            AnswerMode: answerMode,
+            GroundingStatus: snapshot.GroundingStatus,
+            CitationCoverage: snapshot.CitationCoverage,
+            VerifiedClaimRatio: snapshot.VerifiedClaimRatio,
+            HasContradictions: snapshot.HasContradictions,
+            HasWeakEvidence: snapshot.HasWeakEvidence,
+            HighRiskDomain: snapshot.HighRiskDomain,
+            FreshnessSensitive: snapshot.FreshnessSensitive,
+            ConfidenceCeiling: snapshot.ConfidenceCeiling,
+            CalibrationThreshold: snapshot.CalibrationThreshold,
+            AbstentionRecommended: snapshot.AbstentionRecommended,
+            Trace: snapshot.Trace);
+    }
+
+    private static InteractionStateSnapshotDto? ToDto(InteractionStateSnapshot? snapshot)
+    {
+        if (snapshot is null)
+        {
+            return null;
+        }
+
+        return new InteractionStateSnapshotDto(
+            FrustrationLevel: ToApiValue(snapshot.FrustrationLevel),
+            UrgencyLevel: ToApiValue(snapshot.UrgencyLevel),
+            OverloadRisk: ToApiValue(snapshot.OverloadRisk),
+            ReassuranceNeed: ToApiValue(snapshot.ReassuranceNeed),
+            ClarificationToleranceShift: snapshot.ClarificationToleranceShift,
+            AssistantPressureRisk: ToApiValue(snapshot.AssistantPressureRisk),
+            Signals: snapshot.Signals);
+    }
+
+    private static string ToApiValue(EpistemicAnswerMode answerMode)
+    {
+        return answerMode switch
+        {
+            EpistemicAnswerMode.BestEffortHypothesis => "best_effort_hypothesis",
+            EpistemicAnswerMode.NeedsVerification => "needs_verification",
+            _ => answerMode.ToString().ToLowerInvariant()
+        };
+    }
+
+    private static string ToApiValue(InteractionSignalLevel level)
+    {
+        return level.ToString().ToLowerInvariant();
     }
 
     private static void UpdateClarificationState(ConversationState state, bool clarificationIssued)
