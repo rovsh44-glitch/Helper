@@ -7,14 +7,16 @@ import { useHelperHubContext } from '../../hooks/useHelperHubContext';
 import { useConversationArchiveAction } from '../../hooks/useConversationArchiveAction';
 import { useConversationResetAction } from '../../hooks/useConversationResetAction';
 import { useResumeLastTurnAction } from '../../hooks/useConversationBootstrap';
+import { useConversationBranchRouteSync } from '../../hooks/useConversationBranchRouteSync';
 import { useConversationActions, useConversationRuntimeState, useConversationShellState } from '../../contexts/ConversationStateContext';
 import { readPreferredLanguage } from '../../services/conversationSession';
+import type { LiveVoiceTurnPayload } from '../../services/liveVoiceRuntime';
 import { OrchestratorView } from './OrchestratorView';
 
 export function OrchestratorContainer() {
   const runtime = useConversationRuntimeState();
   const shell = useConversationShellState();
-  const { setInput, setLiveWebMode } = useConversationActions();
+  const { setConversationId, setInput, setLiveWebMode } = useConversationActions();
   const { handleAttachFiles, clearAttachments } = useAttachmentQueue();
   const { handleSendMessage } = useConversationStreaming();
   const { handleCreateBranch, handleMergeIntoActive, handleSwitchBranch } = useConversationBranches();
@@ -25,13 +27,35 @@ export function OrchestratorContainer() {
   const { progressEntries, currentPlan, activeMutation, dismissActiveMutation } = useHelperHubContext();
   const resumeLastTurn = useResumeLastTurnAction();
 
+  useConversationBranchRouteSync({
+    activeBranchId: runtime.activeBranchId,
+    availableBranches: runtime.availableBranches,
+    onSwitchBranch: handleSwitchBranch,
+  });
+
+  const ensureConversationId = () => {
+    if (runtime.conversationId) {
+      return runtime.conversationId;
+    }
+
+    const nextConversationId = crypto.randomUUID();
+    setConversationId(nextConversationId);
+    return nextConversationId;
+  };
+
   return (
     <OrchestratorView
       messages={runtime.messages}
       input={runtime.input}
       setInput={setInput}
       handleSendMessage={handleSendMessage}
-      handleVoiceInput={(transcript) => void handleSendMessage({ message: transcript, inputMode: 'voice' })}
+      handleVoiceTurn={(payload: LiveVoiceTurnPayload) => void handleSendMessage({
+        message: payload.transcript,
+        inputMode: 'voice',
+        attachments: payload.attachments,
+      })}
+      conversationId={runtime.conversationId}
+      ensureConversationId={ensureConversationId}
       isProcessing={runtime.isProcessing}
       progressEntries={progressEntries}
       currentPlan={currentPlan}

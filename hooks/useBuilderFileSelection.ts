@@ -15,6 +15,8 @@ type UseBuilderFileSelectionArgs = {
   setEditorContent: Dispatch<SetStateAction<string>>;
   setIsDirty: Dispatch<SetStateAction<boolean>>;
   setWorkspaceError: Dispatch<SetStateAction<string | null>>;
+  onSaveActivity?: (filePath: string) => void;
+  onSelectFileActivity?: (filePath: string) => void;
 };
 
 export function useBuilderFileSelection({
@@ -29,6 +31,8 @@ export function useBuilderFileSelection({
   setEditorContent,
   setIsDirty,
   setWorkspaceError,
+  onSaveActivity,
+  onSelectFileActivity,
 }: UseBuilderFileSelectionArgs) {
   const selectedFile = useMemo(
     () => (project && selectedFilePath ? findFileByPath(project.root, selectedFilePath) : null),
@@ -93,6 +97,7 @@ export function useBuilderFileSelection({
     setSelectedFilePath(file.path);
     setSelectedNode({ kind: 'file', path: file.path, label: file.name });
     setWorkspaceError(null);
+    onSelectFileActivity?.(file.path);
   };
 
   const handleSelectFolder = (folder: { path: string; name: string }) => {
@@ -110,6 +115,7 @@ export function useBuilderFileSelection({
 
     await projectService.updateFileContent(selectedFile.path, editorContent);
     setIsDirty(false);
+    onSaveActivity?.(selectedFile.path);
   };
 
   return {

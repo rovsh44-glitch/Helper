@@ -1,7 +1,13 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import * as signalR from '@microsoft/signalr';
 import { getAccessToken } from '../services/apiConfig';
 import type { MutationProposal, ProgressLogEntry, StrategicPlan, ThoughtStreamEntry } from '../types';
+import {
+  buildReasoningFeed,
+  createMutationReasoningEvent,
+  createStrategyReasoningEvent,
+  parseThoughtEvent,
+} from '../services/reasoningSurface';
 
 const MAX_PROGRESS_LOGS = 200;
 const MAX_THOUGHTS = 50;
@@ -15,24 +21,6 @@ function parseTaggedJson<T>(rawMessage: string, tag: string): T | null {
     return JSON.parse(rawMessage.split(tag)[1]) as T;
   } catch {
     return null;
-  }
-}
-
-function parseThoughtEvent(rawMessage: string): ThoughtStreamEntry {
-  try {
-    const parsed = JSON.parse(rawMessage) as { content?: string; timestamp?: string; type?: string };
-    return {
-      id: crypto.randomUUID(),
-      content: parsed.content || rawMessage,
-      timestamp: parsed.timestamp ? new Date(parsed.timestamp).getTime() : Date.now(),
-      type: parsed.type,
-    };
-  } catch {
-    return {
-      id: crypto.randomUUID(),
-      content: rawMessage,
-      timestamp: Date.now(),
-    };
   }
 }
 
@@ -67,12 +55,14 @@ export function useHelperHub(hubUrl: string) {
       const plan = parseTaggedJson<StrategicPlan>(rawMessage, '[STRATEGY_JSON]');
       if (plan) {
         setCurrentPlan(plan);
+        setThoughts(previous => [createStrategyReasoningEvent(plan), ...previous].slice(0, MAX_THOUGHTS));
         return;
       }
 
       const mutation = parseTaggedJson<MutationProposal>(rawMessage, '[MUTATION_JSON]');
       if (mutation) {
         setActiveMutation(mutation);
+        setThoughts(previous => [createMutationReasoningEvent(mutation), ...previous].slice(0, MAX_THOUGHTS));
         return;
       }
 
@@ -91,18 +81,31 @@ export function useHelperHub(hubUrl: string) {
       setThoughts(previous => [thought, ...previous].slice(0, MAX_THOUGHTS));
     });
 
+    connection.on('ReceiveReasoningEvent', (payload: unknown) => {
+      const serialized = typeof payload === 'string' ? payload : JSON.stringify(payload);
+      const thought = parseThoughtEvent(serialized);
+      setThoughts(previous => [thought, ...previous].slice(0, MAX_THOUGHTS));
+    });
+
     connection.start().catch(error => console.error('Helper Hub Error:', error));
 
     return () => {
       connection.off('ReceiveProgress');
       connection.off('ReceiveThought');
+      connection.off('ReceiveReasoningEvent');
       void connection.stop();
     };
   }, [hubUrl]);
 
+  const reasoningFeed = useMemo(
+    () => buildReasoningFeed(thoughts, progressEntries, currentPlan, activeMutation),
+    [activeMutation, currentPlan, progressEntries, thoughts],
+  );
+
   return {
     progressEntries,
     thoughts,
+    reasoningFeed,
     currentPlan,
     activeMutation,
     clearProgressState,

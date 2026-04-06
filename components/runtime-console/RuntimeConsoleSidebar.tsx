@@ -11,6 +11,8 @@ import styles from './runtimeConsole.module.css';
 import type { RuntimeConsoleModel } from '../../hooks/useRuntimeConsoleModel';
 import { useCapabilityCatalog } from '../../hooks/useCapabilityCatalog';
 import { useHelperHubContext } from '../../hooks/useHelperHubContext';
+import { useConversationRuntimeState } from '../../contexts/ConversationStateContext';
+import { navigateToTab, updateRouteQueryParams } from '../../services/appShellRoute';
 
 type RuntimeConsoleSidebarProps = Pick<
   RuntimeConsoleModel,
@@ -35,7 +37,8 @@ export default function RuntimeConsoleSidebar({
   updatedLabel,
 }: RuntimeConsoleSidebarProps) {
   const { snapshot, error, isRefreshing } = useCapabilityCatalog();
-  const { thoughts, progressEntries } = useHelperHubContext();
+  const { reasoningFeed } = useHelperHubContext();
+  const { activeBranchId, conversationId } = useConversationRuntimeState();
   const [actionStatus, setActionStatus] = React.useState<string | null>(null);
 
   React.useEffect(() => {
@@ -47,27 +50,15 @@ export default function RuntimeConsoleSidebar({
     return () => window.clearTimeout(timeoutId);
   }, [actionStatus]);
 
-  const runtimeFeed = React.useMemo(() => {
-    const thoughtFeed = thoughts.map(thought => ({
-      id: thought.id,
-      kind: 'thought' as const,
-      text: thought.content,
-      timestamp: thought.timestamp,
-      tag: thought.type ? thought.type.toUpperCase() : 'THOUGHT',
-    }));
-
-    const progressFeed = progressEntries.map(entry => ({
-      id: entry.id,
-      kind: 'progress' as const,
-      text: entry.message,
-      timestamp: entry.timestamp,
-      tag: 'BUS',
-    }));
-
-    return [...thoughtFeed, ...progressFeed]
-      .sort((left, right) => right.timestamp - left.timestamp)
-      .slice(0, 32);
-  }, [progressEntries, thoughts]);
+  const runtimeFeed = React.useMemo(() => reasoningFeed
+    .slice(0, 32)
+    .map(event => ({
+      id: event.id,
+      kind: event.source === 'progress' ? 'progress' as const : 'thought' as const,
+      text: event.summary,
+      timestamp: event.timestamp,
+      tag: event.typeLabel,
+    })), [reasoningFeed]);
 
   const alerts = React.useMemo(() => {
     const nextAlerts = [
@@ -81,9 +72,13 @@ export default function RuntimeConsoleSidebar({
   const snapshotPayload = React.useMemo(() => ({
     exportedAtUtc: new Date().toISOString(),
     selectedSourceId: activeSource?.id ?? null,
+    activeRouteHref: `${window.location.pathname}${window.location.search}`,
+    conversationId: conversationId ?? null,
+    activeBranchId,
     controlPlane,
     runtimeLogs: logsSnapshot,
-  }), [activeSource?.id, controlPlane, logsSnapshot]);
+    reasoningFeed: reasoningFeed.slice(0, 100),
+  }), [activeBranchId, activeSource?.id, controlPlane, conversationId, logsSnapshot, reasoningFeed]);
 
   const copySnapshot = React.useCallback(async () => {
     const payload = JSON.stringify(snapshotPayload, null, 2);
@@ -117,6 +112,20 @@ export default function RuntimeConsoleSidebar({
       setActionStatus('Runtime snapshot export failed.');
     }
   }, [snapshotPayload]);
+
+  const openReasoningTrace = React.useCallback((alert?: string) => {
+    navigateToTab('orchestrator', { preserveQuery: false });
+    updateRouteQueryParams({
+      reasoningKind: inferReasoningKindFromAlert(alert),
+      reasoningScope: activeBranchId ? 'active_branch' : null,
+    }, { replace: false });
+    setActionStatus('Reasoning trace opened.');
+  }, [activeBranchId]);
+
+  const openRuntimeConsoleHome = React.useCallback(() => {
+    navigateToTab('runtime', { preserveQuery: false });
+    setActionStatus('Runtime console focus updated.');
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -271,7 +280,23 @@ export default function RuntimeConsoleSidebar({
           ) : (
             alerts.map(alert => (
               <div key={alert} className="rounded-2xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-sm text-amber-100">
-                {alert}
+                <div>{alert}</div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => openReasoningTrace(alert)}
+                    className="rounded-full border border-amber-500/30 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-amber-100 hover:border-amber-400/60"
+                  >
+                    Open trace
+                  </button>
+                  <button
+                    type="button"
+                    onClick={openRuntimeConsoleHome}
+                    className="rounded-full border border-slate-700 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-200 hover:border-slate-500"
+                  >
+                    Runtime
+                  </button>
+                </div>
               </div>
             ))
           )}
@@ -287,4 +312,17 @@ export default function RuntimeConsoleSidebar({
       />
     </div>
   );
+}
+
+function inferReasoningKindFromAlert(alert?: string) {
+  const normalized = alert?.toLowerCase() ?? '';
+  if (normalized.includes('blocked') || normalized.includes('guard') || normalized.includes('unsafe')) {
+    return 'safety';
+  }
+
+  if (normalized.includes('fail') || normalized.includes('error') || normalized.includes('degrad')) {
+    return 'verification';
+  }
+
+  return 'progress';
 }

@@ -2,6 +2,7 @@ import React from 'react';
 import type { BuilderWorkspaceSelection, GeneratedProject, VirtualFile, VirtualFolder } from '../../types';
 import { BuilderNodeSheet, type BuilderNodeSheetState } from './BuilderNodeSheet';
 import { FileTree } from '../FileTree';
+import { navigateToTab } from '../../services/appShellRoute';
 
 type BuilderWorkspaceSidebarProps = {
   project: GeneratedProject;
@@ -119,6 +120,20 @@ export const BuilderWorkspaceSidebar: React.FC<BuilderWorkspaceSidebarProps> = (
           {project.launchContext.planSummary && (
             <div className="text-[11px] text-slate-400 leading-relaxed">{project.launchContext.planSummary}</div>
           )}
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={() => navigateToTab('planner')}
+              className="flex-1 rounded-lg border border-primary-500/40 px-3 py-2 text-[10px] font-bold text-primary-100 hover:bg-primary-500/10"
+            >
+              OPEN ARCHITECTURE
+            </button>
+            <button
+              onClick={() => navigateToTab('strategy')}
+              className="flex-1 rounded-lg border border-slate-700 px-3 py-2 text-[10px] font-bold text-slate-200 hover:bg-slate-800"
+            >
+              OPEN STRATEGY
+            </button>
+          </div>
         </div>
       )}
 

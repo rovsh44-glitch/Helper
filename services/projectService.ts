@@ -1,4 +1,4 @@
-import { BuilderLaunchRequest, DeploymentPlatform, GeneratedProject, MutationProposal } from '../types';
+import { BuildError, BuilderLaunchRequest, DeploymentPlatform, GeneratedProject, MutationProposal } from '../types';
 import { helperGenerationService } from './helperGenerationService';
 import { helperApi } from './generatedApiClient';
 import { buildVirtualFolder, getParentRelativePath, normalizeRelativePath, toVirtualFolder } from './workspaceTree';
@@ -85,10 +85,12 @@ export class ProjectService {
     }
   }
 
-  public async runBuild(): Promise<any> {
-    if (!this.currentProject) return { success: false, errors: [] };
-    
-    return await helperApi.build({ projectPath: this.currentProject.fullPath });
+  public async runBuild(): Promise<ProjectBuildResult> {
+    if (!this.currentProject) {
+      return { success: false, errors: [] };
+    }
+
+    return await helperApi.build({ projectPath: this.currentProject.fullPath }) as ProjectBuildResult;
   }
 
   public getCurrentProject(): GeneratedProject | null {
@@ -214,3 +216,8 @@ export class ProjectService {
 }
 
 export const projectService = new ProjectService();
+
+export type ProjectBuildResult = {
+  success: boolean;
+  errors: BuildError[];
+};
