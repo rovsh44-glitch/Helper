@@ -90,6 +90,9 @@ export interface ChatResponseDto {
   budgetProfile?: string;
   budgetExceeded?: boolean;
   estimatedTokensGenerated?: number;
+  reasoningEffort?: string;
+  decisionExplanation?: string;
+  repairClass?: string;
   searchTrace?: SearchTraceDto;
   inputMode?: ConversationInputMode;
 }
@@ -112,10 +115,16 @@ export interface ConversationMemoryItemDto {
   id: string;
   type: string;
   content: string;
+  scope?: string;
+  retention?: string;
+  whyRemembered?: string;
+  priority?: number;
   createdAt: string;
   expiresAt?: string;
   sourceTurnId?: string;
+  sourceProjectId?: string;
   isPersonal: boolean;
+  userEditable?: boolean;
 }
 
 export interface ConversationMemoryPolicyDto {
@@ -125,6 +134,41 @@ export interface ConversationMemoryPolicyDto {
   sessionMemoryTtlMinutes: number;
   taskMemoryTtlHours: number;
   longTermMemoryTtlDays: number;
+}
+
+export interface LiveVoiceSessionSyncDto {
+  sessionId: string;
+  language: string;
+  runtimeKind: string;
+  status: string;
+  isHeld: boolean;
+  transcript?: string;
+  transcriptSegments?: string[];
+  attachedReferenceCount?: number;
+  lastReferenceSummary?: string;
+  referenceArtifacts?: string[];
+  interruptionsEnabled?: boolean;
+}
+
+export interface LiveVoiceChunkSyncDto {
+  sessionId: string;
+  sequence: number;
+  durationMs: number;
+  byteCount: number;
+  transcript?: string;
+  language?: string;
+  runtimeKind?: string;
+  attachedReferenceCount?: number;
+  lastReferenceSummary?: string;
+  referenceArtifacts?: string[];
+}
+
+export interface LiveVoiceCaptureChunkDto {
+  sequence: number;
+  durationMs: number;
+  byteCount: number;
+  transcript?: string;
+  capturedAtUtc: string;
 }
 
 export interface ModelPoolSnapshotDto {
@@ -315,6 +359,7 @@ export interface ControlPlaneSnapshotDto {
     lastCatalogRefreshAtUtc?: string;
     lastWarmupAtUtc?: string;
     alerts: string[];
+    activeProfileId?: string;
   };
   persistenceQueue: {
     pending: number;
@@ -360,6 +405,128 @@ export interface RuntimeLogSourceDto {
   lastWriteTimeUtc?: string;
   totalLines: number;
   isPrimary: boolean;
+}
+
+export interface ProviderModelClassBindingDto {
+  modelClass: string;
+  modelName: string;
+}
+
+export interface ProviderCredentialReferenceDto {
+  apiKeyEnvVar?: string;
+  required: boolean;
+  configured: boolean;
+}
+
+export interface ProviderProfileDto {
+  id: string;
+  displayName: string;
+  kind: string;
+  transportKind: string;
+  baseUrl: string;
+  enabled: boolean;
+  isBuiltIn: boolean;
+  isLocal: boolean;
+  trustMode: string;
+  supportedGoals: string[];
+  modelBindings: ProviderModelClassBindingDto[];
+  credential?: ProviderCredentialReferenceDto;
+  embeddingModel?: string;
+  preferredReasoningEffort?: string;
+  notes?: string;
+}
+
+export interface ProviderProfileValidationDto {
+  isValid: boolean;
+  alerts: string[];
+  warnings: string[];
+}
+
+export interface ProviderCapabilitySummaryDto {
+  supportsFast: boolean;
+  supportsReasoning: boolean;
+  supportsCoder: boolean;
+  supportsVision: boolean;
+  supportsBackground: boolean;
+  supportsResearchVerified: boolean;
+  supportsPrivacyFirst: boolean;
+  requiresLocalRuntime: boolean;
+}
+
+export interface ProviderProfileSummaryDto {
+  profile: ProviderProfileDto;
+  validation: ProviderProfileValidationDto;
+  capabilities: ProviderCapabilitySummaryDto;
+  isActive: boolean;
+}
+
+export interface ProviderProfilesSnapshotDto {
+  generatedAtUtc: string;
+  activeProfileId?: string;
+  profiles: ProviderProfileSummaryDto[];
+  alerts: string[];
+}
+
+export interface ProviderActivationRequestDto {
+  profileId: string;
+}
+
+export interface ProviderActivationResultDto {
+  success: boolean;
+  activeProfileId?: string;
+  reasonCodes: string[];
+  warnings: string[];
+}
+
+export interface ProviderRecommendationRequestDto {
+  goal: string;
+  preferLocal?: boolean;
+  needVision?: boolean;
+  latencyPreference?: string;
+  codingIntensity?: string;
+}
+
+export interface ProviderRecommendationResultDto {
+  recommendedProfileId?: string;
+  alternativeProfileIds: string[];
+  reasonCodes: string[];
+  warnings: string[];
+}
+
+export interface ProviderDoctorRunRequestDto {
+  profileId?: string;
+  includeInactive?: boolean;
+}
+
+export interface ProviderDoctorCheckDto {
+  code: string;
+  status: string;
+  severity: string;
+  summary: string;
+  detail?: string;
+  durationMs?: number;
+}
+
+export interface ProviderDoctorProfileReportDto {
+  profileId: string;
+  displayName: string;
+  transportKind: string;
+  baseUrl: string;
+  isActive: boolean;
+  isEnabled: boolean;
+  status: string;
+  capabilities: ProviderCapabilitySummaryDto;
+  checks: ProviderDoctorCheckDto[];
+  alerts: string[];
+  warnings: string[];
+}
+
+export interface ProviderDoctorReportDto {
+  generatedAtUtc: string;
+  status: string;
+  activeProfileId?: string;
+  profiles: ProviderDoctorProfileReportDto[];
+  alerts: string[];
 }
 
 export interface RuntimeLogEntryDto {
@@ -688,6 +855,38 @@ export class HelperApiClient {
     return request<RuntimeLogsSnapshotDto>(`/runtime/logs${suffix}`, { method: 'GET' }, { surface: 'runtime_console' });
   }
 
+  getProviderProfiles() {
+    return request<ProviderProfilesSnapshotDto>('/settings/provider-profiles', { method: 'GET' }, { surface: 'settings' });
+  }
+
+  getActiveProviderProfile() {
+    return request<ProviderProfileSummaryDto>('/settings/provider-profiles/active', { method: 'GET' }, { surface: 'settings' });
+  }
+
+  activateProviderProfile(body: ProviderActivationRequestDto) {
+    return request<ProviderActivationResultDto>('/settings/provider-profiles/activate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }, { surface: 'settings' });
+  }
+
+  recommendProviderProfile(body: ProviderRecommendationRequestDto) {
+    return request<ProviderRecommendationResultDto>('/settings/provider-profiles/recommend', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }, { surface: 'settings' });
+  }
+
+  runRuntimeDoctor(body?: ProviderDoctorRunRequestDto) {
+    return request<ProviderDoctorReportDto>('/settings/runtime-doctor/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body ?? {}),
+    }, { surface: 'settings', profile: 'startup', timeoutMs: 20_000, label: 'Runtime doctor' });
+  }
+
   chat(body: ChatRequestDto) {
     return request<ChatResponseDto>('/chat', {
       method: 'POST',
@@ -719,8 +918,67 @@ export class HelperApiClient {
         enthusiasm?: string;
         directness?: string;
         defaultAnswerShape?: string;
+        searchLocalityHint?: string;
+        decisionAssertiveness?: string;
+        clarificationTolerance?: string;
+        citationPreference?: string;
+        repairStyle?: string;
+        reasoningStyle?: string;
+        reasoningEffort?: string;
+        personaBundleId?: string;
+        projectId?: string;
+        projectLabel?: string;
+        projectInstructions?: string;
+        projectMemoryEnabled?: boolean;
+        backgroundResearchEnabled?: boolean;
+        proactiveUpdatesEnabled?: boolean;
         memoryTags: string[];
         memoryItemsCount?: number;
+      };
+      projectContext?: {
+        projectId: string;
+        label?: string;
+        instructions?: string;
+        memoryEnabled: boolean;
+        referenceArtifacts?: string[];
+        updatedAtUtc: string;
+      };
+      backgroundTasks?: Array<{
+        id: string;
+        kind: string;
+        title: string;
+        status: string;
+        createdAtUtc: string;
+        dueAtUtc?: string;
+        projectId?: string;
+        notes?: string;
+      }>;
+      proactiveTopics?: Array<{
+        id: string;
+        topic: string;
+        frequency: string;
+        enabled: boolean;
+        createdAtUtc: string;
+        projectId?: string;
+      }>;
+      liveVoiceSession?: {
+        sessionId: string;
+        status: string;
+        language: string;
+        runtimeKind: string;
+        interruptionsEnabled: boolean;
+        isHeld: boolean;
+        lastTranscript?: string;
+        transcriptSegments?: string[];
+        attachedReferenceCount: number;
+        lastReferenceSummary?: string;
+        captureChunkCount: number;
+        approximateDurationMs: number;
+        holdCount: number;
+        resumeCount: number;
+        recentChunks?: LiveVoiceCaptureChunkDto[];
+        startedAtUtc?: string;
+        updatedAtUtc: string;
       };
     }>(`/chat/${encodeURIComponent(conversationId)}`, { method: 'GET' }, { profile: 'startup', label: 'Conversation restore' });
   }
@@ -768,6 +1026,20 @@ export class HelperApiClient {
     enthusiasm?: string;
     directness?: string;
     defaultAnswerShape?: string;
+    searchLocalityHint?: string;
+    decisionAssertiveness?: string;
+    clarificationTolerance?: string;
+    citationPreference?: string;
+    repairStyle?: string;
+    reasoningStyle?: string;
+    reasoningEffort?: string;
+    personaBundleId?: string;
+    projectId?: string;
+    projectLabel?: string;
+    projectInstructions?: string;
+    projectMemoryEnabled?: boolean;
+    backgroundResearchEnabled?: boolean;
+    proactiveUpdatesEnabled?: boolean;
     personalMemoryConsentGranted?: boolean;
     sessionMemoryTtlMinutes?: number;
     taskMemoryTtlHours?: number;
@@ -790,6 +1062,20 @@ export class HelperApiClient {
       enthusiasm?: string;
       directness?: string;
       defaultAnswerShape?: string;
+      searchLocalityHint?: string;
+      decisionAssertiveness?: string;
+      clarificationTolerance?: string;
+      citationPreference?: string;
+      repairStyle?: string;
+      reasoningStyle?: string;
+      reasoningEffort?: string;
+      personaBundleId?: string;
+      projectId?: string;
+      projectLabel?: string;
+      projectInstructions?: string;
+      projectMemoryEnabled?: boolean;
+      backgroundResearchEnabled?: boolean;
+      proactiveUpdatesEnabled?: boolean;
     }>(`/chat/${encodeURIComponent(conversationId)}/preferences`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -807,6 +1093,86 @@ export class HelperApiClient {
 
   deleteConversationMemoryItem(conversationId: string, memoryId: string) {
     return request<{ success: boolean }>(`/chat/${encodeURIComponent(conversationId)}/memory/${encodeURIComponent(memoryId)}`, {
+      method: 'DELETE',
+    });
+  }
+
+  cancelBackgroundTask(conversationId: string, taskId: string, body?: { reason?: string }) {
+    return request<{ success: boolean; taskId: string; status: string }>(`/chat/${encodeURIComponent(conversationId)}/background/${encodeURIComponent(taskId)}/cancel`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body ?? {}),
+    });
+  }
+
+  setProactiveTopicEnabled(conversationId: string, topicId: string, body: { enabled: boolean }) {
+    return request<{ success: boolean; topicId: string; enabled: boolean }>(`/chat/${encodeURIComponent(conversationId)}/topics/${encodeURIComponent(topicId)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  }
+
+  syncLiveVoiceSession(conversationId: string, body: LiveVoiceSessionSyncDto) {
+    return request<{
+      success: boolean;
+      liveVoiceSession: {
+        sessionId: string;
+        status: string;
+        language: string;
+        runtimeKind: string;
+        interruptionsEnabled: boolean;
+        isHeld: boolean;
+        lastTranscript?: string;
+        transcriptSegments?: string[];
+        attachedReferenceCount: number;
+        lastReferenceSummary?: string;
+        captureChunkCount: number;
+        approximateDurationMs: number;
+        holdCount: number;
+        resumeCount: number;
+        recentChunks?: LiveVoiceCaptureChunkDto[];
+        startedAtUtc?: string;
+        updatedAtUtc: string;
+      };
+    }>(`/chat/${encodeURIComponent(conversationId)}/voice/session`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  }
+
+  appendLiveVoiceChunk(conversationId: string, sessionId: string, body: LiveVoiceChunkSyncDto) {
+    return request<{
+      success: boolean;
+      liveVoiceSession: {
+        sessionId: string;
+        status: string;
+        language: string;
+        runtimeKind: string;
+        interruptionsEnabled: boolean;
+        isHeld: boolean;
+        lastTranscript?: string;
+        transcriptSegments?: string[];
+        attachedReferenceCount: number;
+        lastReferenceSummary?: string;
+        captureChunkCount: number;
+        approximateDurationMs: number;
+        holdCount: number;
+        resumeCount: number;
+        recentChunks?: LiveVoiceCaptureChunkDto[];
+        startedAtUtc?: string;
+        updatedAtUtc: string;
+      };
+    }>(`/chat/${encodeURIComponent(conversationId)}/voice/session/${encodeURIComponent(sessionId)}/chunks`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  }
+
+  clearLiveVoiceSession(conversationId: string, sessionId: string) {
+    return request<{ success: boolean; sessionId: string }>(`/chat/${encodeURIComponent(conversationId)}/voice/session/${encodeURIComponent(sessionId)}`, {
       method: 'DELETE',
     });
   }

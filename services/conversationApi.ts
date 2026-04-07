@@ -179,6 +179,14 @@ export async function deleteConversationMemoryEntry(conversationId: string, memo
   return helperApi.deleteConversationMemoryItem(conversationId, memoryId);
 }
 
+export async function cancelConversationBackgroundTask(conversationId: string, taskId: string, reason?: string) {
+  return helperApi.cancelBackgroundTask(conversationId, taskId, { reason });
+}
+
+export async function setConversationProactiveTopicEnabled(conversationId: string, topicId: string, enabled: boolean) {
+  return helperApi.setProactiveTopicEnabled(conversationId, topicId, { enabled });
+}
+
 export async function deleteConversation(conversationId: string) {
   return helperApi.deleteConversation(conversationId);
 }

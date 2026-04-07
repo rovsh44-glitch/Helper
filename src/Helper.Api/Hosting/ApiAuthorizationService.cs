@@ -118,6 +118,16 @@ public sealed class ApiAuthorizationService : IApiAuthorizationService
             return "metrics:read";
         }
 
+        if (normalized.StartsWith("/api/settings/provider-profiles/activate"))
+        {
+            return "evolution:control";
+        }
+
+        if (normalized.StartsWith("/api/settings/provider-profiles") || normalized.StartsWith("/api/settings/runtime-doctor"))
+        {
+            return "metrics:read";
+        }
+
         if (normalized.StartsWith("/api/metrics"))
         {
             return "metrics:read";
