@@ -3,7 +3,6 @@ using System.Runtime.CompilerServices;
 using Helper.Api.Backend.Application;
 using Helper.Api.Backend.Configuration;
 using Helper.Api.Backend.ModelGateway;
-using Helper.Api.Backend.Providers;
 using Helper.Runtime.Core;
 using Helper.Runtime.Infrastructure;
 
@@ -31,10 +30,9 @@ public sealed class ChatTurnExecutor : IChatTurnExecutor
         ISourceNormalizationService? sourceNormalizer = null,
         IConversationContextAssembler? contextAssembler = null,
         IReasoningBranchExecutor? reasoningBranchExecutor = null,
-        IConversationVariationPolicy? variationPolicy = null,
-        IProviderProfileResolver? providerProfileResolver = null)
+        IConversationVariationPolicy? variationPolicy = null)
     {
-        var resolvedModelGateway = modelGateway ?? new HelperModelGateway(ai, new BackendOptionsCatalog(config), new ModelGatewayTelemetry(), providerProfileResolver);
+        var resolvedModelGateway = modelGateway ?? new HelperModelGateway(ai, new BackendOptionsCatalog(config), new ModelGatewayTelemetry());
         var resolvedSourceNormalizer = sourceNormalizer ?? new SourceNormalizationService();
         var localBaselineAnswerService = new LocalBaselineAnswerService(ai);
         var deps = new ChatTurnExecutorDependencies(
@@ -53,8 +51,6 @@ public sealed class ChatTurnExecutor : IChatTurnExecutor
             resolvedSourceNormalizer,
             variationPolicy ?? new ConversationVariationPolicy(),
             policyProvider ?? new BackendOptionsCatalog(config),
-            new ConversationPromptPolicy(),
-            new ConversationModelSelectionPolicy(providerProfileResolver: providerProfileResolver),
             ChatTurnExecutionSupport.ReadProjectGenerationFlag(),
             ChatTurnExecutionSupport.ReadDouble("HELPER_CHAT_GENERATE_MIN_CONFIDENCE", 0.70, 0.0, 1.0),
             localBaselineAnswerService,

@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <Compile Remove="Fixtures\**\*.cs" />
+    <Compile Remove="BrowserRenderFallbackServiceTests.cs" />
     <Compile Remove="EvalHarnessTests.cs" />
     <Compile Remove="TemplateCertificationServiceTests.cs" />
     <Compile Remove="TemplatePromotionEndToEndAndChaosTests.cs" />

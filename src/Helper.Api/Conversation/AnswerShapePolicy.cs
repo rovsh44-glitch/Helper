@@ -6,7 +6,6 @@ internal interface IAnswerShapePolicy
 {
     string ApplyAnswerShapePreference(ChatTurnContext context, string solution, ComposerLocalization localization);
     string ApplyTaskClassFormatting(ChatTurnContext context, string solution, ComposerLocalization localization);
-    string ApplyConversationalNaturalness(ChatTurnContext context, string solution);
     bool HasStructuredShape(string solution);
 }
 
@@ -80,23 +79,6 @@ internal sealed class AnswerShapePolicy : IAnswerShapePolicy
         }
 
         return solution;
-    }
-
-    public string ApplyConversationalNaturalness(ChatTurnContext context, string solution)
-    {
-        if (string.IsNullOrWhiteSpace(solution))
-        {
-            return solution;
-        }
-
-        var normalized = solution.Trim();
-        if ((context.CollaborationIntent.IsGuidanceSeeking || context.CollaborationIntent.TrustsBestJudgment) &&
-            normalized.StartsWith("Here is", StringComparison.OrdinalIgnoreCase))
-        {
-            return normalized["Here is".Length..].TrimStart();
-        }
-
-        return normalized;
     }
 
     public bool HasStructuredShape(string solution)

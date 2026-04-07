@@ -28,8 +28,6 @@ internal sealed record ChatTurnExecutorDependencies(
     ISourceNormalizationService SourceNormalizer,
     IConversationVariationPolicy VariationPolicy,
     IBackendRuntimePolicyProvider PolicyProvider,
-    IConversationPromptPolicy? PromptPolicy,
-    IConversationModelSelectionPolicy? ModelSelectionPolicy,
     bool ProjectGenerationEnabled,
     double GenerateMinConfidence,
     ILocalBaselineAnswerService? LocalBaselineAnswerService = null,

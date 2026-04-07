@@ -18,12 +18,6 @@ public sealed class MemoryPolicyService : IMemoryPolicyService
         "меня ",
         "мне "
     };
-    private readonly IMemoryPriorityPolicy _priorityPolicy;
-
-    public MemoryPolicyService(IMemoryPriorityPolicy? priorityPolicy = null)
-    {
-        _priorityPolicy = priorityPolicy ?? new MemoryPriorityPolicy();
-    }
 
     public void CaptureFromUserMessage(ConversationState state, ChatMessageDto message, DateTimeOffset now)
     {
@@ -52,13 +46,7 @@ public sealed class MemoryPolicyService : IMemoryPolicyService
                 now,
                 now.AddMinutes(ClampSessionTtlMinutes(state.SessionMemoryTtlMinutes)),
                 message.TurnId,
-                isPersonal: false,
-                scope: MemoryScope.Session,
-                retention: "session_ttl",
-                whyRemembered: "recent_conversation_continuity",
-                priority: _priorityPolicy.Score(MemoryScope.Session, false, sessionContent),
-                sourceProjectId: state.ProjectContext?.ProjectId,
-                userEditable: false);
+                isPersonal: false);
 
             if (ContainsAnyToken(content, TaskMarkers))
             {
@@ -69,13 +57,7 @@ public sealed class MemoryPolicyService : IMemoryPolicyService
                     now,
                     now.AddHours(ClampTaskTtlHours(state.TaskMemoryTtlHours)),
                     message.TurnId,
-                    isPersonal: false,
-                    scope: state.ProjectContext is null ? MemoryScope.Task : MemoryScope.Project,
-                    retention: state.ProjectContext is null ? "task_ttl" : "project_ttl",
-                    whyRemembered: state.ProjectContext is null ? "task_signal" : "project_task_signal",
-                    priority: _priorityPolicy.Score(state.ProjectContext is null ? MemoryScope.Task : MemoryScope.Project, false, content),
-                    sourceProjectId: state.ProjectContext?.ProjectId,
-                    userEditable: true);
+                    isPersonal: false);
             }
 
             if (RememberDirectiveParser.TryExtractFact(content, out var fact))
@@ -92,13 +74,7 @@ public sealed class MemoryPolicyService : IMemoryPolicyService
                             now,
                             now.AddDays(ClampLongTermTtlDays(state.LongTermMemoryTtlDays)),
                             message.TurnId,
-                            isPersonal,
-                            scope: isPersonal ? MemoryScope.User : (state.ProjectContext is null ? MemoryScope.Session : MemoryScope.Project),
-                            retention: "long_term_ttl",
-                            whyRemembered: "explicit_remember_directive",
-                            priority: _priorityPolicy.Score(isPersonal ? MemoryScope.User : (state.ProjectContext is null ? MemoryScope.Session : MemoryScope.Project), isPersonal, fact),
-                            sourceProjectId: state.ProjectContext?.ProjectId,
-                            userEditable: true);
+                            isPersonal);
                     }
                 }
             }
@@ -207,19 +183,11 @@ public sealed class MemoryPolicyService : IMemoryPolicyService
         DateTimeOffset createdAt,
         DateTimeOffset? expiresAt,
         string? sourceTurnId,
-        bool isPersonal,
-        MemoryScope scope,
-        string retention,
-        string whyRemembered,
-        int priority,
-        string? sourceProjectId,
-        bool userEditable)
+        bool isPersonal)
     {
         var existingIndex = state.MemoryItems.FindIndex(item =>
             item.Type.Equals(type, StringComparison.OrdinalIgnoreCase) &&
-            item.Content.Equals(content, StringComparison.OrdinalIgnoreCase) &&
-            item.Scope == scope &&
-            string.Equals(item.SourceProjectId, sourceProjectId, StringComparison.OrdinalIgnoreCase));
+            item.Content.Equals(content, StringComparison.OrdinalIgnoreCase));
 
         var normalizedType = type.Trim().ToLowerInvariant();
         var nextItem = new ConversationMemoryItem(
@@ -229,13 +197,7 @@ public sealed class MemoryPolicyService : IMemoryPolicyService
             createdAt,
             expiresAt,
             sourceTurnId,
-            isPersonal,
-            scope,
-            retention,
-            whyRemembered,
-            priority,
-            sourceProjectId,
-            userEditable);
+            isPersonal);
 
         if (existingIndex >= 0)
         {

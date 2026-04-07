@@ -13,27 +13,6 @@ public sealed class WebResearchTelemetryServiceTests
             Response: "Done",
             Messages: Array.Empty<ChatMessageDto>(),
             Timestamp: DateTimeOffset.UtcNow,
-            EpistemicAnswerMode: "needs_verification",
-            RepairDriver: "interaction",
-            EpistemicRisk: new EpistemicRiskSnapshotDto(
-                AnswerMode: "needs_verification",
-                GroundingStatus: "grounded_with_contradictions",
-                CitationCoverage: 0.42,
-                VerifiedClaimRatio: 0.5,
-                HasContradictions: true,
-                HasWeakEvidence: true,
-                HighRiskDomain: true,
-                FreshnessSensitive: true,
-                ConfidenceCeiling: 0.42,
-                CalibrationThreshold: 0.78,
-                AbstentionRecommended: true),
-            InteractionState: new InteractionStateSnapshotDto(
-                FrustrationLevel: "moderate",
-                UrgencyLevel: "low",
-                OverloadRisk: "low",
-                ReassuranceNeed: "high",
-                ClarificationToleranceShift: -1,
-                AssistantPressureRisk: "moderate"),
             SearchTrace: new SearchTraceDto(
                 RequestedMode: "force_search",
                 ResolvedRequirement: "web_required",
@@ -65,12 +44,6 @@ public sealed class WebResearchTelemetryServiceTests
         Assert.Equal(2, snapshot.AvgFetchedPagesPerTurn);
         Assert.Equal(5, snapshot.AvgPassagesPerTurn);
         Assert.Equal(1, snapshot.StaleDisclosureTurns);
-        Assert.Equal(1, snapshot.NeedsVerificationTurns);
-        Assert.Equal(1, snapshot.AbstentionRecommendedTurns);
-        Assert.Equal(1, snapshot.ContradictionRiskTurns);
-        Assert.Equal(1, snapshot.InteractionPressureTurns);
-        Assert.Equal(1, snapshot.ReassuranceNeedTurns);
-        Assert.Equal(1, snapshot.InteractionDrivenRepairTurns);
     }
 
     [Fact]
@@ -83,20 +56,6 @@ public sealed class WebResearchTelemetryServiceTests
             Response: "Cached answer",
             Messages: Array.Empty<ChatMessageDto>(),
             Timestamp: DateTimeOffset.UtcNow,
-            EpistemicAnswerMode: "abstain",
-            RepairDriver: "epistemic",
-            EpistemicRisk: new EpistemicRiskSnapshotDto(
-                AnswerMode: "abstain",
-                GroundingStatus: "unverified",
-                CitationCoverage: 0.1,
-                VerifiedClaimRatio: 0.0,
-                HasContradictions: false,
-                HasWeakEvidence: true,
-                HighRiskDomain: true,
-                FreshnessSensitive: true,
-                ConfidenceCeiling: 0.4,
-                CalibrationThreshold: 0.78,
-                AbstentionRecommended: true),
             SearchTrace: new SearchTraceDto(
                 RequestedMode: "auto",
                 ResolvedRequirement: "web_helpful",
@@ -120,8 +79,6 @@ public sealed class WebResearchTelemetryServiceTests
         Assert.Equal(1, snapshot.Turns);
         Assert.Equal(1, snapshot.CachedWebTurns);
         Assert.Equal(0, snapshot.LiveWebTurns);
-        Assert.Equal(1, snapshot.AbstainTurns);
-        Assert.Equal(1, snapshot.EpistemicDrivenRepairTurns);
     }
 }
 

@@ -24,7 +24,7 @@ public static partial class ServiceRegistrationExtensions
         services.AddSingleton<IRemoteDocumentExtractor, PdfRemoteDocumentExtractor>();
         services.AddSingleton<IHardPageDetectionPolicy, HardPageDetectionPolicy>();
         services.AddSingleton<IRenderedPageBudgetPolicy, RenderedPageBudgetPolicy>();
-        services.AddSingleton<IBrowserRenderFallbackService, BrowserRenderFallbackService>();
+        services.AddSingleton<IBrowserRenderFallbackService, DisabledBrowserRenderFallbackService>();
         services.AddSingleton<IWebProviderHealthState, WebProviderHealthState>();
         services.AddSingleton<ISearchCostBudgetPolicy, SearchCostBudgetPolicy>();
         services.AddSingleton<ITurnLatencyBudgetPolicy, TurnLatencyBudgetPolicy>();

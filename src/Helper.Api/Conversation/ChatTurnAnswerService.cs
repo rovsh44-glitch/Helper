@@ -83,14 +83,13 @@ internal sealed class ChatTurnAnswerService
         var llmTimedOut = false;
 
         using (var stageCts = ChatTurnExecutionSupport.CreateStageCancellation("llm", context, ct))
-        using (var streamCts = CancellationTokenSource.CreateLinkedTokenSource(stageCts.Token))
         {
             var stream = _deps.Resilience.ExecuteStreamingAsync(
                 "llm.ask.stream",
                 retryCt => StreamThroughGatewayAsync(prepared, context, retryCt),
-                streamCts.Token);
+                stageCts.Token);
 
-            await using var enumerator = stream.GetAsyncEnumerator(streamCts.Token);
+            await using var enumerator = stream.GetAsyncEnumerator(stageCts.Token);
             while (true)
             {
                 var hasNext = false;
@@ -140,10 +139,6 @@ internal sealed class ChatTurnAnswerService
                         offset,
                         DateTimeOffset.UtcNow,
                         ModelStreamStartedAtUtc: modelStreamStartedAt);
-                    if (!streamCts.IsCancellationRequested)
-                    {
-                        streamCts.Cancel();
-                    }
                     break;
                 }
 
@@ -191,16 +186,7 @@ internal sealed class ChatTurnAnswerService
         var model = context.Intent.Model;
         if (string.IsNullOrWhiteSpace(model))
         {
-            if (_deps.ModelSelectionPolicy is not null)
-            {
-                var selection = _deps.ModelSelectionPolicy.Select(context, _deps.ModelGateway.GetAvailableModelsSnapshot());
-                model = selection.PreferredModel;
-                context.ModelRouteKey = selection.RouteKey;
-                context.ModelRouteReason = string.Join("; ", selection.Reasons);
-                context.ModelRouteSignals.Clear();
-                context.ModelRouteSignals.AddRange(selection.Reasons);
-            }
-            else if (_deps.ModelOrchestrator is IContextAwareModelOrchestrator contextAware)
+            if (_deps.ModelOrchestrator is IContextAwareModelOrchestrator contextAware)
             {
                 var approximateTokens = TokenBudgetEstimator.Estimate(string.Join("\n", context.History.Select(message => message.Content)));
                 var route = await contextAware.SelectRoutingDecisionAsync(
@@ -263,8 +249,7 @@ internal sealed class ChatTurnAnswerService
         var styleRoute = _deps.UserProfileService.ResolveStyleRoute(profile, context);
         context.ResolvedStyleMode = styleRoute.Mode;
         context.ResolvedTonePreset = styleRoute.TonePreset;
-        var promptPolicy = _deps.PromptPolicy ?? new ConversationPromptPolicy();
-        var styleHint = promptPolicy.BuildSystemInstruction(context, profile, styleRoute, resolvedTurnLanguage);
+        var styleHint = styleRoute.BuildSystemHint(profile, resolvedTurnLanguage);
         var systemInstruction = string.IsNullOrWhiteSpace(context.Request.SystemInstruction)
             ? styleHint
             : $"{styleHint} {context.Request.SystemInstruction}";

@@ -60,7 +60,7 @@ internal sealed class DialogActPlanner : IDialogActPlanner
             return DialogAct.AckMemory;
         }
 
-        if (!context.IsCritiqueApproved)
+        if (!context.IsCritiqueApproved || !string.IsNullOrWhiteSpace(context.CritiqueFeedback))
         {
             return DialogAct.Repair;
         }

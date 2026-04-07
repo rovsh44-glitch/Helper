@@ -18,7 +18,7 @@ public sealed record ConversationStyleRoute(
 
         return string.Join(
             " ",
-            $"User profile: language={effectiveLanguage}, detail={profile.DetailLevel}, formality={profile.Formality}, domain={profile.DomainFamiliarity}, structure={profile.PreferredStructure}, warmth={profile.Warmth}, enthusiasm={profile.Enthusiasm}, directness={profile.Directness}, answer_shape={profile.DefaultAnswerShape}, decision_assertiveness={profile.DecisionAssertiveness}, clarification_tolerance={profile.ClarificationTolerance}, citation_preference={profile.CitationPreference}, repair_style={profile.RepairStyle}, reasoning_style={profile.ReasoningStyle}, reasoning_effort={profile.ReasoningEffort}.",
+            $"User profile: language={effectiveLanguage}, detail={profile.DetailLevel}, formality={profile.Formality}, domain={profile.DomainFamiliarity}, structure={profile.PreferredStructure}, warmth={profile.Warmth}, enthusiasm={profile.Enthusiasm}, directness={profile.Directness}, answer_shape={profile.DefaultAnswerShape}.",
             $"Style route: mode={Mode}, tone_preset={TonePreset}.",
             $"Persona: {PersonaDescriptor}.",
             $"Mode guidance: {ModeDirective}");
@@ -61,13 +61,13 @@ public sealed class ConversationStylePolicy : IConversationStylePolicy
 
         if (string.Equals(profile.Formality, "formal", StringComparison.OrdinalIgnoreCase))
         {
-            return BuildProfessionalRoute(profile, context);
+            return BuildProfessionalRoute(profile);
         }
 
-        return BuildConversationalRoute(profile, context);
+        return BuildConversationalRoute(profile);
     }
 
-    private static ConversationStyleRoute BuildConversationalRoute(ConversationUserProfile profile, ChatTurnContext? context)
+    private static ConversationStyleRoute BuildConversationalRoute(ConversationUserProfile profile)
     {
         var tonePreset = profile switch
         {
@@ -78,34 +78,24 @@ public sealed class ConversationStylePolicy : IConversationStylePolicy
             _ => ConversationalProfessional.TonePreset
         };
 
-        if (context?.InteractionPolicy?.UseCalmTone == true)
-        {
-            tonePreset = "conversational_calm";
-        }
-
         return new ConversationStyleRoute(
             Mode: ConversationalProfessional.Mode,
             TonePreset: tonePreset,
             PersonaDescriptor: BuildPersonaDescriptor("naturally conversational", profile),
-            ModeDirective: BuildConversationalDirective(profile, context));
+            ModeDirective: BuildConversationalDirective(profile));
     }
 
-    private static ConversationStyleRoute BuildProfessionalRoute(ConversationUserProfile profile, ChatTurnContext? context)
+    private static ConversationStyleRoute BuildProfessionalRoute(ConversationUserProfile profile)
     {
         var tonePreset = profile.Directness == "direct"
             ? "professional_direct"
             : Professional.TonePreset;
 
-        if (context?.InteractionPolicy?.UseCalmTone == true)
-        {
-            tonePreset = "professional_calm";
-        }
-
         return new ConversationStyleRoute(
             Mode: Professional.Mode,
             TonePreset: tonePreset,
             PersonaDescriptor: BuildPersonaDescriptor("professionally warm", profile),
-            ModeDirective: BuildProfessionalDirective(profile, context));
+            ModeDirective: BuildProfessionalDirective(profile));
     }
 
     private static bool IsOperatorTurn(ChatTurnContext? context)
@@ -162,7 +152,7 @@ public sealed class ConversationStylePolicy : IConversationStylePolicy
         return string.Join(", ", segments);
     }
 
-    private static string BuildConversationalDirective(ConversationUserProfile profile, ChatTurnContext? context)
+    private static string BuildConversationalDirective(ConversationUserProfile profile)
     {
         var segments = new List<string>
         {
@@ -188,20 +178,10 @@ public sealed class ConversationStylePolicy : IConversationStylePolicy
             _ => "Balance directness with conversational tact."
         });
 
-        if (context?.InteractionPolicy?.IncreaseReassurance == true)
-        {
-            segments.Add("Use calm, reassuring phrasing without becoming therapeutic or sentimental.");
-        }
-
-        if (context?.InteractionPolicy?.CompressStructure == true)
-        {
-            segments.Add("Prefer shorter structure and low-cognitive-load sequencing.");
-        }
-
         return string.Join(" ", segments);
     }
 
-    private static string BuildProfessionalDirective(ConversationUserProfile profile, ChatTurnContext? context)
+    private static string BuildProfessionalDirective(ConversationUserProfile profile)
     {
         var segments = new List<string>
         {
@@ -225,16 +205,6 @@ public sealed class ConversationStylePolicy : IConversationStylePolicy
         else if (profile.Enthusiasm == "high")
         {
             segments.Add("Allow some forward energy while preserving professional restraint.");
-        }
-
-        if (context?.InteractionPolicy?.IncreaseReassurance == true)
-        {
-            segments.Add("Be more visibly steady and reassuring while keeping professional boundaries.");
-        }
-
-        if (context?.InteractionPolicy?.CompressStructure == true)
-        {
-            segments.Add("Reduce structural overhead and keep the answer easier to scan.");
         }
 
         return string.Join(" ", segments);

@@ -28,24 +28,6 @@ internal sealed class PersistedConversationState
     public string Directness { get; set; } = "balanced";
     public string DefaultAnswerShape { get; set; } = "auto";
     public string? SearchLocalityHint { get; set; }
-    public string DecisionAssertiveness { get; set; } = "balanced";
-    public string ClarificationTolerance { get; set; } = "balanced";
-    public string CitationPreference { get; set; } = "adaptive";
-    public string RepairStyle { get; set; } = "direct_fix";
-    public string ReasoningStyle { get; set; } = "concise";
-    public string ReasoningEffort { get; set; } = "balanced";
-    public string? PersonaBundleId { get; set; }
-    public SharedUnderstandingState? SharedUnderstanding { get; set; }
-    public UserUnderstandingState? UserUnderstanding { get; set; }
-    public ProjectUnderstandingState? ProjectUnderstanding { get; set; }
-    public ProjectContextState? ProjectContext { get; set; }
-    public PersonalizationProfile? PersonalizationProfile { get; set; }
-    public LiveVoiceSessionState? LiveVoiceSession { get; set; }
-    public CommunicationQualityState? CommunicationQuality { get; set; }
-    public bool BackgroundResearchEnabled { get; set; } = true;
-    public bool ProactiveUpdatesEnabled { get; set; }
-    public List<BackgroundConversationTask> BackgroundTasks { get; set; } = new();
-    public List<ProactiveTopicSubscription> ProactiveTopics { get; set; } = new();
     public string? ActiveTurnId { get; set; }
     public string? ActiveTurnUserMessage { get; set; }
     public DateTimeOffset? ActiveTurnStartedAt { get; set; }
@@ -103,24 +85,6 @@ internal static class ConversationPersistenceModelMapper
                 Directness = state.Directness,
                 DefaultAnswerShape = state.DefaultAnswerShape,
                 SearchLocalityHint = state.SearchLocalityHint,
-                DecisionAssertiveness = state.DecisionAssertiveness,
-                ClarificationTolerance = state.ClarificationTolerance,
-                CitationPreference = state.CitationPreference,
-                RepairStyle = state.RepairStyle,
-                ReasoningStyle = state.ReasoningStyle,
-                ReasoningEffort = state.ReasoningEffort,
-                PersonaBundleId = state.PersonaBundleId,
-                SharedUnderstanding = state.SharedUnderstanding,
-                UserUnderstanding = state.UserUnderstanding,
-                ProjectUnderstanding = state.ProjectUnderstanding,
-                ProjectContext = state.ProjectContext,
-                PersonalizationProfile = state.PersonalizationProfile,
-                LiveVoiceSession = state.LiveVoiceSession,
-                CommunicationQuality = state.CommunicationQuality,
-                BackgroundResearchEnabled = state.BackgroundResearchEnabled,
-                ProactiveUpdatesEnabled = state.ProactiveUpdatesEnabled,
-                BackgroundTasks = state.BackgroundTasks.ToList(),
-                ProactiveTopics = state.ProactiveTopics.ToList(),
                 ActiveTurnId = state.ActiveTurnId,
                 ActiveTurnUserMessage = state.ActiveTurnUserMessage,
                 ActiveTurnStartedAt = state.ActiveTurnStartedAt,
@@ -157,22 +121,6 @@ internal static class ConversationPersistenceModelMapper
             Directness = string.IsNullOrWhiteSpace(item.Directness) ? "balanced" : item.Directness,
             DefaultAnswerShape = string.IsNullOrWhiteSpace(item.DefaultAnswerShape) ? "auto" : item.DefaultAnswerShape,
             SearchLocalityHint = string.IsNullOrWhiteSpace(item.SearchLocalityHint) ? null : item.SearchLocalityHint.Trim(),
-            DecisionAssertiveness = string.IsNullOrWhiteSpace(item.DecisionAssertiveness) ? "balanced" : item.DecisionAssertiveness,
-            ClarificationTolerance = string.IsNullOrWhiteSpace(item.ClarificationTolerance) ? "balanced" : item.ClarificationTolerance,
-            CitationPreference = string.IsNullOrWhiteSpace(item.CitationPreference) ? "adaptive" : item.CitationPreference,
-            RepairStyle = string.IsNullOrWhiteSpace(item.RepairStyle) ? "direct_fix" : item.RepairStyle,
-            ReasoningStyle = string.IsNullOrWhiteSpace(item.ReasoningStyle) ? "concise" : item.ReasoningStyle,
-            ReasoningEffort = string.IsNullOrWhiteSpace(item.ReasoningEffort) ? "balanced" : item.ReasoningEffort,
-            PersonaBundleId = string.IsNullOrWhiteSpace(item.PersonaBundleId) ? null : item.PersonaBundleId.Trim(),
-            SharedUnderstanding = item.SharedUnderstanding,
-            UserUnderstanding = item.UserUnderstanding,
-            ProjectUnderstanding = item.ProjectUnderstanding,
-            ProjectContext = item.ProjectContext,
-            PersonalizationProfile = item.PersonalizationProfile,
-            LiveVoiceSession = item.LiveVoiceSession,
-            CommunicationQuality = item.CommunicationQuality,
-            BackgroundResearchEnabled = item.BackgroundResearchEnabled,
-            ProactiveUpdatesEnabled = item.ProactiveUpdatesEnabled,
             ActiveTurnId = item.ActiveTurnId,
             ActiveTurnUserMessage = item.ActiveTurnUserMessage,
             ActiveTurnStartedAt = item.ActiveTurnStartedAt,
@@ -213,12 +161,7 @@ internal static class ConversationPersistenceModelMapper
                     item.UpdatedAt,
                     item.UpdatedAt.AddDays(Math.Clamp(item.LongTermMemoryTtlDays, 1, 3650)),
                     null,
-                    IsPersonal: false,
-                    Scope: MemoryScope.User,
-                    Retention: "long_term_ttl",
-                    WhyRemembered: "legacy_preference_migration",
-                    Priority: 85,
-                    UserEditable: true));
+                    IsPersonal: false));
             }
 
             foreach (var task in item.OpenTasks.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase))
@@ -230,19 +173,9 @@ internal static class ConversationPersistenceModelMapper
                     item.UpdatedAt,
                     item.UpdatedAt.AddHours(Math.Clamp(item.TaskMemoryTtlHours, 1, 24 * 60)),
                     null,
-                    IsPersonal: false,
-                    Scope: MemoryScope.Task,
-                    Retention: "task_ttl",
-                    WhyRemembered: "legacy_task_migration",
-                    Priority: 70,
-                    UserEditable: true));
+                    IsPersonal: false));
             }
         }
-
-        state.BackgroundTasks.Clear();
-        state.BackgroundTasks.AddRange(item.BackgroundTasks);
-        state.ProactiveTopics.Clear();
-        state.ProactiveTopics.AddRange(item.ProactiveTopics);
 
         state.Branches.Clear();
         if (item.Branches.Count == 0)

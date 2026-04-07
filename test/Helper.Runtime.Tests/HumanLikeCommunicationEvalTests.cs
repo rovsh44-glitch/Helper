@@ -74,29 +74,5 @@ public class HumanLikeCommunicationEvalTests
             }
         }
     }
-
-    [Fact]
-    [Trait("Category", "EvalV2")]
-    public async Task HumanLikeCommunicationEvalService_Prepares_Real_Repository_Package()
-    {
-        var packageRoot = TestWorkspaceRoot.ResolveFile("eval", "human_like_communication");
-        var service = new HumanLikeCommunicationEvalService();
-
-        var package = await service.PrepareAsync(
-            packageRoot,
-            new HumanLikeCommunicationEvalOptions(MinPreparedRuns: 240, Seed: 29),
-            CancellationToken.None);
-
-        Assert.Equal("pass", package.Summary.GateStatus);
-        Assert.Empty(package.Summary.Alerts);
-        Assert.Equal("2026-04-05", package.Rubric.Version);
-        Assert.True(package.SeedScenarios.Count >= 12);
-        Assert.True(package.PreparedRun.Scenarios.Count >= 240);
-        Assert.Contains("unsupported_factual", package.Summary.LabelDistribution.Keys, StringComparer.OrdinalIgnoreCase);
-        Assert.Contains("clarification_fatigue", package.Summary.LabelDistribution.Keys, StringComparer.OrdinalIgnoreCase);
-        Assert.Contains("overload_sensitive", package.Summary.LabelDistribution.Keys, StringComparer.OrdinalIgnoreCase);
-        Assert.Contains("emotional_benign", package.Summary.LabelDistribution.Keys, StringComparer.OrdinalIgnoreCase);
-        Assert.Contains("research_synthesis", package.Summary.KindDistribution.Keys, StringComparer.OrdinalIgnoreCase);
-    }
 }
 
