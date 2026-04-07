@@ -25,10 +25,16 @@ internal sealed class BenchmarkResponseAssessmentWriter : IBenchmarkResponseAsse
 
     public string BuildAnalysis(ChatTurnContext context, string solution, bool isFallback, string? topicalBody)
     {
+        var answerModeLead = BuildAnswerModeLead(context);
         var evidenceLevel = BenchmarkEvidenceFallbackSummaryBuilder.GetPassageEvidenceSupportLevel(context);
         if (isFallback && !string.IsNullOrWhiteSpace(topicalBody))
         {
             var builder = new StringBuilder();
+            if (!string.IsNullOrWhiteSpace(answerModeLead))
+            {
+                builder.Append(answerModeLead);
+                builder.Append(' ');
+            }
             builder.Append("Базовый локальный каркас по теме выглядит так: ");
             builder.Append(topicalBody.Trim());
             if (context.Sources.Count > 0)
@@ -76,6 +82,11 @@ internal sealed class BenchmarkResponseAssessmentWriter : IBenchmarkResponseAsse
             if (_qualityPolicy.LooksLowQualityBenchmarkDraft(context, normalized))
             {
                 var builder = new StringBuilder();
+                if (!string.IsNullOrWhiteSpace(answerModeLead))
+                {
+                    builder.Append(answerModeLead);
+                    builder.Append(' ');
+                }
                 builder.Append("Черновой ответ был сгенерирован, но содержит заметный смешанный языковой шум и поэтому не годится как финальная формулировка без нормализации.");
                 if (context.Sources.Count == 0)
                 {
@@ -97,6 +108,10 @@ internal sealed class BenchmarkResponseAssessmentWriter : IBenchmarkResponseAsse
         }
 
         var parts = new List<string>();
+        if (!string.IsNullOrWhiteSpace(answerModeLead))
+        {
+            parts.Add(answerModeLead);
+        }
         if (_qualityPolicy.LooksLowQualityBenchmarkDraft(context, solution))
         {
             parts.Add("Черновой ответ содержит заметный смешанный языковой шум или placeholder-паттерны, поэтому его нельзя выдавать как готовый ответ без нормализации.");
@@ -125,17 +140,20 @@ internal sealed class BenchmarkResponseAssessmentWriter : IBenchmarkResponseAsse
 
     public string BuildConclusion(ChatTurnContext context, bool isFallback, string? topicalBody)
     {
+        var answerModeLead = BuildAnswerModeLead(context);
         var evidenceLevel = BenchmarkEvidenceFallbackSummaryBuilder.GetPassageEvidenceSupportLevel(context);
         if (!isFallback)
         {
             if (context.Sources.Count > 0)
             {
-                return "Итог: ответ нужно читать как сочетание локального базового понимания и внешней сверки; ссылки выше показывают, что веб-проверка действительно участвовала в результате.";
+                var result = "Итог: ответ нужно читать как сочетание локального базового понимания и внешней сверки; ссылки выше показывают, что веб-проверка действительно участвовала в результате.";
+                return string.IsNullOrWhiteSpace(answerModeLead) ? result : $"{answerModeLead} {result}";
             }
 
-            return context.IsFactualPrompt
+            var fallback = context.IsFactualPrompt
                 ? "Итог: это локальный explanatory answer без внешней проверки свежести, поэтому для текущих или спорных фактов понадобилась бы отдельная веб-сверка."
                 : "Итог: это local-first объяснение без live web-проверки. Для базового понимания этого достаточно, но для спорных или быстро меняющихся тем нужна внешняя сверка.";
+            return string.IsNullOrWhiteSpace(answerModeLead) ? fallback : $"{answerModeLead} {fallback}";
         }
 
         if (!string.IsNullOrWhiteSpace(topicalBody))
@@ -180,12 +198,14 @@ internal sealed class BenchmarkResponseAssessmentWriter : IBenchmarkResponseAsse
 
     public string BuildOpinion(ChatTurnContext context, bool isFallback, string? topicalBody)
     {
+        var answerModeLead = BuildAnswerModeLead(context);
         var evidenceLevel = BenchmarkEvidenceFallbackSummaryBuilder.GetPassageEvidenceSupportLevel(context);
         if (!isFallback)
         {
-            return context.Sources.Count > 0
+            var opinion = context.Sources.Count > 0
                 ? "Моё мнение: такой формат полезен, потому что видно, где локальная база была дополнена реальными источниками, а не подменена ими."
                 : "Моё мнение: для учебного или базового объяснения local-first ответ допустим, но финальную уверенность я бы давал только после внешней проверки там, где цена ошибки выше.";
+            return string.IsNullOrWhiteSpace(answerModeLead) ? opinion : $"{answerModeLead} {opinion}";
         }
 
         if (!string.IsNullOrWhiteSpace(topicalBody))
@@ -226,6 +246,17 @@ internal sealed class BenchmarkResponseAssessmentWriter : IBenchmarkResponseAsse
         return context.IsFactualPrompt
             ? "Моё мнение: в таком состоянии системы лучше дать осторожный отказ от уверенного фактического вывода, чем написать убедительно звучащий, но непроверенный ответ."
             : "Моё мнение: для research-режима честный структурированный fallback лучше, чем гладкий boilerplate, который делает вид, будто анализ уже состоялся.";
+    }
+
+    private static string? BuildAnswerModeLead(ChatTurnContext context)
+    {
+        return context.EpistemicAnswerMode switch
+        {
+            Epistemic.EpistemicAnswerMode.BestEffortHypothesis => "Эпистемический режим: ответ сформулирован как best-effort hypothesis, а не как окончательно установленный факт.",
+            Epistemic.EpistemicAnswerMode.NeedsVerification => "Эпистемический режим: ответ требует дополнительной проверки перед сильным утверждением.",
+            Epistemic.EpistemicAnswerMode.Abstain => "Эпистемический режим: система сознательно воздерживается от сильного фактического вывода.",
+            _ => null
+        };
     }
 }
 

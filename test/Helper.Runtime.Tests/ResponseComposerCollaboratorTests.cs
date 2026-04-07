@@ -146,6 +146,40 @@ public sealed class ResponseComposerCollaboratorTests
         Assert.DoesNotContain("Theoretical Physics V2", formatted, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public async Task ChatTurnFinalizer_ComposesStructuredBenchmarkClarification_WhenBenchmarkSectionsAreRequired()
+    {
+        var finalizer = new ChatTurnFinalizer(new CitationGroundingService(), ResponseComposerServiceFactory.CreateDefault());
+        var context = CreateContext(
+            "Проверь, актуальны ли налоговые thresholds и reporting deadlines, которыми я пользуюсь сегодня.",
+            preferredLanguage: "ru",
+            systemInstruction: "## Local Findings\n## Web Findings\n## Sources\n## Analysis\n## Conclusion\n## Opinion");
+        context.RequiresClarification = true;
+        context.ClarifyingQuestion = "Какое ограничение здесь главное: срок, стек, риск, запрет на изменения или формат результата?";
+        context.IsFactualPrompt = true;
+        context.ResolvedTurnLanguage = "ru";
+        context.UncertaintyFlags.Add("soft_best_effort_entry");
+
+        await finalizer.FinalizeAsync(context, CancellationToken.None);
+
+        Assert.Equal("clarification_required", context.GroundingStatus);
+        Assert.Contains("## Local Findings", context.FinalResponse, StringComparison.Ordinal);
+        Assert.Contains("## Analysis", context.FinalResponse, StringComparison.Ordinal);
+        Assert.Contains("Какое ограничение здесь главное", context.FinalResponse, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ResponseComposer_Appends_Verification_Framing_For_NeedsVerification_Mode()
+    {
+        var composer = ResponseComposerServiceFactory.CreateDefault();
+        var context = CreateContext("Проверь вывод", preferredLanguage: "ru");
+        context.EpistemicAnswerMode = Helper.Api.Conversation.Epistemic.EpistemicAnswerMode.NeedsVerification;
+
+        var result = composer.Compose(context, "Промежуточный вывод по теме.");
+
+        Assert.Contains("ответ пока предварительный", result, StringComparison.OrdinalIgnoreCase);
+    }
+
     private static ChatTurnContext CreateContext(
         string message,
         string preferredLanguage,

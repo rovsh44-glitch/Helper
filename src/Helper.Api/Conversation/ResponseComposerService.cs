@@ -1,4 +1,5 @@
 using System.Text;
+using Helper.Api.Conversation.Epistemic;
 
 namespace Helper.Api.Conversation;
 
@@ -39,6 +40,7 @@ public sealed class ResponseComposerService : IResponseComposerService
     {
         var localization = _localizationResolver.Resolve(context);
         var solution = _textDeduplicator.NormalizePreparedOutput(preparedOutput, localization);
+        solution = EpistemicAnswerModeRenderer.Apply(context, solution, localization);
         if (_benchmarkResponseFormatter.TryComposeLocalFirstBenchmarkResponse(context, solution, out var benchmarkResponse))
         {
             return benchmarkResponse;
@@ -46,7 +48,8 @@ public sealed class ResponseComposerService : IResponseComposerService
 
         solution = _answerShapePolicy.ApplyTaskClassFormatting(context, solution, localization);
         solution = _answerShapePolicy.ApplyAnswerShapePreference(context, solution, localization);
-        var mode = ResolveMode(context, solution);
+        solution = _answerShapePolicy.ApplyConversationalNaturalness(context, solution);
+        var mode = ResponseCompositionRecoveryModePolicy.Promote(ResolveMode(context, solution), context);
         context.NextStep = _nextStepComposer.ResolveEffectiveNextStep(context, solution, localization, mode);
         var plan = _dialogActPlanner.BuildPlan(context, mode, solution);
 
@@ -62,7 +65,7 @@ public sealed class ResponseComposerService : IResponseComposerService
     private string ComposeFreeformShort(ChatTurnContext context, string solution, DialogActPlan plan)
     {
         var nextStep = NormalizeOptional(context.NextStep);
-        if (string.IsNullOrWhiteSpace(nextStep) || !plan.Contains(DialogAct.NextStep))
+        if (string.IsNullOrWhiteSpace(nextStep) || !plan.Contains(DialogAct.NextStep) || !_nextStepComposer.ShouldRender(context, solution, nextStep))
         {
             return solution;
         }
@@ -155,7 +158,7 @@ public sealed class ResponseComposerService : IResponseComposerService
     private void AppendNextStepSection(StringBuilder builder, ComposerLocalization localization, string? nextStep, ChatTurnContext context, DialogActPlan plan)
     {
         var normalized = NormalizeOptional(nextStep);
-        if (string.IsNullOrWhiteSpace(normalized) || !plan.Contains(DialogAct.NextStep))
+        if (string.IsNullOrWhiteSpace(normalized) || !plan.Contains(DialogAct.NextStep) || !_nextStepComposer.ShouldRender(context, builder.ToString(), normalized))
         {
             return;
         }

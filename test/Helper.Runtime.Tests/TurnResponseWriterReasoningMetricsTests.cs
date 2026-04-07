@@ -247,5 +247,71 @@ public class TurnResponseWriterReasoningMetricsTests
         Assert.Single(response.SearchTrace.Sources!);
         Assert.Equal("Observability guide", response.SearchTrace.Sources![0].Title);
     }
+
+    [Fact]
+    public void TurnResponseWriter_Emits_Epistemic_And_Interaction_Metadata()
+    {
+        var store = new InMemoryConversationStore();
+        var checkpointManager = new Mock<ITurnCheckpointManager>();
+        var auditScheduler = new Mock<IPostTurnAuditScheduler>();
+        auditScheduler
+            .Setup(x => x.TrySchedule(It.IsAny<ChatTurnContext>(), It.IsAny<ChatResponseDto>()))
+            .Returns(false);
+
+        var writer = new TurnResponseWriter(
+            store,
+            checkpointManager.Object,
+            auditScheduler.Object,
+            new TurnLifecycleStateMachine(),
+            new TurnExecutionStateMachine(),
+            new TurnRouteTelemetryRecorder());
+
+        var state = store.GetOrCreate("conv-epistemic-interaction-writer");
+        var context = new ChatTurnContext
+        {
+            TurnId = "turn-epistemic-interaction-writer",
+            Request = new ChatRequestDto("Help me sanity-check this medical claim", state.Id, 10, null),
+            Conversation = state,
+            History = Array.Empty<ChatMessageDto>(),
+            FinalResponse = "I will avoid a strong factual claim here.",
+            ExecutionOutput = "I will avoid a strong factual claim here.",
+            Confidence = 0.34,
+            LifecycleState = TurnLifecycleState.Finalize,
+            ExecutionState = TurnExecutionState.Finalized,
+            RepairDriver = "interaction",
+            EpistemicAnswerMode = Helper.Api.Conversation.Epistemic.EpistemicAnswerMode.Abstain,
+            EpistemicRiskSnapshot = new Helper.Api.Conversation.Epistemic.EpistemicRiskSnapshot(
+                GroundingStatus: "unverified",
+                CitationCoverage: 0.15,
+                VerifiedClaimRatio: 0.0,
+                HasContradictions: false,
+                HasWeakEvidence: true,
+                HighRiskDomain: true,
+                FreshnessSensitive: true,
+                CurrentConfidence: 0.34,
+                ConfidenceCeiling: 0.42,
+                CalibrationThreshold: 0.78,
+                AbstentionRecommended: true,
+                Trace: new[] { "epistemic.abstention_recommended=true" }),
+            InteractionState = new Helper.Api.Conversation.InteractionState.InteractionStateSnapshot(
+                FrustrationLevel: Helper.Api.Conversation.InteractionState.InteractionSignalLevel.Moderate,
+                UrgencyLevel: Helper.Api.Conversation.InteractionState.InteractionSignalLevel.Low,
+                OverloadRisk: Helper.Api.Conversation.InteractionState.InteractionSignalLevel.Low,
+                ReassuranceNeed: Helper.Api.Conversation.InteractionState.InteractionSignalLevel.High,
+                ClarificationToleranceShift: -1,
+                AssistantPressureRisk: Helper.Api.Conversation.InteractionState.InteractionSignalLevel.Moderate,
+                Signals: new[] { "interaction.reassurance:lexical" })
+        };
+
+        var response = writer.PersistCompletedTurn(state, context, branchId: "main", turnVersion: 1);
+
+        Assert.Equal("abstain", response.EpistemicAnswerMode);
+        Assert.Equal("interaction", response.RepairDriver);
+        Assert.NotNull(response.EpistemicRisk);
+        Assert.Equal("abstain", response.EpistemicRisk!.AnswerMode);
+        Assert.True(response.EpistemicRisk.AbstentionRecommended);
+        Assert.NotNull(response.InteractionState);
+        Assert.Equal("high", response.InteractionState!.ReassuranceNeed);
+    }
 }
 

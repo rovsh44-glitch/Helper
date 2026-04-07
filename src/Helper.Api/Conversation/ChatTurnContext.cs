@@ -1,3 +1,5 @@
+using Helper.Api.Conversation.Epistemic;
+using Helper.Api.Conversation.InteractionState;
 using Helper.Api.Hosting;
 using Helper.Runtime.Core;
 
@@ -27,9 +29,11 @@ public sealed class ChatTurnContext
     public double IntentConfidence { get; set; }
     public string IntentSource { get; set; } = "unknown";
     public List<string> IntentSignals { get; } = new();
+    public CollaborationIntentAnalysis CollaborationIntent { get; set; } = CollaborationIntentAnalysis.None;
     public string AmbiguityType { get; set; } = nameof(global::Helper.Api.Conversation.AmbiguityType.None);
     public double AmbiguityConfidence { get; set; }
     public string? AmbiguityReason { get; set; }
+    public string? ClarificationBoundary { get; set; }
     public bool RequiresClarification { get; set; }
     public bool RequiresConfirmation { get; set; }
     public string? ClarifyingQuestion { get; set; }
@@ -67,6 +71,15 @@ public sealed class ChatTurnContext
     public bool RequireExplicitBenchmarkUncertainty { get; set; }
     public string? ResolvedStyleMode { get; set; }
     public string? ResolvedTonePreset { get; set; }
+    public EpistemicRiskSnapshot? EpistemicRiskSnapshot { get; set; }
+    public EpistemicAnswerMode EpistemicAnswerMode { get; set; } = EpistemicAnswerMode.Direct;
+    public InteractionStateSnapshot? InteractionState { get; set; }
+    public InteractionPolicyProjection? InteractionPolicy { get; set; }
+    public string? ReasoningEffort { get; set; }
+    public string? DecisionExplanation { get; set; }
+    public string? RepairClass { get; set; }
+    public string? RepairDriver { get; set; }
+    public string? ActiveProjectId { get; set; }
     public bool AuditEligible { get; set; }
     public bool AuditExpectedTrace { get; set; }
     public bool AuditStrictMode { get; set; }
@@ -95,6 +108,7 @@ public sealed class ChatTurnContext
     public List<ClaimGrounding> ClaimGroundings { get; } = new();
     public List<ResearchEvidenceItem> ResearchEvidenceItems { get; } = new();
     public ConversationStyleTelemetry? StyleTelemetry { get; set; }
+    public CommunicationQualitySnapshot? CommunicationQualitySnapshot { get; set; }
     public List<string> UncertaintyFlags { get; } = new();
     public List<string> ToolCalls { get; } = new();
     public List<string> Sources { get; } = new();

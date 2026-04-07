@@ -113,7 +113,7 @@ public sealed class HybridAmbiguityDetector : IAmbiguityDetector
                 "Output format requested but not concretely specified.");
         }
 
-        if (ContainsAny(text, ConstraintTokens) && !HasConcreteConstraints(text))
+        if (ContainsAny(text, ConstraintTokens) && !HasConcreteConstraints(text) && !LooksLikeResearchEvidencePrompt(text))
         {
             return new AmbiguityDecision(
                 true,
@@ -188,6 +188,16 @@ public sealed class HybridAmbiguityDetector : IAmbiguityDetector
         var broadTokens = new[] { "всё", "all", "entire", "полностью", "completely", "full rewrite" };
         var immediateTokens = new[] { "срочно", "now", "asap", "быстро", "quickly" };
         return ContainsAny(text, broadTokens) && ContainsAny(text, immediateTokens);
+    }
+
+    private static bool LooksLikeResearchEvidencePrompt(string text)
+    {
+        var researchTokens = new[]
+        {
+            "source", "sources", "research", "evidence", "study", "studies",
+            "источник", "источники", "научн", "исследован", "доказатель", "популярн"
+        };
+        return ContainsAny(text, researchTokens);
     }
 }
 

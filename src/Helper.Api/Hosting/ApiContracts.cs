@@ -313,6 +313,27 @@ public record SearchTraceDto(
     IReadOnlyList<string>? Events = null,
     IReadOnlyList<SearchTraceSourceDto>? Sources = null,
     string? InputMode = null);
+public record EpistemicRiskSnapshotDto(
+    string AnswerMode,
+    string? GroundingStatus,
+    double CitationCoverage,
+    double VerifiedClaimRatio,
+    bool HasContradictions,
+    bool HasWeakEvidence,
+    bool HighRiskDomain,
+    bool FreshnessSensitive,
+    double ConfidenceCeiling,
+    double CalibrationThreshold,
+    bool AbstentionRecommended,
+    IReadOnlyList<string>? Trace = null);
+public record InteractionStateSnapshotDto(
+    string FrustrationLevel,
+    string UrgencyLevel,
+    string OverloadRisk,
+    string ReassuranceNeed,
+    int ClarificationToleranceShift,
+    string AssistantPressureRisk,
+    IReadOnlyList<string>? Signals = null);
 public record ChatResponseDto(
     string ConversationId,
     string Response,
@@ -345,6 +366,9 @@ public record ChatResponseDto(
     string? DecisionExplanation = null,
     string? RepairClass = null,
     string? RepairDriver = null,
+    string? EpistemicAnswerMode = null,
+    EpistemicRiskSnapshotDto? EpistemicRisk = null,
+    InteractionStateSnapshotDto? InteractionState = null,
     PostTurnAuditStatusDto? AuditStatus = null,
     ConversationStyleTelemetryDto? StyleTelemetry = null,
     SearchTraceDto? SearchTrace = null,
