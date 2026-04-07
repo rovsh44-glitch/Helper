@@ -67,6 +67,11 @@ public static class OpenApiDocumentFactory
                 ["/api/metrics/parity-benchmark"] = new { post = new { summary = "Run generation+diagnostics parity benchmark corpora" } },
                 ["/api/metrics/closed-loop-predictability"] = new { post = new { summary = "Run closed-loop predictability protocol for top incident classes" } },
                 ["/api/openapi.json"] = new { get = new { summary = "OpenAPI contract document" } },
+                ["/api/settings/provider-profiles"] = new { get = new { summary = "List provider profiles and activation state" } },
+                ["/api/settings/provider-profiles/active"] = new { get = new { summary = "Get active provider profile" } },
+                ["/api/settings/provider-profiles/activate"] = new { post = new { summary = "Activate provider profile" } },
+                ["/api/settings/provider-profiles/recommend"] = new { post = new { summary = "Recommend provider profile for workload" } },
+                ["/api/settings/runtime-doctor/run"] = new { post = new { summary = "Run runtime provider diagnostics" } },
                 ["/api/chat"] = new { post = new { summary = "Run chat turn", operationId = "chatCompleteTurn" } },
                 ["/api/chat/stream"] = new { post = new { summary = "Run streaming chat turn", operationId = "chatStreamTurn" } },
                 ["/api/chat/{conversationId}"] = new

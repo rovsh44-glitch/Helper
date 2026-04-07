@@ -1,6 +1,4 @@
 using Helper.Api.Conversation;
-using Helper.Api.Conversation.Epistemic;
-using Helper.Api.Conversation.InteractionState;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Helper.Api.Hosting;
@@ -315,27 +313,6 @@ public record SearchTraceDto(
     IReadOnlyList<string>? Events = null,
     IReadOnlyList<SearchTraceSourceDto>? Sources = null,
     string? InputMode = null);
-public record EpistemicRiskSnapshotDto(
-    string AnswerMode,
-    string GroundingStatus,
-    double CitationCoverage,
-    double VerifiedClaimRatio,
-    bool HasContradictions,
-    bool HasWeakEvidence,
-    bool HighRiskDomain,
-    bool FreshnessSensitive,
-    double ConfidenceCeiling,
-    double CalibrationThreshold,
-    bool AbstentionRecommended,
-    IReadOnlyList<string>? Trace = null);
-public record InteractionStateSnapshotDto(
-    string FrustrationLevel,
-    string UrgencyLevel,
-    string OverloadRisk,
-    string ReassuranceNeed,
-    int ClarificationToleranceShift,
-    string AssistantPressureRisk,
-    IReadOnlyList<string>? Signals = null);
 public record ChatResponseDto(
     string ConversationId,
     string Response,
@@ -371,10 +348,7 @@ public record ChatResponseDto(
     PostTurnAuditStatusDto? AuditStatus = null,
     ConversationStyleTelemetryDto? StyleTelemetry = null,
     SearchTraceDto? SearchTrace = null,
-    string? InputMode = null,
-    string? EpistemicAnswerMode = null,
-    EpistemicRiskSnapshotDto? EpistemicRisk = null,
-    InteractionStateSnapshotDto? InteractionState = null);
+    string? InputMode = null);
 
 public record ConversationFeedbackSnapshot(
     int TotalVotes,

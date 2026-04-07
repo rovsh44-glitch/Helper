@@ -21,7 +21,10 @@
 
   <ItemGroup>
     <Compile Remove="Fixtures\**\*.cs" />
+    <Compile Remove="ConversationModelSelectionPolicy.ProfileOverlayTests.cs" />
     <Compile Remove="EvalHarnessTests.cs" />
+    <Compile Remove="HelperModelGatewayProfileOverlayTests.cs" />
+    <Compile Remove="ReasoningEffortPolicy.ProfileOverlayTests.cs" />
     <Compile Remove="TemplateCertificationServiceTests.cs" />
     <Compile Remove="TemplatePromotionEndToEndAndChaosTests.cs" />
     <Content Include="Fixtures\**\*.*">

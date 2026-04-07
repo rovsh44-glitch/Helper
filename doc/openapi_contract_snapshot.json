@@ -119,7 +119,7 @@
     },
     "/api/metrics/parity-benchmark": {
       "post": {
-        "summary": "Run generation+diagnostics parity benchmark corpora"
+        "summary": "Run generation\u002Bdiagnostics parity benchmark corpora"
       }
     },
     "/api/metrics/closed-loop-predictability": {
@@ -130,6 +130,31 @@
     "/api/openapi.json": {
       "get": {
         "summary": "OpenAPI contract document"
+      }
+    },
+    "/api/settings/provider-profiles": {
+      "get": {
+        "summary": "List provider profiles and activation state"
+      }
+    },
+    "/api/settings/provider-profiles/active": {
+      "get": {
+        "summary": "Get active provider profile"
+      }
+    },
+    "/api/settings/provider-profiles/activate": {
+      "post": {
+        "summary": "Activate provider profile"
+      }
+    },
+    "/api/settings/provider-profiles/recommend": {
+      "post": {
+        "summary": "Recommend provider profile for workload"
+      }
+    },
+    "/api/settings/runtime-doctor/run": {
+      "post": {
+        "summary": "Run runtime provider diagnostics"
       }
     },
     "/api/chat": {

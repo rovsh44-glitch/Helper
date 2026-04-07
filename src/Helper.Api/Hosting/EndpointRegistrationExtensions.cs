@@ -73,6 +73,8 @@ public static partial class EndpointRegistrationExtensions
 		MapSmokeEndpoints(endpoints);
 		MapEvolutionAndGenerationEndpoints(endpoints, runtimeConfig);
 		MapConversationEndpoints(endpoints);
+		MapSettingsProviderProfileEndpoints(endpoints);
+		MapSettingsDoctorEndpoints(endpoints);
 		return endpoints;
 	}
 

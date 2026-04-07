@@ -211,7 +211,6 @@ builder.Services.AddHostedService<PrometheusBroadcastService>();
 builder.Services.AddHostedService<ModelWarmupService>();
 builder.Services.AddHostedService<ConversationPersistenceWorker>();
 builder.Services.AddHostedService<Helper.Api.Conversation.PostTurnAuditWorker>();
-builder.Services.AddHostedService<Helper.Api.Conversation.ConversationFollowThroughWorker>();
 
 var app = builder.Build();
 await app.Services.GetRequiredService<IProviderProfileActivationService>().EnsureRuntimeSynchronizedAsync(CancellationToken.None);

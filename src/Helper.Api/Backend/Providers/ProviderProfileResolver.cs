@@ -69,12 +69,24 @@ public sealed class ProviderProfileResolver : IProviderProfileResolver
             return null;
         }
 
-        _aiLink.ConfigureRuntimeProvider(
-            configuration.BaseUrl,
-            configuration.TransportKind == ProviderTransportKind.OpenAiCompatible ? "openai_compatible" : "ollama",
-            configuration.ApiKey,
-            configuration.DefaultModel,
-            configuration.EmbeddingModel);
+        Environment.SetEnvironmentVariable("HELPER_ACTIVE_PROVIDER_PROFILE_ID", configuration.ProfileId);
+        if (configuration.TransportKind == ProviderTransportKind.OpenAiCompatible)
+        {
+            Environment.SetEnvironmentVariable("HELPER_OPENAI_BASE_URL", configuration.BaseUrl);
+            Environment.SetEnvironmentVariable("HELPER_OPENAI_DEFAULT_MODEL", configuration.DefaultModel);
+            Environment.SetEnvironmentVariable("HELPER_OPENAI_API_KEY", configuration.ApiKey);
+        }
+        else
+        {
+            Environment.SetEnvironmentVariable("HELPER_AI_BASE_URL", configuration.BaseUrl);
+        }
+
+        Environment.SetEnvironmentVariable("HELPER_MODEL_EMBEDDING", configuration.EmbeddingModel);
+        if (!string.IsNullOrWhiteSpace(configuration.DefaultModel))
+        {
+            _aiLink.SwitchModel(configuration.DefaultModel);
+        }
+
         return configuration.ProfileId;
     }
 }
