@@ -11,6 +11,7 @@ public sealed class SearchEvidenceSufficiencyPolicy : ISearchEvidenceSufficiency
     {
         var liveDocuments = aggregateDocuments.Where(static document => !document.IsFallback).ToArray();
         var liveResultCount = liveDocuments.Length;
+        var extractedLiveCount = liveDocuments.Count(static document => document.ExtractedPage is not null);
         var distinctDomainCount = liveDocuments
             .Select(static document => TryGetHost(document.Url))
             .Where(static host => !string.IsNullOrWhiteSpace(host))
@@ -39,11 +40,14 @@ public sealed class SearchEvidenceSufficiencyPolicy : ISearchEvidenceSufficiency
         var hasOfficialIteration = executedPlans.Any(static plan => plan.QueryKind.Equals("official", StringComparison.OrdinalIgnoreCase));
         var hasPaperIteration = executedPlans.Any(static plan => plan.QueryKind.Equals("paper_focus", StringComparison.OrdinalIgnoreCase));
         var tokenCount = CountTokens(text);
+        var minimumSourceFloor = ResolveMinimumSourceFloor(intentProfile, queryProfile, paperAnalysisLike);
+        var meetsSourceFloor = liveResultCount >= minimumSourceFloor;
 
         if (paperAnalysisLike)
         {
-            var enough = hasPaperIteration ||
-                         (liveResultCount >= 2 && distinctDomainCount >= 1);
+            var enough = liveResultCount >= 2 &&
+                         distinctDomainCount >= 1 &&
+                         (hasPaperIteration || hasOfficialIteration || extractedLiveCount >= 1);
             return new WebEvidenceSufficiencyDecision(
                 enough,
                 enough ? "paper_focus_covered" : "need_paper_focus_query",
@@ -71,7 +75,13 @@ public sealed class SearchEvidenceSufficiencyPolicy : ISearchEvidenceSufficiency
                 liveResultCount);
         }
 
-        if (intentProfile.BroadPromptLike || intentProfile.AmbiguousPromptLike)
+        var genericExpansionPrompt =
+            (intentProfile.BroadPromptLike || intentProfile.AmbiguousPromptLike) &&
+            !evidenceSensitive &&
+            !hasFreshnessNeed &&
+            !queryProfile.OfficialBias;
+
+        if (genericExpansionPrompt)
         {
             var enough = liveResultCount >= 2 ||
                          hasStepBackIteration ||
@@ -86,8 +96,19 @@ public sealed class SearchEvidenceSufficiencyPolicy : ISearchEvidenceSufficiency
 
         if (hasFreshnessNeed)
         {
-            var enough = (liveResultCount >= 2 && distinctDomainCount >= 1) ||
-                         (liveResultCount >= 1 && (hasFreshnessIteration || hasOfficialIteration));
+            var requiresStructuredFollowUp = queryProfile.MedicalEvidenceHeavy ||
+                                            evidenceSensitive ||
+                                            paperAnalysisLike ||
+                                            queryProfile.OfficialBias;
+            var hasStructuredFollowUp = queryProfile.MedicalEvidenceHeavy || evidenceSensitive
+                ? hasEvidenceIteration || hasOfficialIteration
+                : paperAnalysisLike
+                    ? hasPaperIteration || hasOfficialIteration
+                    : hasFreshnessIteration || hasOfficialIteration;
+            var enough = requiresStructuredFollowUp
+                ? meetsSourceFloor && hasStructuredFollowUp
+                : (liveResultCount >= 2 && distinctDomainCount >= 1) ||
+                  (liveResultCount >= 1 && (hasFreshnessIteration || hasOfficialIteration));
             return new WebEvidenceSufficiencyDecision(
                 enough,
                 enough ? "freshness_covered" : "need_freshness_query",
@@ -99,7 +120,7 @@ public sealed class SearchEvidenceSufficiencyPolicy : ISearchEvidenceSufficiency
         {
             var enough = liveResultCount >= 2 &&
                          distinctDomainCount >= 2 &&
-                         (hasEvidenceIteration || hasOfficialIteration || executedPlans.Count >= 2);
+                         (hasEvidenceIteration || hasOfficialIteration);
             return new WebEvidenceSufficiencyDecision(
                 enough,
                 enough ? "evidence_coverage" : "need_evidence_query",
@@ -129,6 +150,30 @@ public sealed class SearchEvidenceSufficiencyPolicy : ISearchEvidenceSufficiency
         return string.IsNullOrWhiteSpace(text)
             ? 0
             : text.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Length;
+    }
+
+    private static int ResolveMinimumSourceFloor(
+        SearchQueryIntentProfile intentProfile,
+        SearchRankingQueryProfile queryProfile,
+        bool paperAnalysisLike)
+    {
+        if (queryProfile.MedicalEvidenceHeavy &&
+            (intentProfile.ComparisonSensitive || intentProfile.ContradictionSensitive))
+        {
+            return 3;
+        }
+
+        if (paperAnalysisLike ||
+            queryProfile.EvidenceHeavy ||
+            intentProfile.FreshnessSensitive ||
+            queryProfile.OfficialBias ||
+            intentProfile.BroadPromptLike ||
+            intentProfile.AmbiguousPromptLike)
+        {
+            return 2;
+        }
+
+        return 1;
     }
 
     private static string? TryGetHost(string url)

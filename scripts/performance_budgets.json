@@ -48,10 +48,36 @@
         "maxCollaborators": 7,
         "maxMembers": 11
       },
+      "chatTurnFinalizer": {
+        "maxLines": 380,
+        "maxCollaborators": 11,
+        "maxMembers": 12
+      },
+      "behavioralCalibrationPolicy": {
+        "maxLines": 160,
+        "maxMembers": 6
+      },
+      "interactionStateAnalyzer": {
+        "maxLines": 220,
+        "maxMembers": 10
+      },
+      "interactionPolicyProjector": {
+        "maxLines": 60,
+        "maxMembers": 2
+      },
+      "chatTurnPlanner": {
+        "maxLines": 120,
+        "maxCollaborators": 8,
+        "maxMembers": 2
+      },
       "toolService": {
         "maxLines": 120,
         "maxCollaborators": 5,
         "maxMembers": 6
+      },
+      "dotnetService": {
+        "maxLines": 120,
+        "maxMembers": 3
       },
       "dotnetTestTooling": {
         "maxLines": 760

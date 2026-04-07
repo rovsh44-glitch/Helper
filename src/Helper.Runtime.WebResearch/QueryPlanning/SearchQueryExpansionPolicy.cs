@@ -38,7 +38,9 @@ internal sealed class SearchQueryExpansionPolicy : ISearchQueryExpansionPolicy
     public SearchQueryExpansionDecision RewriteFreshness(string baseQuery, SearchQueryIntentProfile intentProfile, Ranking.SearchRankingQueryProfile queryProfile)
     {
         var terms = queryProfile.MedicalEvidenceHeavy
-            ? ContainsAny(baseQuery, "guideline", "guidelines", "рекомендац")
+            ? ContainsAny(baseQuery, "prediabet", "преддиаб", "nutrition", "diet", "рацион", "питани", "диет")
+                ? Terms(intentProfile.Language, "latest official nutrition guideline", "свежие официальные рекомендации по питанию")
+            : ContainsAny(baseQuery, "guideline", "guidelines", "рекомендац")
                 ? Terms(intentProfile.Language, "latest guidance update", "последние обновления рекомендаций")
                 : Terms(intentProfile.Language, "latest clinical guideline", "последние клинические рекомендации")
             : intentProfile.OfficialBias
@@ -58,7 +60,12 @@ internal sealed class SearchQueryExpansionPolicy : ISearchQueryExpansionPolicy
     public SearchQueryExpansionDecision RewriteEvidence(string baseQuery, SearchQueryIntentProfile intentProfile, Ranking.SearchRankingQueryProfile queryProfile)
     {
         var terms = queryProfile.MedicalEvidenceHeavy
-            ? ContainsAny(baseQuery, "intermittent fasting", "time-restricted", "голодание", "состав тела", "мышечная масса", "без потери мышц")
+            ? ContainsAny(baseQuery, "prediabet", "преддиаб", "nutrition", "diet", "meal", "glycemic", "рацион", "питани", "диет", "гликем", "глюкоз")
+                ? Terms(
+                    intentProfile.Language,
+                    "prediabetes diet nutrition meal planning glycemic guideline systematic review",
+                    "преддиабет питание рацион гликемия клинические рекомендации systematic review")
+            : ContainsAny(baseQuery, "intermittent fasting", "time-restricted", "голодание", "состав тела", "мышечная масса", "без потери мышц")
                 ? Terms(
                     intentProfile.Language,
                     "lean mass body composition muscle mass fat loss pubmed pmc systematic review meta-analysis randomized trial",
@@ -161,7 +168,11 @@ internal sealed class SearchQueryExpansionPolicy : ISearchQueryExpansionPolicy
     public SearchQueryExpansionDecision RewriteOfficial(string baseQuery, SearchQueryIntentProfile intentProfile, Ranking.SearchRankingQueryProfile queryProfile)
     {
         var terms = queryProfile.MedicalEvidenceHeavy
-            ? Terms(intentProfile.Language, "official guideline society who", "официальные рекомендации общество who")
+            ? ContainsAny(baseQuery, "prediabet", "преддиаб", "nutrition", "diet", "рацион", "питани", "диет")
+                ? Terms(intentProfile.Language, "official diabetes nutrition guideline", "официальные рекомендации по преддиабету и питанию")
+                : Terms(intentProfile.Language, "official guideline society who", "официальные рекомендации общество who")
+            : ContainsAny(baseQuery, "налог", "tax", "threshold", "thresholds", "deadline", "deadlines", "reporting", "filing", "irs", "sec", "report")
+                ? Terms(intentProfile.Language, "official tax authority filing deadline threshold reporting requirement", "официальный налоговый орган сроки отчетности пороги лимиты требования")
             : Terms(intentProfile.Language, "official source guidance", "официальный источник руководство");
         var rewritten = AppendDistinctTerms(baseQuery, terms);
         return new SearchQueryExpansionDecision(
@@ -175,7 +186,9 @@ internal sealed class SearchQueryExpansionPolicy : ISearchQueryExpansionPolicy
 
     public SearchQueryExpansionDecision RewritePaperFocus(string baseQuery, SearchQueryIntentProfile intentProfile, Ranking.SearchRankingQueryProfile queryProfile)
     {
-        var terms = Terms(intentProfile.Language, "paper pdf abstract method results", "статья pdf аннотация метод результаты");
+        var terms = ContainsAny(baseQuery, "literature review", "systematic review", "narrative review", "обзор литературы", "систематический обзор", "мета-анализ", "meta-analysis")
+            ? Terms(intentProfile.Language, "systematic review prisma amstar checklist method guidance", "systematic review prisma amstar checklist метод руководство")
+            : Terms(intentProfile.Language, "paper pdf abstract method results", "статья pdf аннотация метод результаты");
         var rewritten = AppendDistinctTerms(baseQuery, terms);
         return new SearchQueryExpansionDecision(
             rewritten,

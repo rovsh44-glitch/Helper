@@ -4,8 +4,8 @@ internal static class SearchQuerySignalLexicon
 {
     internal static readonly string[] CurrentnessTokens =
     {
-        "latest", "current", "today", "this week", "this month", "news", "price", "forecast", "update", "updates",
-        "последн", "актуаль", "сегодня", "на этой неделе", "в этом месяце", "новости", "новост", "цена", "прогноз", "обновлен"
+        "latest", "current", "today", "this week", "this month", "news", "price", "forecast", "update", "updates", "fresh", "freshness",
+        "последн", "актуаль", "сегодня", "на этой неделе", "в этом месяце", "новости", "новост", "цена", "прогноз", "обновлен", "свеж"
     };
 
     internal static readonly string[] ComparisonTokens =
@@ -17,7 +17,8 @@ internal static class SearchQuerySignalLexicon
     internal static readonly string[] ContradictionTokens =
     {
         "conflict", "conflicting", "contradiction", "disagree", "disagreement", "controversy",
-        "противореч", "расхожд", "расход", "конфликт", "спор", "спорн"
+        "different conclusions", "different findings", "different results",
+        "противореч", "расхожд", "расход", "конфликт", "спор", "спорн", "разные выводы", "разные результаты"
     };
 
     internal static readonly string[] BreadthTokens =
@@ -35,7 +36,9 @@ internal static class SearchQuerySignalLexicon
     internal static readonly string[] PaperTokens =
     {
         "paper", "pdf", "article", "preprint", "manuscript", "abstract", "full text",
-        "пейпер", "статья", "pdf", "препринт", "аннотация", "полный текст"
+        "systematic review", "literature review", "narrative review", "meta-analysis", "meta analysis",
+        "пейпер", "статья", "pdf", "препринт", "аннотация", "полный текст",
+        "систематический обзор", "обзор литературы", "мета-анализ", "метаанализ"
     };
 
     internal static bool ContainsAny(string text, IEnumerable<string> tokens)

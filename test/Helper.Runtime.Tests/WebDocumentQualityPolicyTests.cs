@@ -178,5 +178,55 @@ public sealed class WebDocumentQualityPolicyTests
         Assert.False(decision.Allowed);
         Assert.Contains(decision.Signals, signal => signal.Contains("anti_bot_interstitial", StringComparison.OrdinalIgnoreCase));
     }
+
+    [Fact]
+    public void Evaluate_RejectsLowOverlapSource_ForOfficialFreshnessQuery()
+    {
+        var policy = new WebDocumentQualityPolicy();
+
+        var decision = policy.Evaluate(
+            new WebSearchDocument(
+                "https://wikileaks.org/ciav7p1",
+                "Vault 7: CIA Hacking Tools Revealed - WikiLeaks",
+                "Press Release Today, Tuesday 7 March 2017, WikiLeaks begins its new series of leaks on the U.S. Central Intelligence Agency."),
+            "provider",
+            "Проверь, актуальны ли налоговые thresholds и reporting deadlines, которыми я пользуюсь сегодня.");
+
+        Assert.False(decision.Allowed);
+        Assert.Contains(decision.Signals, signal => signal.Contains("low_query_overlap", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void Evaluate_RejectsLowTrustAggregator_ForOfficialFreshnessQuery_EvenWithTopicOverlap()
+    {
+        var policy = new WebDocumentQualityPolicy();
+
+        var decision = policy.Evaluate(
+            new WebSearchDocument(
+                "https://cont.ws/@oolegov2025/3088229",
+                "Налоги для трейдера в 2026: ужесточение правил и новые риски",
+                "В 2026 году российская налоговая система получает масштабное обновление, меняются лимиты и сроки отчетности."),
+            "provider",
+            "Проверь, актуальны ли налоговые thresholds и reporting deadlines, которыми я пользуюсь сегодня.");
+
+        Assert.False(decision.Allowed);
+        Assert.Contains(decision.Signals, signal => signal.Contains("low_trust_for_freshness_or_official_query", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void Evaluate_AllowsTrustedLegalReference_ForOfficialFreshnessQuery()
+    {
+        var policy = new WebDocumentQualityPolicy();
+
+        var decision = policy.Evaluate(
+            new WebSearchDocument(
+                "https://www.consultant.ru/document/cons_doc_LAW_28165/",
+                "Сроки сдачи отчетности и налоговые лимиты",
+                "Официальные сроки отчетности, лимиты и налоговые требования на текущий период."),
+            "provider",
+            "Проверь, актуальны ли налоговые thresholds и reporting deadlines, которыми я пользуюсь сегодня.");
+
+        Assert.True(decision.Allowed);
+    }
 }
 

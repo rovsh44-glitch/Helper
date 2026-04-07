@@ -515,6 +515,10 @@ foreach ($entry in $selectedCases) {
             citationCoverage = Get-SafeDoubleValue -InputObject $responseDto -PropertyName "citationCoverage"
             verifiedClaims = Get-SafeIntValue -InputObject $responseDto -PropertyName "verifiedClaims"
             totalClaims = Get-SafeIntValue -InputObject $responseDto -PropertyName "totalClaims"
+            epistemicAnswerMode = Get-SafeStringValue -InputObject $responseDto -PropertyName "epistemicAnswerMode"
+            epistemicRisk = Get-SafePropertyValue -InputObject $responseDto -PropertyName "epistemicRisk"
+            interactionState = Get-SafePropertyValue -InputObject $responseDto -PropertyName "interactionState"
+            repairDriver = Get-SafeStringValue -InputObject $responseDto -PropertyName "repairDriver"
             uncertaintyFlags = $uncertaintyFlags
             requiresConfirmation = Get-SafeBoolValue -InputObject $responseDto -PropertyName "requiresConfirmation"
             nextStep = Get-SafeStringValue -InputObject $responseDto -PropertyName "nextStep"
@@ -564,6 +568,10 @@ foreach ($entry in $selectedCases) {
             citationCoverage = 0.0
             verifiedClaims = 0
             totalClaims = 0
+            epistemicAnswerMode = ""
+            epistemicRisk = $null
+            interactionState = $null
+            repairDriver = ""
             uncertaintyFlags = @()
             requiresConfirmation = $false
             nextStep = ""

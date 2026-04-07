@@ -46,8 +46,12 @@ public sealed class WebDocumentQualityPolicy : IWebDocumentQualityPolicy
         var corpus = BuildCorpus(document);
         var requestProfile = ResearchRequestProfileResolver.From(query);
         var queryProfile = SourceAuthorityScorer.BuildQueryProfile(query, null);
+        var trustProfile = ResolveTrustProfile(document.Url);
         var evidenceSensitive = queryProfile.EvidenceHeavy || queryProfile.MedicalEvidenceHeavy;
+        var freshnessOrOfficialSensitive = queryProfile.CurrentnessHeavy && queryProfile.OfficialBias;
+        var regulationFreshnessSensitive = freshnessOrOfficialSensitive && LooksLikeRegulationFreshnessQuery(query);
         var strongMedicalEvidenceSource = queryProfile.MedicalEvidenceHeavy && LooksLikeStrongMedicalEvidenceSource(document, corpus);
+        var strongFreshnessOrOfficialSource = freshnessOrOfficialSensitive && LooksLikeStrongFreshnessOrOfficialSource(document, corpus, trustProfile);
 
         if (string.IsNullOrWhiteSpace(corpus))
         {
@@ -89,6 +93,19 @@ public sealed class WebDocumentQualityPolicy : IWebDocumentQualityPolicy
             signals.Add("anti_bot_interstitial");
         }
 
+        if (freshnessOrOfficialSensitive &&
+            trustProfile.IsLowTrust &&
+            !strongFreshnessOrOfficialSource)
+        {
+            signals.Add("low_trust_for_freshness_or_official_query");
+        }
+
+        if (regulationFreshnessSensitive &&
+            !LooksLikeStrongRegulatoryFreshnessSource(document, corpus, trustProfile))
+        {
+            signals.Add("regulatory_source_mismatch");
+        }
+
         if (requestProfile.IsDocumentAnalysis &&
             signals.Contains("site_chrome_markers", StringComparer.Ordinal) &&
             !LooksLikeSubstantiveDocument(document))
@@ -102,8 +119,13 @@ public sealed class WebDocumentQualityPolicy : IWebDocumentQualityPolicy
                      signals.Contains("document_analysis_without_document_content", StringComparer.Ordinal) ||
                      signals.Contains("interactive_or_ugc_for_evidence_query", StringComparer.Ordinal) ||
                      (evidenceSensitive &&
+                     signals.Contains("low_query_overlap", StringComparer.Ordinal) &&
+                     !strongMedicalEvidenceSource) ||
+                     (freshnessOrOfficialSensitive &&
                       signals.Contains("low_query_overlap", StringComparer.Ordinal) &&
-                      !strongMedicalEvidenceSource) ||
+                      !strongFreshnessOrOfficialSource) ||
+                     signals.Contains("low_trust_for_freshness_or_official_query", StringComparer.Ordinal) ||
+                     signals.Contains("regulatory_source_mismatch", StringComparer.Ordinal) ||
                      signals.Contains("anti_bot_interstitial", StringComparer.Ordinal) ||
                      (signals.Contains("site_chrome_markers", StringComparer.Ordinal) &&
                       signals.Contains("low_query_overlap", StringComparer.Ordinal));
@@ -183,6 +205,101 @@ public sealed class WebDocumentQualityPolicy : IWebDocumentQualityPolicy
                corpus.Contains("guideline", StringComparison.OrdinalIgnoreCase) ||
                corpus.Contains("клиничес", StringComparison.OrdinalIgnoreCase) ||
                corpus.Contains("рекомендац", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool LooksLikeStrongFreshnessOrOfficialSource(
+        WebSearchDocument document,
+        string corpus,
+        DomainTrustProfile trustProfile)
+    {
+        if (!Uri.TryCreate(document.Url, UriKind.Absolute, out var uri))
+        {
+            return false;
+        }
+
+        // Freshness/official queries should not treat low-trust mirrors or aggregators
+        // as strong sources purely because they repeat topical keywords.
+        if (trustProfile.IsLowTrust)
+        {
+            return false;
+        }
+
+        var host = uri.Host;
+        if (host.EndsWith(".gov", StringComparison.OrdinalIgnoreCase) ||
+            host.Contains(".gov.", StringComparison.OrdinalIgnoreCase) ||
+            host.EndsWith(".int", StringComparison.OrdinalIgnoreCase) ||
+            host.Contains("irs.gov", StringComparison.OrdinalIgnoreCase) ||
+            host.Contains("sec.gov", StringComparison.OrdinalIgnoreCase) ||
+            host.Contains("minzdrav", StringComparison.OrdinalIgnoreCase) ||
+            host.Contains("medelement.com", StringComparison.OrdinalIgnoreCase) ||
+            host.Contains("consultant.ru", StringComparison.OrdinalIgnoreCase) ||
+            host.Contains("garant.ru", StringComparison.OrdinalIgnoreCase) ||
+            host.Contains("nalog", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return corpus.Contains("official", StringComparison.OrdinalIgnoreCase) ||
+               corpus.Contains("guideline", StringComparison.OrdinalIgnoreCase) ||
+               corpus.Contains("recommendation", StringComparison.OrdinalIgnoreCase) ||
+               corpus.Contains("регламент", StringComparison.OrdinalIgnoreCase) ||
+               corpus.Contains("рекомендац", StringComparison.OrdinalIgnoreCase) ||
+               corpus.Contains("налог", StringComparison.OrdinalIgnoreCase) ||
+               corpus.Contains("deadline", StringComparison.OrdinalIgnoreCase) ||
+               corpus.Contains("срок", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool LooksLikeStrongRegulatoryFreshnessSource(
+        WebSearchDocument document,
+        string corpus,
+        DomainTrustProfile trustProfile)
+    {
+        if (!Uri.TryCreate(document.Url, UriKind.Absolute, out var uri))
+        {
+            return false;
+        }
+
+        if (trustProfile.IsAuthoritative ||
+            trustProfile.Label is "trusted_legal_reference" or "legal_document_host" or "major_business_news" or "major_newswire" or "government_primary")
+        {
+            return ContainsAny(
+                $"{uri.Host} {uri.AbsolutePath} {corpus}",
+                "tax", "threshold", "deadline", "reporting", "filing", "irs", "sec",
+                "налог", "порог", "лимит", "срок", "отчетност", "отчётност");
+        }
+
+        return false;
+    }
+
+    private static DomainTrustProfile ResolveTrustProfile(string? url)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+        {
+            return LowTrustDomainRegistry.Resolve(null);
+        }
+
+        return LowTrustDomainRegistry.Resolve(uri.Host);
+    }
+
+    private static bool LooksLikeRegulationFreshnessQuery(string? query)
+    {
+        return ContainsAny(
+            query ?? string.Empty,
+            "tax", "threshold", "deadline", "reporting", "filing", "regulation",
+            "налог", "порог", "лимит", "срок", "отчетност", "отчётност", "регуляц");
+    }
+
+    private static bool ContainsAny(string text, params string[] markers)
+    {
+        foreach (var marker in markers)
+        {
+            if (text.Contains(marker, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static void Append(List<string> target, string? value)

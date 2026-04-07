@@ -69,9 +69,9 @@ public sealed class WebQueryPlannerTests
 
         Assert.Equal("primary", plans[0].QueryKind);
         Assert.DoesNotContain("объясни", plans[0].Query, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("профилактику", plans[0].Query, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("мигрени", plans[0].Query, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("клинических", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("профилакти", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("мигрень", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("клинические", plans[0].Query, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -85,10 +85,10 @@ public sealed class WebQueryPlannerTests
 
         Assert.DoesNotContain("строят", plans[0].Query, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("изменилось", plans[0].Query, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("профилактику", plans[0].Query, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("мигрени", plans[0].Query, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("клинических", plans[0].Query, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("рекомендациях", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("профилакти", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("мигрень", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("клинические", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("рекомендации", plans[0].Query, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -124,6 +124,25 @@ public sealed class WebQueryPlannerTests
     }
 
     [Fact]
+    public void BuildPlans_RewritesMixedLanguageTaxThresholdPrompt_ToTaxDeadlineCore()
+    {
+        var planner = new WebQueryPlanner();
+
+        var plans = planner.BuildPlans(
+            new WebSearchRequest("Проверь, актуальны ли налоговые thresholds и reporting deadlines, которыми я пользуюсь сегодня.", Depth: 1),
+            new SearchIterationBudget(3, "fresh_prompt"));
+
+        Assert.Equal("primary", plans[0].QueryKind);
+        Assert.Contains("налог", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("пороги", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("сроки", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("официальные", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("которыми я пользуюсь сегодня", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(plans, plan => plan.QueryKind == "freshness");
+        Assert.Contains(plans, plan => plan.QueryKind == "official");
+    }
+
+    [Fact]
     public void BuildPlans_AddsStepBackBranch_ForBroadHumanPrompt()
     {
         var planner = new WebQueryPlanner();
@@ -135,6 +154,17 @@ public sealed class WebQueryPlannerTests
         Assert.Equal(2, plans.Count);
         Assert.Equal("step_back", plans[1].QueryKind);
         Assert.Contains("обзор", plans[1].Query, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Resolve_TreatsSvezhieAsFreshnessSignal_ForRegulatoryPrompt()
+    {
+        var policy = new SearchIterationPolicy();
+
+        var budget = policy.Resolve(new WebSearchRequest("Проверь свежие требования к отчетности для ИП"));
+
+        Assert.Equal(2, budget.MaxIterations);
+        Assert.Contains("freshness_sensitive", budget.Reason, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -152,6 +182,34 @@ public sealed class WebQueryPlannerTests
     }
 
     [Fact]
+    public void Resolve_AllowsThreeIterations_ForLiteratureReviewGuidancePrompt()
+    {
+        var policy = new SearchIterationPolicy();
+
+        var budget = policy.Resolve(new WebSearchRequest("Оцени мой метод literature review и проверь его по актуальным guidance для systematic reviews."));
+
+        Assert.Equal(3, budget.MaxIterations);
+        Assert.Contains("paper_freshness_multibranch", budget.Reason, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void BuildPlans_AddsFreshnessThenPaperFocus_ForLiteratureReviewGuidancePrompt()
+    {
+        var planner = new WebQueryPlanner();
+
+        var plans = planner.BuildPlans(
+            new WebSearchRequest("Оцени мой метод literature review и проверь его по актуальным guidance для systematic reviews.", Depth: 1),
+            new SearchIterationBudget(3, "paper_freshness_multibranch"));
+
+        Assert.Equal(3, plans.Count);
+        Assert.Equal("primary", plans[0].QueryKind);
+        Assert.Equal("freshness", plans[1].QueryKind);
+        Assert.Equal("paper_focus", plans[2].QueryKind);
+        Assert.Contains("systematic", plans[2].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("prisma", plans[2].Query, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public void Resolve_AllowsThreeIterations_ForMedicalEvidencePrompt()
     {
         var policy = new SearchIterationPolicy();
@@ -160,6 +218,53 @@ public sealed class WebQueryPlannerTests
 
         Assert.Equal(3, budget.MaxIterations);
         Assert.Contains("medical_evidence", budget.Reason, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Resolve_AllowsThreeIterations_ForPrediabetesNutritionPrompt()
+    {
+        var policy = new SearchIterationPolicy();
+
+        var budget = policy.Resolve(new WebSearchRequest("Оцени мой дневной рацион при преддиабете и проверь его по свежим официальным рекомендациям: сладкий йогурт утром, рис на обед, фрукты вечером, сок перед сном."));
+
+        Assert.Equal(3, budget.MaxIterations);
+        Assert.Contains("medical_evidence", budget.Reason, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void BuildPlans_RewritesPrediabetesDietPrompt_ToMedicalNutritionCore()
+    {
+        var planner = new WebQueryPlanner();
+
+        var plans = planner.BuildPlans(
+            new WebSearchRequest("Оцени мой дневной рацион при преддиабете и проверь его по свежим официальным рекомендациям: сладкий йогурт утром, рис на обед, фрукты вечером, сок перед сном.", Depth: 1),
+            new SearchIterationBudget(3, "medical_evidence_query"));
+
+        Assert.Equal("primary", plans[0].QueryKind);
+        Assert.DoesNotContain("оцени", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("йогурт", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("преддиабет", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("питание", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("рацион", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("официальные", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void BuildPlans_AddsFreshnessAndEvidenceBranches_ForPrediabetesNutritionPrompt()
+    {
+        var planner = new WebQueryPlanner();
+
+        var plans = planner.BuildPlans(
+            new WebSearchRequest("Оцени мой дневной рацион при преддиабете и проверь его по свежим официальным рекомендациям: сладкий йогурт утром, рис на обед, фрукты вечером, сок перед сном.", Depth: 1),
+            new SearchIterationBudget(3, "medical_evidence_query"));
+
+        Assert.Equal(3, plans.Count);
+        Assert.Equal("freshness", plans[1].QueryKind);
+        Assert.Equal("evidence", plans[2].QueryKind);
+        Assert.Contains("свежие", plans[1].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("преддиабет", plans[2].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("питание", plans[2].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("systematic review", plans[2].Query, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -204,6 +309,21 @@ public sealed class WebQueryPlannerTests
         Assert.Equal("evidence", plans[1].QueryKind);
         Assert.Contains("systematic review", plans[1].Query, StringComparison.OrdinalIgnoreCase);
         Assert.Equal("contradiction", plans[2].QueryKind);
+    }
+
+    [Fact]
+    public void BuildPlans_TreatsRaznyeVyvody_AsContradictionSignal()
+    {
+        var planner = new WebQueryPlanner();
+
+        var plans = planner.BuildPlans(
+            new WebSearchRequest("Сравни холодные ванны и сауну для восстановления после силовых тренировок, если исследования и популярные обзоры дают разные выводы.", Depth: 1),
+            new SearchIterationBudget(3, "contradiction_sensitive"));
+
+        Assert.Equal(3, plans.Count);
+        Assert.Equal("evidence", plans[1].QueryKind);
+        Assert.Equal("contradiction", plans[2].QueryKind);
+        Assert.Contains("meta-analysis", plans[2].Query, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
