@@ -175,7 +175,7 @@ public sealed class ChatTurnFinalizer : IChatTurnFinalizer
             context.NextStep = BuildSoftBestEffortNextStep(context, context.NextStep, isRussian);
         }
 
-        if (!context.IsCritiqueApproved)
+        if (!context.IsCritiqueApproved && context.InteractionPolicy?.NarrowRepairScope == true)
         {
             context.NextStep = _misunderstandingRepairPolicy.BuildRepairNextStep(context, isRussian) ?? context.NextStep;
         }

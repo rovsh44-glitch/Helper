@@ -6,6 +6,7 @@ internal interface IAnswerShapePolicy
 {
     string ApplyAnswerShapePreference(ChatTurnContext context, string solution, ComposerLocalization localization);
     string ApplyTaskClassFormatting(ChatTurnContext context, string solution, ComposerLocalization localization);
+    string ApplyConversationalNaturalness(ChatTurnContext context, string solution);
     bool HasStructuredShape(string solution);
 }
 
@@ -76,6 +77,22 @@ internal sealed class AnswerShapePolicy : IAnswerShapePolicy
         if (ShouldPromoteToProceduralStructure(context, solution))
         {
             return TryConvertParagraphToStructured(context, solution) ?? solution;
+        }
+
+        return solution;
+    }
+
+    public string ApplyConversationalNaturalness(ChatTurnContext context, string solution)
+    {
+        if (string.IsNullOrWhiteSpace(solution))
+        {
+            return solution;
+        }
+
+        if ((context.CollaborationIntent.IsGuidanceSeeking || context.CollaborationIntent.TrustsBestJudgment) &&
+            solution.StartsWith("Here is ", StringComparison.OrdinalIgnoreCase))
+        {
+            return solution["Here is ".Length..];
         }
 
         return solution;

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Helper.Api.Hosting;
+using Helper.Api.Conversation.InteractionState;
 
 namespace Helper.Api.Conversation;
 
@@ -13,6 +14,53 @@ public sealed class ChatTurnPlanner : IChatTurnPlanner
     private readonly TurnAmbiguityResolutionStep _ambiguityResolutionStep;
     private readonly TurnIntentOverrideStep _intentOverrideStep;
     private readonly IConversationStageMetricsService? _stageMetrics;
+
+    public ChatTurnPlanner(
+        IIntentClassifier intentClassifier,
+        IAmbiguityDetector ambiguityDetector,
+        IClarificationPolicy clarificationPolicy,
+        IIntentTelemetryService intentTelemetry,
+        ILatencyBudgetPolicy? latencyBudgetPolicy = null,
+        IAssumptionCheckPolicy? assumptionCheckPolicy = null,
+        IFeatureFlags? featureFlags = null,
+        IConversationStageMetricsService? stageMetrics = null,
+        IUserProfileService? userProfileService = null,
+        ITurnLanguageResolver? turnLanguageResolver = null,
+        ILiveWebRequirementPolicy? liveWebRequirementPolicy = null,
+        ILocalFirstBenchmarkPolicy? localFirstBenchmarkPolicy = null,
+        ICollaborationIntentDetector? collaborationIntentDetector = null,
+        ICommunicationQualityPolicy? communicationQualityPolicy = null,
+        IPersonalizationMergePolicy? personalizationMergePolicy = null,
+        IInteractionStateAnalyzer? interactionStateAnalyzer = null,
+        IInteractionPolicyProjector? interactionPolicyProjector = null,
+        IReasoningEffortPolicy? reasoningEffortPolicy = null,
+        IClarificationQualityPolicy? clarificationQualityPolicy = null)
+        : this(
+            new TurnIntentAnalysisStep(
+                intentClassifier,
+                intentTelemetry,
+                featureFlags ?? new FeatureFlags()),
+            new TurnPersonalizationStep(
+                userProfileService ?? new UserProfileService(),
+                turnLanguageResolver ?? new TurnLanguageResolver(),
+                collaborationIntentDetector ?? new CollaborationIntentDetector(),
+                communicationQualityPolicy ?? new CommunicationQualityPolicy(),
+                personalizationMergePolicy ?? new PersonalizationMergePolicy(),
+                localFirstBenchmarkPolicy ?? new LocalFirstBenchmarkPolicy(),
+                interactionStateAnalyzer ?? new InteractionStateAnalyzer(),
+                interactionPolicyProjector ?? new InteractionPolicyProjector()),
+            new TurnReasoningSelectionStep(reasoningEffortPolicy ?? new ReasoningEffortPolicy()),
+            new TurnLatencyBudgetStep(latencyBudgetPolicy ?? new LatencyBudgetPolicy()),
+            new TurnLiveWebDecisionStep(liveWebRequirementPolicy ?? new LiveWebRequirementPolicy()),
+            new TurnAmbiguityResolutionStep(
+                ambiguityDetector,
+                clarificationPolicy,
+                clarificationQualityPolicy ?? new ClarificationQualityPolicy(),
+                assumptionCheckPolicy ?? new AssumptionCheckPolicy()),
+            new TurnIntentOverrideStep(clarificationPolicy),
+            stageMetrics)
+    {
+    }
 
     public ChatTurnPlanner(
         TurnIntentAnalysisStep intentAnalysisStep,

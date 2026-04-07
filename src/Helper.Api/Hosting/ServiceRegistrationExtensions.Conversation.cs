@@ -11,8 +11,6 @@ public static partial class ServiceRegistrationExtensions
 {
     private static IServiceCollection AddHelperConversationServices(this IServiceCollection services)
     {
-        services.AddSingleton<IMemoryPriorityPolicy, MemoryPriorityPolicy>();
-        services.AddSingleton<IMemoryInspectionService, MemoryInspectionService>();
         services.AddSingleton<IMemoryPolicyService, MemoryPolicyService>();
         services.AddSingleton<IConversationSummarizer, ConversationSummarizer>();
         services.AddSingleton<IConversationPersistenceEngine>(sp =>
@@ -58,23 +56,14 @@ public static partial class ServiceRegistrationExtensions
         services.AddSingleton<IEpistemicAnswerModePolicy, EpistemicAnswerModePolicy>();
         services.AddSingleton<IInteractionStateAnalyzer, InteractionStateAnalyzer>();
         services.AddSingleton<IInteractionPolicyProjector, InteractionPolicyProjector>();
-        services.AddSingleton<IProjectInstructionPolicy, ProjectInstructionPolicy>();
-        services.AddSingleton<IProjectMemoryBoundaryPolicy, ProjectMemoryBoundaryPolicy>();
         services.AddSingleton<IPersonalizationMergePolicy, PersonalizationMergePolicy>();
-        services.AddSingleton<IConversationPromptPolicy, ConversationPromptPolicy>();
         services.AddSingleton<ICommunicationQualityPolicy, CommunicationQualityPolicy>();
         services.AddSingleton<IMisunderstandingRepairPolicy, MisunderstandingRepairPolicy>();
         services.AddSingleton<IReasoningEffortPolicy, ReasoningEffortPolicy>();
         services.AddSingleton<IDecisionExplanationProjector, DecisionExplanationProjector>();
         services.AddSingleton<IRepairClassifiers, RepairClassifiers>();
-        services.AddSingleton<IProactiveTopicPolicy, ProactiveTopicPolicy>();
         services.AddSingleton<IFollowThroughScheduler, FollowThroughScheduler>();
         services.AddSingleton<IConversationFollowThroughProcessor, ConversationFollowThroughProcessor>();
-        services.AddSingleton<IConversationModelCapabilityCatalog, ConversationModelCapabilityCatalog>();
-        services.AddSingleton<IConversationModelSelectionPolicy, ConversationModelSelectionPolicy>();
-        services.AddSingleton<ILiveVoiceTurnCoordinator, LiveVoiceTurnCoordinator>();
-        services.AddSingleton<IConversationLiveVoiceSessionService, ConversationLiveVoiceSessionService>();
-        services.AddSingleton<IMultimodalReferenceProjector, MultimodalReferenceProjector>();
         services.AddSingleton<IConversationContinuityCoordinator, ConversationContinuityCoordinator>();
         services.AddSingleton<ITurnLanguageResolver, TurnLanguageResolver>();
         services.AddSingleton<IDialogActPlanner, DialogActPlanner>();

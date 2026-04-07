@@ -34,6 +34,16 @@ public sealed class ConversationState
     public string Directness { get; set; } = "balanced";
     public string DefaultAnswerShape { get; set; } = "auto";
     public string? SearchLocalityHint { get; set; }
+    public string DecisionAssertiveness { get; set; } = "balanced";
+    public string ClarificationTolerance { get; set; } = "balanced";
+    public string CitationPreference { get; set; } = "adaptive";
+    public string RepairStyle { get; set; } = "direct_fix";
+    public string ReasoningStyle { get; set; } = "concise";
+    public SharedUnderstandingState? SharedUnderstanding { get; set; }
+    public UserUnderstandingState? UserUnderstanding { get; set; }
+    public ProjectUnderstandingState? ProjectUnderstanding { get; set; }
+    public ProjectContextState? ProjectContext { get; set; }
+    public CommunicationQualityState? CommunicationQuality { get; set; }
     public string? ActiveTurnId { get; set; }
     public string? ActiveTurnUserMessage { get; set; }
     public DateTimeOffset? ActiveTurnStartedAt { get; set; }
