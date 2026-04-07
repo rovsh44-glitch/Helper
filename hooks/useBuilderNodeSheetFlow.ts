@@ -14,6 +14,7 @@ type UseBuilderNodeSheetFlowArgs = {
   setWorkspaceError: Dispatch<SetStateAction<string | null>>;
   setBuildLogs: Dispatch<SetStateAction<string[]>>;
   syncProjectFromService: (nextSelection?: BuilderWorkspaceSelection | null) => void;
+  onStructureActivity?: (summary: string, detail?: string, tone?: 'neutral' | 'success' | 'warning' | 'danger', relatedPath?: string) => void;
 };
 
 export function useBuilderNodeSheetFlow({
@@ -27,6 +28,7 @@ export function useBuilderNodeSheetFlow({
   setWorkspaceError,
   setBuildLogs,
   syncProjectFromService,
+  onStructureActivity,
 }: UseBuilderNodeSheetFlowArgs) {
   const [nodeSheet, setNodeSheet] = useState<BuilderNodeSheetState | null>(null);
 
@@ -64,6 +66,7 @@ export function useBuilderNodeSheetFlow({
       await projectService.createWorkspaceNode(parentPath, trimmedName, isFolder);
       syncProjectFromService({ kind: isFolder ? 'folder' : 'file', path: createdPath, label: trimmedName });
       setBuildLogs(prev => [...prev, `${isFolder ? '📁' : '📄'} Created ${trimmedName} in ${parentPath || project.name}`]);
+      onStructureActivity?.(isFolder ? 'Folder created' : 'File created', createdPath, 'success', createdPath);
       setNodeSheet(null);
     } catch (error) {
       setWorkspaceError(error instanceof Error ? error.message : 'Workspace create failed.');
@@ -113,6 +116,7 @@ export function useBuilderNodeSheetFlow({
       }
       syncProjectFromService({ kind: targetKind, path: nextPath, label: trimmedName });
       setBuildLogs(prev => [...prev, `✏️ Renamed ${targetLabel} to ${trimmedName}`]);
+      onStructureActivity?.('Node renamed', `${targetPath} -> ${nextPath}`, 'neutral', nextPath);
       setNodeSheet(null);
     } catch (error) {
       setWorkspaceError(error instanceof Error ? error.message : 'Workspace rename failed.');
@@ -154,6 +158,7 @@ export function useBuilderNodeSheetFlow({
       setSelectedNode(null);
       syncProjectFromService();
       setBuildLogs(prev => [...prev, `🗑 Deleted ${targetKind}: ${targetLabel}`]);
+      onStructureActivity?.('Node deleted', `${targetKind}: ${targetLabel}`, 'warning', targetPath);
       setNodeSheet(null);
     } catch (error) {
       setWorkspaceError(error instanceof Error ? error.message : 'Workspace delete failed.');

@@ -1,6 +1,17 @@
+import type { BuildError } from '../types';
 import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
 import type { BuilderWorkspaceSelection, GeneratedProject } from '../types';
 import { projectService } from '../services/projectService';
+
+export type BuilderBuildSummary = {
+  status: 'idle' | 'running' | 'success' | 'error';
+  label: string;
+  errorCount: number;
+  warningCount: number;
+  primaryError: BuildError | null;
+  completedAtUtc: string | null;
+  durationMs: number | null;
+};
 
 type UseBuilderWorkspaceRefreshArgs = {
   project: GeneratedProject | null;
@@ -16,6 +27,7 @@ type UseBuilderWorkspaceRefreshArgs = {
   clearWorkspaceSession: () => void;
   syncProjectFromService: () => void;
   clearPreviewMutation: () => void;
+  onWorkspaceActivity?: (summary: string, detail?: string, tone?: 'neutral' | 'success' | 'warning' | 'danger', relatedPath?: string) => void;
 };
 
 export function useBuilderWorkspaceRefresh({
@@ -32,29 +44,86 @@ export function useBuilderWorkspaceRefresh({
   clearWorkspaceSession,
   syncProjectFromService,
   clearPreviewMutation,
+  onWorkspaceActivity,
 }: UseBuilderWorkspaceRefreshArgs) {
   const [isBuilding, setIsBuilding] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [buildSummary, setBuildSummary] = useState<BuilderBuildSummary>({
+    status: 'idle',
+    label: 'No build has been executed in this session yet.',
+    errorCount: 0,
+    warningCount: 0,
+    primaryError: null,
+    completedAtUtc: null,
+    durationMs: null,
+  });
 
   useEffect(() => {
     setWorkspacePathInput(project?.fullPath ?? '');
   }, [project?.fullPath, setWorkspacePathInput]);
 
   const handleBuild = async () => {
+    const startedAt = Date.now();
     setIsBuilding(true);
+    setBuildSummary({
+      status: 'running',
+      label: 'Build is running...',
+      errorCount: 0,
+      warningCount: 0,
+      primaryError: null,
+      completedAtUtc: null,
+      durationMs: null,
+    });
     setBuildLogs(['> Initializing build chain...', `> Target: ${project?.fullPath}`]);
     try {
       const result = await projectService.runBuild();
+      const completedAtUtc = new Date().toISOString();
+      const durationMs = Date.now() - startedAt;
       if (result.success) {
         setBuildLogs(prev => [...prev, '✅ Build Successful!']);
+        setBuildSummary({
+          status: 'success',
+          label: 'Build completed successfully.',
+          errorCount: 0,
+          warningCount: 0,
+          primaryError: null,
+          completedAtUtc,
+          durationMs,
+        });
+        onWorkspaceActivity?.('Build completed', project?.fullPath ?? 'Workspace build', 'success', project?.fullPath);
       } else {
-        const errors = result.errors.map((entry: { code: string; message: string; line: number }) =>
+        const errors = result.errors.map((entry: BuildError) =>
           `❌ ${entry.code}: ${entry.message} at line ${entry.line}`);
         setBuildLogs(prev => [...prev, ...errors]);
+        setBuildSummary({
+          status: 'error',
+          label: `Build failed with ${result.errors.length} error(s).`,
+          errorCount: result.errors.length,
+          warningCount: 0,
+          primaryError: result.errors[0] ?? null,
+          completedAtUtc,
+          durationMs,
+        });
+        onWorkspaceActivity?.(
+          'Build failed',
+          result.errors[0]?.message ?? `${result.errors.length} build errors`,
+          'danger',
+          result.errors[0]?.file,
+        );
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Build failed.';
       setBuildLogs(prev => [...prev, `❌ ${message}`]);
+      setBuildSummary({
+        status: 'error',
+        label: message,
+        errorCount: 1,
+        warningCount: 0,
+        primaryError: null,
+        completedAtUtc: new Date().toISOString(),
+        durationMs: Date.now() - startedAt,
+      });
+      onWorkspaceActivity?.('Build failed', message, 'danger', project?.fullPath);
     }
     setIsBuilding(false);
   };
@@ -82,6 +151,7 @@ export function useBuilderWorkspaceRefresh({
       setEditorContent('');
       setIsDirty(false);
       setBuildLogs(prev => [...prev, `📂 Workspace opened: ${openedProject.fullPath}`]);
+      onWorkspaceActivity?.('Workspace opened', openedProject.fullPath, 'success', openedProject.fullPath);
     } catch (error) {
       setWorkspaceError(error instanceof Error ? error.message : 'Failed to open workspace.');
     } finally {
@@ -100,6 +170,7 @@ export function useBuilderWorkspaceRefresh({
       await projectService.refreshProject();
       syncProjectFromService();
       setBuildLogs(prev => [...prev, `🔄 Workspace refreshed: ${project.fullPath}`]);
+      onWorkspaceActivity?.('Workspace refreshed', project.fullPath, 'neutral', project.fullPath);
     } catch (error) {
       setWorkspaceError(error instanceof Error ? error.message : 'Workspace refresh failed.');
     } finally {
@@ -108,6 +179,7 @@ export function useBuilderWorkspaceRefresh({
   };
 
   return {
+    buildSummary,
     isBuilding,
     isRefreshing,
     handleBuild,

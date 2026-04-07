@@ -324,6 +324,35 @@ $scenarios = @(
         return "conversationId=$conversationId"
     }
 
+    Invoke-SmokeScenario -Id "settings" -Title "Settings governance path" -Action {
+        Assert-Condition (-not [string]::IsNullOrWhiteSpace($conversationId)) "Conversation id was not initialized for settings verification."
+
+        Invoke-JsonRequest -Method "POST" -Uri "$ApiBaseUrl/api/chat/$conversationId/preferences" -Headers $conversationHeaders -Body @{
+            longTermMemoryEnabled = $true
+            preferredLanguage = "en"
+            detailLevel = "detailed"
+            warmth = "balanced"
+            enthusiasm = "balanced"
+            directness = "balanced"
+            defaultAnswerShape = "auto"
+            sessionMemoryTtlMinutes = 120
+            taskMemoryTtlHours = 48
+            longTermMemoryTtlDays = 30
+        } | Out-Null
+
+        $conversationSnapshot = Invoke-JsonRequest -Method "GET" -Uri "$ApiBaseUrl/api/chat/$conversationId" -Headers $conversationHeaders
+        Assert-Condition ($null -ne $conversationSnapshot.preferences) "Conversation preferences were not returned after save."
+        Assert-Condition ([string]$conversationSnapshot.preferences.preferredLanguage -eq "en") "Preferred language was not persisted."
+        Assert-Condition ([string]$conversationSnapshot.preferences.detailLevel -eq "detailed") "Detail level was not persisted."
+
+        $memorySnapshot = Invoke-JsonRequest -Method "GET" -Uri "$ApiBaseUrl/api/chat/$conversationId/memory" -Headers $conversationHeaders
+        Assert-Condition ($null -ne $memorySnapshot.policy) "Memory policy snapshot was not returned."
+        Assert-Condition ([int]$memorySnapshot.policy.sessionMemoryTtlMinutes -eq 120) "Session TTL did not round-trip."
+        Assert-Condition ([int]$memorySnapshot.policy.taskMemoryTtlHours -eq 48) "Task TTL did not round-trip."
+        Assert-Condition ([int]$memorySnapshot.policy.longTermMemoryTtlDays -eq 30) "Long-term TTL did not round-trip."
+        return "language=$($conversationSnapshot.preferences.preferredLanguage); memoryItems=$(@($memorySnapshot.items).Count)"
+    }
+
     Invoke-SmokeScenario -Id "goals" -Title "Objectives lifecycle" -Action {
         $goalTitle = "UI smoke goal $(Get-Date -Format 'HHmmss')"
         Invoke-JsonRequest -Method "POST" -Uri "$ApiBaseUrl/api/goals" -Headers $conversationHeaders -Body @{

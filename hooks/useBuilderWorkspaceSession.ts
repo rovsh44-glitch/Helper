@@ -1,11 +1,12 @@
-import { useState } from 'react';
-import type { BuilderLaunchRequest, DeploymentPlatform } from '../types';
+import type { BuilderLaunchRequest } from '../types';
 import { useBuilderWorkspace } from '../contexts/BuilderWorkspaceContext';
-import { projectService } from '../services/projectService';
 import { useBuilderFileSelection } from './useBuilderFileSelection';
 import { useBuilderLaunchHandoff } from './useBuilderLaunchHandoff';
+import { useBuilderActivityTimeline } from './useBuilderActivityTimeline';
+import { useBuilderWorkspaceCommands } from './useBuilderWorkspaceCommands';
 import { useBuilderMutationFlow, type BuilderVisibleMutation } from './useBuilderMutationFlow';
 import { useBuilderNodeSheetFlow } from './useBuilderNodeSheetFlow';
+import { useBuilderOpenFileTabs } from './useBuilderOpenFileTabs';
 import { useBuilderWorkspaceRefresh } from './useBuilderWorkspaceRefresh';
 
 type UseBuilderWorkspaceSessionArgs = {
@@ -40,7 +41,7 @@ export function useBuilderWorkspaceSession({
     setWorkspaceError,
     clearWorkspaceSession,
   } = useBuilderWorkspace();
-  const [isCreating, setIsCreating] = useState(false);
+  const activityTimeline = useBuilderActivityTimeline();
 
   const {
     selectedFile,
@@ -60,6 +61,20 @@ export function useBuilderWorkspaceSession({
     setEditorContent,
     setIsDirty,
     setWorkspaceError,
+    onSaveActivity: (filePath) => activityTimeline.recordActivity({
+      kind: 'file',
+      summary: 'File saved',
+      detail: filePath,
+      relatedPath: filePath,
+      tone: 'success',
+    }),
+    onSelectFileActivity: (filePath) => activityTimeline.recordActivity({
+      kind: 'file',
+      summary: 'File opened',
+      detail: filePath,
+      relatedPath: filePath,
+      tone: 'neutral',
+    }),
   });
 
   const mutationFlow = useBuilderMutationFlow({
@@ -67,6 +82,13 @@ export function useBuilderWorkspaceSession({
     setBuildLogs,
     setEditorContent,
     setIsDirty,
+    onMutationActivity: (summary, detail, tone, relatedPath) => activityTimeline.recordActivity({
+      kind: 'mutation',
+      summary,
+      detail,
+      tone,
+      relatedPath,
+    }),
   });
 
   const refreshFlow = useBuilderWorkspaceRefresh({
@@ -83,6 +105,33 @@ export function useBuilderWorkspaceSession({
     clearWorkspaceSession,
     syncProjectFromService: () => syncProjectFromService(),
     clearPreviewMutation: mutationFlow.clearPreviewMutation,
+    onWorkspaceActivity: (summary, detail, tone, relatedPath) => activityTimeline.recordActivity({
+      kind: 'workspace',
+      summary,
+      detail,
+      tone,
+      relatedPath,
+    }),
+  });
+
+  const clearSelection = () => {
+    setSelectedFilePath(null);
+    setSelectedNode(null);
+    setEditorContent('');
+    setIsDirty(false);
+  };
+
+  const {
+    openFileTabs,
+    handleSelectTrackedFile,
+    handleCloseFileTab,
+  } = useBuilderOpenFileTabs({
+    project,
+    selectedFile,
+    selectedFilePath,
+    isDirty,
+    onSelectFile: handleSelectFile,
+    onClearSelection: clearSelection,
   });
 
   const nodeSheetFlow = useBuilderNodeSheetFlow({
@@ -96,42 +145,33 @@ export function useBuilderWorkspaceSession({
     setWorkspaceError,
     setBuildLogs,
     syncProjectFromService,
+    onStructureActivity: (summary, detail, tone, relatedPath) => activityTimeline.recordActivity({
+      kind: 'structure',
+      summary,
+      detail,
+      tone,
+      relatedPath,
+    }),
   });
 
-  const createProjectFromPrompt = async (
-    prompt: string,
-    platform: DeploymentPlatform,
-    request?: BuilderLaunchRequest,
-  ) => {
-    setIsCreating(true);
-    setCreateError(null);
-    setWorkspaceError(null);
-
-    try {
-      const createdProject = request
-        ? await projectService.createProject(prompt, platform, request)
-        : await projectService.createProject(prompt, platform);
-
-      setProject({ ...createdProject });
-      setSelectedFilePath(null);
-      setSelectedNode(null);
-      setEditorContent('');
-      setIsDirty(false);
-      setBuildLogs(request
-        ? [
-            `> Builder launch source: ${request.source}`,
-            `> Route hint: ${request.routeTemplateId || 'none'}`,
-            `> Blueprint: ${request.blueprintName || 'not specified'}`,
-            `✅ Generated project: ${createdProject.name}`,
-          ]
-        : []);
-    } catch (error) {
-      setCreateError(error instanceof Error ? error.message : 'Project generation failed.');
-    } finally {
-      setIsCreating(false);
-      onLaunchConsumed?.();
-    }
-  };
+  const commands = useBuilderWorkspaceCommands({
+    createPrompt,
+    onLaunchConsumed,
+    project,
+    buildSummary: refreshFlow.buildSummary,
+    resetWorkspace: refreshFlow.handleResetProject,
+    setProject: (nextProject) => setProject(nextProject),
+    setSelectedFilePath,
+    setSelectedNode: () => setSelectedNode(null),
+    setEditorContent,
+    setIsDirty,
+    setBuildLogs,
+    setCreateError,
+    setWorkspaceError,
+    handleSelectFile: handleSelectTrackedFile,
+    clearActivity: activityTimeline.clearActivity,
+    recordActivity: activityTimeline.recordActivity,
+  });
 
   useBuilderLaunchHandoff({
     launchRequest,
@@ -139,31 +179,24 @@ export function useBuilderWorkspaceSession({
     project,
     setCreatePrompt,
     setBuildLogs,
-    createProjectFromPrompt,
+    createProjectFromPrompt: commands.createProjectFromPrompt,
   });
-
-  const handleCreate = async () => {
-    const prompt = createPrompt.trim();
-    if (!prompt) {
-      setCreateError('Enter a project request before starting the generation cycle.');
-      return;
-    }
-
-    await createProjectFromPrompt(prompt, DeploymentPlatform.CLI);
-  };
 
   return {
     project,
     selectedNode,
     selectedFile,
+    openFileTabs,
     editorContent,
     isDirty,
     buildLogs,
+    buildSummary: refreshFlow.buildSummary,
+    activityEntries: activityTimeline.activityEntries,
     createPrompt,
     createError,
     workspacePathInput,
     workspaceError,
-    isCreating,
+    isCreating: commands.isCreating,
     isBuilding: refreshFlow.isBuilding,
     isRefreshing: refreshFlow.isRefreshing,
     nodeSheet: nodeSheetFlow.nodeSheet,
@@ -173,16 +206,19 @@ export function useBuilderWorkspaceSession({
     setEditorContent,
     setIsDirty,
     setNodeSheet: nodeSheetFlow.setNodeSheet,
-    handleCreate,
+    handleCreate: commands.handleCreate,
+    handleOpenPrimaryBuildError: commands.handleOpenPrimaryBuildError,
     handleOpenExistingProject: refreshFlow.handleOpenExistingProject,
     handleRefreshWorkspace: refreshFlow.handleRefreshWorkspace,
-    handleResetProject: refreshFlow.handleResetProject,
+    handleResetProject: commands.handleResetProject,
     handleBuild: refreshFlow.handleBuild,
     handleSave,
     handleProposeMutation: mutationFlow.handleProposeMutation,
     handleApproveMutation: mutationFlow.handleApproveMutation,
     handleRejectMutation: mutationFlow.handleRejectMutation,
-    handleSelectFile,
+    handleSelectFile: handleSelectTrackedFile,
+    handleSelectFileTab: handleSelectTrackedFile,
+    handleCloseFileTab,
     handleSelectFolder,
     openCreateNodeSheet: nodeSheetFlow.openCreateNodeSheet,
     openRenameNodeSheet: nodeSheetFlow.openRenameNodeSheet,

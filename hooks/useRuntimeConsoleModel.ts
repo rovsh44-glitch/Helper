@@ -23,6 +23,7 @@ import {
   type ScopeFilter,
   type SeverityFilter,
 } from '../utils/runtimeLogIntelligence';
+import { readRouteQueryParam, updateRouteQueryParams } from '../services/appShellRoute';
 
 export type RuntimeFeedItem = {
   id: string;
@@ -35,7 +36,7 @@ export type RuntimeFeedItem = {
 export function useRuntimeConsoleModel() {
   const [controlPlane, setControlPlane] = useState<ControlPlaneSnapshotDto | null>(null);
   const [logsSnapshot, setLogsSnapshot] = useState<RuntimeLogsSnapshotDto | null>(null);
-  const [selectedSourceId, setSelectedSourceId] = useState('');
+  const [selectedSourceId, setSelectedSourceId] = useState(() => readRouteQueryParam('source') ?? '');
   const [severityFilter, setSeverityFilter] = useState<SeverityFilter>('all');
   const [scopeFilter, setScopeFilter] = useState<ScopeFilter>('all');
   const [domainFilter, setDomainFilter] = useState<DomainFilter>('all');
@@ -73,6 +74,12 @@ export function useRuntimeConsoleModel() {
       setSelectedSourceId(logsSnapshot.sources[0].id);
     }
   }, [logsSnapshot, selectedSourceId]);
+
+  useEffect(() => {
+    updateRouteQueryParams({
+      source: selectedSourceId || null,
+    }, { replace: true });
+  }, [selectedSourceId]);
 
   const activeSource = useMemo(
     () => logsSnapshot?.sources.find(source => source.id === selectedSourceId) ?? logsSnapshot?.sources[0] ?? null,

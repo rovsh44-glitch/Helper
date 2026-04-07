@@ -16,6 +16,7 @@ type UseBuilderMutationFlowArgs = {
   setBuildLogs: Dispatch<SetStateAction<string[]>>;
   setEditorContent: Dispatch<SetStateAction<string>>;
   setIsDirty: Dispatch<SetStateAction<boolean>>;
+  onMutationActivity?: (summary: string, detail?: string, tone?: 'neutral' | 'success' | 'warning' | 'danger', relatedPath?: string) => void;
 };
 
 export function useBuilderMutationFlow({
@@ -23,6 +24,7 @@ export function useBuilderMutationFlow({
   setBuildLogs,
   setEditorContent,
   setIsDirty,
+  onMutationActivity,
 }: UseBuilderMutationFlowArgs) {
   const [previewMutation, setPreviewMutation] = useState<BuilderVisibleMutation | null>(null);
   const { activeMutation, dismissActiveMutation } = useHelperHubContext();
@@ -59,9 +61,11 @@ export function useBuilderMutationFlow({
       }
 
       setBuildLogs(prev => [...prev, `🧬 Mutation applied: ${visibleMutation.filePath}`]);
+      onMutationActivity?.('Mutation applied', visibleMutation.filePath, 'success', visibleMutation.filePath);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Mutation apply failed.';
       setBuildLogs(prev => [...prev, `❌ ${message}`]);
+      onMutationActivity?.('Mutation apply failed', message, 'danger', visibleMutation.filePath);
     } finally {
       setPreviewMutation(null);
       dismissActiveMutation();
@@ -85,13 +89,16 @@ export function useBuilderMutationFlow({
           newCode: result.mutation.proposedCode,
         });
         setBuildLogs(prev => [...prev, `🧠 Mutation proposed for ${result.mutation.filePath}`]);
+        onMutationActivity?.('Mutation proposed', result.mutation.filePath, 'warning', result.mutation.filePath);
         return;
       }
 
       setBuildLogs(prev => [...prev, 'ℹ️ Backend health is currently stable. No mutation proposal returned.']);
+      onMutationActivity?.('Mutation skipped', 'Backend returned no proposal.', 'neutral');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to request mutation proposal.';
       setBuildLogs(prev => [...prev, `❌ ${message}`]);
+      onMutationActivity?.('Mutation request failed', message, 'danger');
     }
   };
 

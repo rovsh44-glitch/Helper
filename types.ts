@@ -193,6 +193,16 @@ export interface GeneratedProject {
   lastBuildTime?: number;
 }
 
+export interface BuilderActivityEntry {
+  id: string;
+  kind: 'workspace' | 'file' | 'build' | 'mutation' | 'structure';
+  summary: string;
+  detail?: string;
+  timestamp: number;
+  relatedPath?: string;
+  tone?: 'neutral' | 'success' | 'warning' | 'danger';
+}
+
 export interface E2ETestResult {
   id: string;
   testName: string;
