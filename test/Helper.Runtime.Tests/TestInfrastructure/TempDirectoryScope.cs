@@ -1,27 +1,57 @@
-namespace Helper.Runtime.Tests;
-
-internal sealed class TempDirectoryScope : IDisposable
+namespace Helper.Runtime.Tests
 {
-    public TempDirectoryScope(string prefix = "helper_test_")
+    internal sealed class TempDirectoryScope : IDisposable
     {
-        Path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), prefix + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(Path);
-    }
-
-    public string Path { get; }
-
-    public void Dispose()
-    {
-        try
+        public TempDirectoryScope(string prefix = "helper_test_")
         {
-            if (Directory.Exists(Path))
+            Path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), prefix + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(Path);
+        }
+
+        public string Path { get; }
+
+        public void Dispose()
+        {
+            try
             {
-                Directory.Delete(Path, recursive: true);
+                if (Directory.Exists(Path))
+                {
+                    Directory.Delete(Path, recursive: true);
+                }
+            }
+            catch
+            {
+                // best effort
             }
         }
-        catch
+    }
+}
+
+namespace Helper.Testing
+{
+    public sealed class TempDirectoryScope : IDisposable
+    {
+        public TempDirectoryScope(string prefix = "helper_test_")
         {
-            // best effort
+            Path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), prefix + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(Path);
+        }
+
+        public string Path { get; }
+
+        public void Dispose()
+        {
+            try
+            {
+                if (Directory.Exists(Path))
+                {
+                    Directory.Delete(Path, recursive: true);
+                }
+            }
+            catch
+            {
+                // best effort
+            }
         }
     }
 }
