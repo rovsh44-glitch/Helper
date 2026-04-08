@@ -9,11 +9,9 @@ import {
   WARMTH_KEY,
 } from '../services/conversationSession';
 import {
-  cancelConversationBackgroundTask,
   deleteConversationMemoryEntry,
   getConversationMemorySnapshot,
   getConversationSnapshot,
-  setConversationProactiveTopicEnabled,
   setConversationPreferences,
 } from '../services/conversationApi';
 import { useCapabilityCatalog } from './useCapabilityCatalog';
@@ -24,7 +22,6 @@ import { navigateToTab } from '../services/appShellRoute';
 import { buildConversationStylePreview } from '../utils/conversationStylePreview';
 import { readActiveConversationId, readStoredPreference, writeStoredPreference } from '../services/settingsPreferenceStorage';
 import type { SettingsAlertItem } from '../components/settings/SettingsAlertsPanel';
-import type { ContinuityBackgroundTask, ContinuityLiveVoiceSession, ContinuityProactiveTopic } from '../services/settingsContinuityContracts';
 
 type ConversationPreferenceOverride = Partial<Parameters<typeof setConversationPreferences>[1]>;
 
@@ -38,23 +35,6 @@ export function useSettingsViewState() {
   const [enthusiasm, setEnthusiasm] = useState(() => readStoredPreference(ENTHUSIASM_KEY, 'balanced'));
   const [directness, setDirectness] = useState(() => readStoredPreference(DIRECTNESS_KEY, 'balanced'));
   const [defaultAnswerShape, setDefaultAnswerShape] = useState(() => readStoredPreference(DEFAULT_ANSWER_SHAPE_KEY, 'auto'));
-  const [decisionAssertiveness, setDecisionAssertiveness] = useState('balanced');
-  const [clarificationTolerance, setClarificationTolerance] = useState('balanced');
-  const [citationPreference, setCitationPreference] = useState('adaptive');
-  const [repairStyle, setRepairStyle] = useState('direct_fix');
-  const [reasoningStyle, setReasoningStyle] = useState('concise');
-  const [reasoningEffort, setReasoningEffort] = useState('balanced');
-  const [personaBundleId, setPersonaBundleId] = useState('');
-  const [projectId, setProjectId] = useState('');
-  const [projectLabel, setProjectLabel] = useState('');
-  const [projectInstructions, setProjectInstructions] = useState('');
-  const [projectMemoryEnabled, setProjectMemoryEnabled] = useState(true);
-  const [backgroundResearchEnabled, setBackgroundResearchEnabled] = useState(true);
-  const [proactiveUpdatesEnabled, setProactiveUpdatesEnabled] = useState(false);
-  const [projectReferenceArtifacts, setProjectReferenceArtifacts] = useState<string[]>([]);
-  const [backgroundTasks, setBackgroundTasks] = useState<ContinuityBackgroundTask[]>([]);
-  const [proactiveTopics, setProactiveTopics] = useState<ContinuityProactiveTopic[]>([]);
-  const [liveVoiceSession, setLiveVoiceSession] = useState<ContinuityLiveVoiceSession | null>(null);
   const [sessionTtlMinutes, setSessionTtlMinutes] = useState(720);
   const [taskTtlHours, setTaskTtlHours] = useState(336);
   const [longTermTtlDays, setLongTermTtlDays] = useState(180);
@@ -172,56 +152,13 @@ export function useSettingsViewState() {
           setDefaultAnswerShape(data.preferences.defaultAnswerShape);
           writeStoredPreference(DEFAULT_ANSWER_SHAPE_KEY, data.preferences.defaultAnswerShape);
         }
-        if (data.preferences.decisionAssertiveness) {
-          setDecisionAssertiveness(data.preferences.decisionAssertiveness);
-        }
-        if (data.preferences.clarificationTolerance) {
-          setClarificationTolerance(data.preferences.clarificationTolerance);
-        }
-        if (data.preferences.citationPreference) {
-          setCitationPreference(data.preferences.citationPreference);
-        }
-        if (data.preferences.repairStyle) {
-          setRepairStyle(data.preferences.repairStyle);
-        }
-        if (data.preferences.reasoningStyle) {
-          setReasoningStyle(data.preferences.reasoningStyle);
-        }
-        if (data.preferences.reasoningEffort) {
-          setReasoningEffort(data.preferences.reasoningEffort);
-        }
-        if (typeof data.preferences.personaBundleId === 'string') {
-          setPersonaBundleId(data.preferences.personaBundleId);
-        }
-        if (typeof data.preferences.projectId === 'string') {
-          setProjectId(data.preferences.projectId);
-        }
-        if (typeof data.preferences.projectLabel === 'string') {
-          setProjectLabel(data.preferences.projectLabel);
-        }
-        if (typeof data.preferences.projectInstructions === 'string') {
-          setProjectInstructions(data.preferences.projectInstructions);
-        }
-        if (typeof data.preferences.projectMemoryEnabled === 'boolean') {
-          setProjectMemoryEnabled(data.preferences.projectMemoryEnabled);
-        }
-        if (typeof data.preferences.backgroundResearchEnabled === 'boolean') {
-          setBackgroundResearchEnabled(data.preferences.backgroundResearchEnabled);
-        }
-        if (typeof data.preferences.proactiveUpdatesEnabled === 'boolean') {
-          setProactiveUpdatesEnabled(data.preferences.proactiveUpdatesEnabled);
-        }
-        setProjectReferenceArtifacts(data.projectContext?.referenceArtifacts ?? []);
-        setBackgroundTasks(data.backgroundTasks ?? []);
-        setProactiveTopics(data.proactiveTopics ?? []);
-        setLiveVoiceSession(data.liveVoiceSession ?? null);
-        if (data.preferences.sessionMemoryTtlMinutes) {
+        if (typeof data.preferences.sessionMemoryTtlMinutes === 'number') {
           setSessionTtlMinutes(data.preferences.sessionMemoryTtlMinutes);
         }
-        if (data.preferences.taskMemoryTtlHours) {
+        if (typeof data.preferences.taskMemoryTtlHours === 'number') {
           setTaskTtlHours(data.preferences.taskMemoryTtlHours);
         }
-        if (data.preferences.longTermMemoryTtlDays) {
+        if (typeof data.preferences.longTermMemoryTtlDays === 'number') {
           setLongTermTtlDays(data.preferences.longTermMemoryTtlDays);
         }
       } catch (error) {
@@ -261,19 +198,6 @@ export function useSettingsViewState() {
         enthusiasm: override?.enthusiasm ?? enthusiasm,
         directness: override?.directness ?? directness,
         defaultAnswerShape: override?.defaultAnswerShape ?? defaultAnswerShape,
-        decisionAssertiveness: override?.decisionAssertiveness ?? decisionAssertiveness,
-        clarificationTolerance: override?.clarificationTolerance ?? clarificationTolerance,
-        citationPreference: override?.citationPreference ?? citationPreference,
-        repairStyle: override?.repairStyle ?? repairStyle,
-        reasoningStyle: override?.reasoningStyle ?? reasoningStyle,
-        reasoningEffort: override?.reasoningEffort ?? reasoningEffort,
-        personaBundleId: override?.personaBundleId ?? (personaBundleId.trim() || undefined),
-        projectId: override?.projectId ?? (projectId.trim() || undefined),
-        projectLabel: override?.projectLabel ?? (projectLabel.trim() || undefined),
-        projectInstructions: override?.projectInstructions ?? (projectInstructions.trim() || undefined),
-        projectMemoryEnabled: override?.projectMemoryEnabled ?? projectMemoryEnabled,
-        backgroundResearchEnabled: override?.backgroundResearchEnabled ?? backgroundResearchEnabled,
-        proactiveUpdatesEnabled: override?.proactiveUpdatesEnabled ?? proactiveUpdatesEnabled,
         personalMemoryConsentGranted: override?.personalMemoryConsentGranted ?? personalConsent,
         sessionMemoryTtlMinutes: override?.sessionMemoryTtlMinutes ?? sessionTtlMinutes,
         taskMemoryTtlHours: override?.taskMemoryTtlHours ?? taskTtlHours,
@@ -326,57 +250,6 @@ export function useSettingsViewState() {
     void savePreferences({ defaultAnswerShape: value });
   };
 
-  const saveDecisionAssertiveness = (value: string) => {
-    setDecisionAssertiveness(value);
-    void savePreferences({ decisionAssertiveness: value });
-  };
-
-  const saveClarificationTolerance = (value: string) => {
-    setClarificationTolerance(value);
-    void savePreferences({ clarificationTolerance: value });
-  };
-
-  const saveCitationPreference = (value: string) => {
-    setCitationPreference(value);
-    void savePreferences({ citationPreference: value });
-  };
-
-  const saveRepairStyle = (value: string) => {
-    setRepairStyle(value);
-    void savePreferences({ repairStyle: value });
-  };
-
-  const saveReasoningStyle = (value: string) => {
-    setReasoningStyle(value);
-    void savePreferences({ reasoningStyle: value });
-  };
-
-  const saveReasoningEffort = (value: string) => {
-    setReasoningEffort(value);
-    void savePreferences({ reasoningEffort: value });
-  };
-
-  const savePersonaBundleId = (value: string) => {
-    setPersonaBundleId(value);
-    void savePreferences({ personaBundleId: value.trim() || undefined });
-  };
-
-  const saveProjectContext = (override?: ConversationPreferenceOverride) => {
-    void savePreferences({
-      projectId: override?.projectId ?? (projectId.trim() || undefined),
-      projectLabel: override?.projectLabel ?? (projectLabel.trim() || undefined),
-      projectInstructions: override?.projectInstructions ?? (projectInstructions.trim() || undefined),
-      projectMemoryEnabled: override?.projectMemoryEnabled ?? projectMemoryEnabled,
-    });
-  };
-
-  const saveContinuityControls = (override?: ConversationPreferenceOverride) => {
-    void savePreferences({
-      backgroundResearchEnabled: override?.backgroundResearchEnabled ?? backgroundResearchEnabled,
-      proactiveUpdatesEnabled: override?.proactiveUpdatesEnabled ?? proactiveUpdatesEnabled,
-    });
-  };
-
   const deleteMemoryItem = async (memoryId: string) => {
     if (!conversationId) {
       setMemoryError('Start a conversation before deleting memory items.');
@@ -397,37 +270,6 @@ export function useSettingsViewState() {
     }
   };
 
-  const cancelBackgroundTask = async (taskId: string) => {
-    if (!conversationId) {
-      setActionStatus('Start a conversation before canceling background work.');
-      return;
-    }
-
-    try {
-      await cancelConversationBackgroundTask(conversationId, taskId, 'Canceled from settings project context.');
-      const snapshot = await getConversationSnapshot(conversationId);
-      setBackgroundTasks(snapshot.backgroundTasks ?? []);
-      setActionStatus('Background task canceled.');
-    } catch (error) {
-      setActionStatus(mapSettingsApiError(error));
-    }
-  };
-
-  const setProactiveTopicEnabled = async (topicId: string, enabled: boolean) => {
-    if (!conversationId) {
-      setActionStatus('Start a conversation before editing proactive topics.');
-      return;
-    }
-
-    try {
-      await setConversationProactiveTopicEnabled(conversationId, topicId, enabled);
-      const snapshot = await getConversationSnapshot(conversationId);
-      setProactiveTopics(snapshot.proactiveTopics ?? []);
-      setActionStatus(enabled ? 'Proactive topic enabled.' : 'Proactive topic disabled.');
-    } catch (error) {
-      setActionStatus(mapSettingsApiError(error));
-    }
-  };
 
   const infrastructureCards = useMemo(() => {
     if (!controlPlane) {
@@ -514,73 +356,43 @@ export function useSettingsViewState() {
       taskTtlHours,
       longTermTtlDays,
     },
-    personalization: {
-      decisionAssertiveness,
-      clarificationTolerance,
-      citationPreference,
-      repairStyle,
-      reasoningStyle,
-      reasoningEffort,
-      personaBundleId: personaBundleId.trim() || null,
-    },
-    projectContext: {
-      projectId: projectId.trim() || null,
-      projectLabel: projectLabel.trim() || null,
-      projectInstructions: projectInstructions.trim() || null,
-      projectMemoryEnabled,
-      referenceArtifacts: projectReferenceArtifacts,
-    },
-    continuity: {
-      backgroundResearchEnabled,
-      proactiveUpdatesEnabled,
-      backgroundTasks,
-      proactiveTopics,
-      liveVoiceSession,
+    stylePreferences: {
+      responseStyle,
+      preferredLanguage,
+      warmth,
+      enthusiasm,
+      directness,
+      defaultAnswerShape,
     },
     memoryItems: memoryItems.slice(0, 20).map(item => ({
       id: item.id,
       type: item.type,
-      scope: item.scope,
-      retention: item.retention,
-      whyRemembered: item.whyRemembered,
-      priority: item.priority,
       isPersonal: item.isPersonal,
       createdAt: item.createdAt,
       expiresAt: item.expiresAt,
       content: item.content,
-      sourceProjectId: item.sourceProjectId,
+      sourceTurnId: item.sourceTurnId,
     })),
   }), [
     capabilityCatalog,
-    citationPreference,
     controlPlane?.readiness,
     conversationId,
     conversationQualityDashboard,
-    decisionAssertiveness,
-    clarificationTolerance,
+    defaultAnswerShape,
+    directness,
+    enthusiasm,
     longTermTtlDays,
     memoryEnabled,
     memoryItems,
     memoryStatus,
     personalConsent,
-    personaBundleId,
-    projectId,
-    projectInstructions,
-    projectLabel,
-    projectMemoryEnabled,
-    projectReferenceArtifacts,
-    backgroundResearchEnabled,
-    proactiveUpdatesEnabled,
-    backgroundTasks,
-    proactiveTopics,
-    liveVoiceSession,
-    reasoningEffort,
-    reasoningStyle,
-    repairStyle,
+    preferredLanguage,
+    responseStyle,
     routeTelemetry,
     sessionTtlMinutes,
     status,
     taskTtlHours,
+    warmth,
   ]);
 
   const copyGovernanceSnapshot = async () => {
@@ -706,23 +518,6 @@ export function useSettingsViewState() {
     enthusiasm,
     directness,
     defaultAnswerShape,
-    decisionAssertiveness,
-    clarificationTolerance,
-    citationPreference,
-    repairStyle,
-    reasoningStyle,
-    reasoningEffort,
-    personaBundleId,
-    projectId,
-    projectLabel,
-    projectInstructions,
-    projectMemoryEnabled,
-    backgroundResearchEnabled,
-    proactiveUpdatesEnabled,
-    projectReferenceArtifacts,
-    backgroundTasks,
-    proactiveTopics,
-    liveVoiceSession,
     sessionTtlMinutes,
     taskTtlHours,
     longTermTtlDays,
@@ -754,30 +549,13 @@ export function useSettingsViewState() {
     saveEnthusiasmPreference,
     saveDirectnessPreference,
     saveDefaultAnswerShapePreference,
-    saveDecisionAssertiveness,
-    saveClarificationTolerance,
-    saveCitationPreference,
-    saveRepairStyle,
-    saveReasoningStyle,
-    saveReasoningEffort,
-    savePersonaBundleId,
-    saveProjectContext,
-    saveContinuityControls,
     setMemoryEnabled,
     setPersonalConsent,
-    setProjectId,
-    setProjectLabel,
-    setProjectInstructions,
-    setProjectMemoryEnabled,
-    setBackgroundResearchEnabled,
-    setProactiveUpdatesEnabled,
     setSessionTtlMinutes,
     setTaskTtlHours,
     setLongTermTtlDays,
     savePreferences,
     deleteMemoryItem,
-    cancelBackgroundTask,
-    setProactiveTopicEnabled,
   };
 }
 

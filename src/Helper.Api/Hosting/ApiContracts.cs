@@ -223,48 +223,10 @@ public record ConversationPreferenceDto(
     string? Directness = null,
     string? DefaultAnswerShape = null,
     string? SearchLocalityHint = null,
-    string? DecisionAssertiveness = null,
-    string? ClarificationTolerance = null,
-    string? CitationPreference = null,
-    string? RepairStyle = null,
-    string? ReasoningStyle = null,
-    string? ReasoningEffort = null,
-    string? PersonaBundleId = null,
-    string? ProjectId = null,
-    string? ProjectLabel = null,
-    string? ProjectInstructions = null,
-    bool? ProjectMemoryEnabled = null,
-    bool? BackgroundResearchEnabled = null,
-    bool? ProactiveUpdatesEnabled = null,
     bool? PersonalMemoryConsentGranted = null,
     int? SessionMemoryTtlMinutes = null,
     int? TaskMemoryTtlHours = null,
     int? LongTermMemoryTtlDays = null);
-public record BackgroundTaskActionRequestDto(string? Reason = null);
-public record ProactiveTopicActionRequestDto(bool Enabled);
-public record LiveVoiceSessionSyncRequestDto(
-    string SessionId,
-    string Language,
-    string RuntimeKind,
-    string Status,
-    bool IsHeld,
-    string? Transcript = null,
-    IReadOnlyList<string>? TranscriptSegments = null,
-    int AttachedReferenceCount = 0,
-    string? LastReferenceSummary = null,
-    IReadOnlyList<string>? ReferenceArtifacts = null,
-    bool? InterruptionsEnabled = null);
-public record LiveVoiceChunkSyncRequestDto(
-    string SessionId,
-    int Sequence,
-    int DurationMs,
-    int ByteCount,
-    string? Transcript = null,
-    string? Language = null,
-    string? RuntimeKind = null,
-    int AttachedReferenceCount = 0,
-    string? LastReferenceSummary = null,
-    IReadOnlyList<string>? ReferenceArtifacts = null);
 public record ReasoningEfficiencyMetricsDto(
     bool PathActive,
     bool BranchingApplied,

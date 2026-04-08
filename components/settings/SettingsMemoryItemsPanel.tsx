@@ -51,28 +51,12 @@ export const SettingsMemoryItemsPanel: React.FC<SettingsMemoryItemsPanelProps> =
                   <div className="text-xs text-slate-200 break-words">{item.content}</div>
                   <div className="mt-2 flex flex-wrap gap-2 text-[10px] uppercase tracking-[0.16em] text-slate-500">
                     <span className="rounded-full border border-slate-800 px-2 py-0.5">
-                      scope: {item.scope ?? (item.isPersonal ? 'user' : 'session')}
+                      visibility: {item.isPersonal ? 'personal' : 'shared'}
                     </span>
                     <span className="rounded-full border border-slate-800 px-2 py-0.5">
                       source: {item.sourceTurnId ? `turn ${item.sourceTurnId.slice(0, 8)}` : 'policy/manual'}
                     </span>
-                    <span className="rounded-full border border-slate-800 px-2 py-0.5">
-                      retention: {item.retention ?? (item.expiresAt ? 'ttl' : 'sticky')}
-                    </span>
-                    <span className="rounded-full border border-slate-800 px-2 py-0.5">
-                      priority: {item.priority ?? 0}
-                    </span>
-                    {item.sourceProjectId && (
-                      <span className="rounded-full border border-slate-800 px-2 py-0.5">
-                        project: {item.sourceProjectId}
-                      </span>
-                    )}
                   </div>
-                  {item.whyRemembered && (
-                    <div className="mt-2 text-[11px] text-slate-400">
-                      Why remembered: {item.whyRemembered}
-                    </div>
-                  )}
                   <div className="mt-1 text-[10px] text-slate-500">
                     created: {new Date(item.createdAt).toLocaleString()} {item.expiresAt ? ` | expires: ${new Date(item.expiresAt).toLocaleString()}` : ''}
                   </div>
@@ -80,10 +64,10 @@ export const SettingsMemoryItemsPanel: React.FC<SettingsMemoryItemsPanelProps> =
                 <button
                   type="button"
                   onClick={() => setPendingDeleteId(item.id)}
-                  disabled={isDeletingMemory === item.id || item.userEditable === false}
+                  disabled={isDeletingMemory === item.id}
                   className="px-2 py-1 text-[10px] rounded border border-red-900 text-red-300 hover:bg-red-950/40 disabled:opacity-50"
                 >
-                  {item.userEditable === false ? 'Locked' : isDeletingMemory === item.id ? 'Deleting...' : 'Delete'}
+                  {isDeletingMemory === item.id ? 'Deleting...' : 'Delete'}
                 </button>
               </div>
               {pendingDeleteItem?.id === item.id && (
@@ -102,18 +86,10 @@ export const SettingsMemoryItemsPanel: React.FC<SettingsMemoryItemsPanelProps> =
                       <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Pending deletion</div>
                       <div className="mt-1 break-words">{item.content}</div>
                       <div className="mt-2 text-[11px] text-slate-500">
-                        Scope: {item.scope ?? (item.isPersonal ? 'user' : 'session')}
-                        {item.retention ? ` · Retention: ${item.retention}` : ''}
-                        {typeof item.priority === 'number' ? ` · Priority: ${item.priority}` : ''}
+                        Visibility: {item.isPersonal ? 'personal' : 'shared'}
                         {item.sourceTurnId ? ` · Source turn: ${item.sourceTurnId}` : ' · Source: policy/manual'}
-                        {item.sourceProjectId ? ` · Project: ${item.sourceProjectId}` : ''}
                         {item.expiresAt ? ` · Expires: ${new Date(item.expiresAt).toLocaleString()}` : ' · No explicit expiry'}
                       </div>
-                      {item.whyRemembered && (
-                        <div className="mt-2 text-[11px] text-slate-500">
-                          Why remembered: {item.whyRemembered}
-                        </div>
-                      )}
                     </div>
                   </InlineActionSheet>
                 </div>
