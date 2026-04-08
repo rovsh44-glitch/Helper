@@ -21,8 +21,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Helper.Testing\Helper.Testing.csproj" />
-    <ProjectReference Include="..\Helper.Testing.WebResearch\Helper.Testing.WebResearch.csproj" />
+    <ProjectReference Include="..\Helper.Testing\Helper.Testing.csproj" Condition="Exists('..\Helper.Testing\Helper.Testing.csproj')" />
+    <ProjectReference Include="..\Helper.Testing.WebResearch\Helper.Testing.WebResearch.csproj" Condition="Exists('..\Helper.Testing.WebResearch\Helper.Testing.WebResearch.csproj')" />
     <ProjectReference Include="..\..\src\Helper.Runtime\Helper.Runtime.csproj" />
     <ProjectReference Include="..\..\src\Helper.Runtime.Knowledge\Helper.Runtime.Knowledge.csproj" />
     <ProjectReference Include="..\..\src\Helper.Runtime.Evolution\Helper.Runtime.Evolution.csproj" />
@@ -31,14 +31,16 @@
 
   <ItemGroup>
     <Compile Include="..\Helper.Runtime.Tests\TestCollectionConfig.cs" Link="TestCollectionConfig.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\TempDirectoryScope.cs" Link="TempDirectoryScope.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\TestInfrastructure\EnvironmentVariableScope.cs" Link="TestInfrastructure\EnvironmentVariableScope.cs" />
     <Compile Include="..\Helper.Runtime.Tests\TestInfrastructure\ProcessEnvironmentCollection.cs" Link="TestInfrastructure\ProcessEnvironmentCollection.cs" />
     <Compile Include="..\Helper.Runtime.Tests\TestInfrastructure\TempDirectoryScope.cs" Link="TestInfrastructure\TempDirectoryScope.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\WebResearchTestDoubles.cs" Link="WebResearchTestDoubles.cs" Condition="!Exists('..\Helper.Testing.WebResearch\Helper.Testing.WebResearch.csproj')" />
     <Compile Include="..\Helper.Runtime.Tests\ApiBindingPlanResolverTests.cs" Link="ApiBindingPlanResolverTests.cs" />
     <Compile Include="..\Helper.Runtime.Tests\ApiPortFileWriterTests.cs" Link="ApiPortFileWriterTests.cs" />
     <Compile Include="..\Helper.Runtime.Tests\BackendRebuildRuntimeTests.cs" Link="BackendRebuildRuntimeTests.cs" />
     <Compile Include="..\Helper.Runtime.Tests\CapabilityCatalogTests.cs" Link="CapabilityCatalogTests.cs" />
     <Compile Include="..\Helper.Runtime.Tests\ChatTurnExecutorResearchRoutingTests.cs" Link="ChatTurnExecutorResearchRoutingTests.cs" />
-    <Compile Include="..\Helper.Runtime.Tests\ChatTurnPlannerTestFactory.cs" Link="ChatTurnPlannerTestFactory.cs" />
     <Compile Include="..\Helper.Runtime.Tests\CompileGateRepairDeterministicTests.cs" Link="CompileGateRepairDeterministicTests.cs" />
     <Compile Include="..\Helper.Runtime.Tests\ConversationE2ETests.cs" Link="ConversationE2ETests.cs" />
     <Compile Include="..\Helper.Runtime.Tests\ConversationMemoryLayeringTests.cs" Link="ConversationMemoryLayeringTests.cs" />
@@ -51,21 +53,14 @@
     <Compile Include="..\Helper.Runtime.Tests\ProcessGuardTests.cs" Link="ProcessGuardTests.cs" />
     <Compile Include="..\Helper.Runtime.Tests\ProjectForgeOrchestratorTests.cs" Link="ProjectForgeOrchestratorTests.cs" />
     <Compile Include="..\Helper.Runtime.Tests\ReasoningBranchExecutorTests.cs" Link="ReasoningBranchExecutorTests.cs" />
-    <Compile Include="..\Helper.Runtime.Tests\RetrievalPipeline.ContextAssemblyTests.cs" Link="RetrievalPipeline.ContextAssemblyTests.cs" />
-    <Compile Include="..\Helper.Runtime.Tests\RetrievalPipeline.DomainRoutingTests.cs" Link="RetrievalPipeline.DomainRoutingTests.cs" />
-    <Compile Include="..\Helper.Runtime.Tests\RetrievalPipeline.RecallExpansionTests.cs" Link="RetrievalPipeline.RecallExpansionTests.cs" />
-    <Compile Include="..\Helper.Runtime.Tests\RetrievalPipelineTests.Support.cs" Link="RetrievalPipelineTests.Support.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\RetrievalPipelineTests.cs" Link="RetrievalPipelineTests.cs" />
     <Compile Include="..\Helper.Runtime.Tests\RuntimeSafetyTests.cs" Link="RuntimeSafetyTests.cs" />
     <Compile Include="..\Helper.Runtime.Tests\SimpleResearcherTests.cs" Link="SimpleResearcherTests.cs" />
     <Compile Include="..\Helper.Runtime.Tests\ToolPermitTests.cs" Link="ToolPermitTests.cs" />
     <Compile Include="..\Helper.Runtime.Tests\ConversationFollowThroughTests.cs" Link="ConversationFollowThroughTests.cs" />
-    <Compile Include="..\Helper.Runtime.Tests\LiveVoiceRuntimeStateTests.cs" Link="LiveVoiceRuntimeStateTests.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\LiveVoiceRuntimeStateTests.cs" Link="LiveVoiceRuntimeStateTests.cs" Condition="Exists('..\Helper.Runtime.Tests\LiveVoiceRuntimeStateTests.cs')" />
     <Compile Include="..\Helper.Runtime.Tests\TemplateRoutingAndDiagnosticsTests.cs" Link="TemplateRoutingAndDiagnosticsTests.cs" />
-    <Compile Include="..\Helper.Runtime.Tests\TemplateRoutingAndDiagnosticsTests.Selection.cs" Link="TemplateRoutingAndDiagnosticsTests.Selection.cs" />
-    <Compile Include="..\Helper.Runtime.Tests\TemplateRoutingAndDiagnosticsTests.DiagnosticFailures.cs" Link="TemplateRoutingAndDiagnosticsTests.DiagnosticFailures.cs" />
-    <Compile Include="..\Helper.Runtime.Tests\ToolService.ConfigurationTests.cs" Link="ToolService.ConfigurationTests.cs" />
-    <Compile Include="..\Helper.Runtime.Tests\ToolService.WorkspaceAndCwdTests.cs" Link="ToolService.WorkspaceAndCwdTests.cs" />
-    <Compile Include="..\Helper.Runtime.Tests\ToolService.EnvironmentMutationTests.cs" Link="ToolService.EnvironmentMutationTests.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\ToolServiceTests.cs" Link="ToolServiceTests.cs" />
     <Compile Include="..\Helper.Runtime.Tests\TurnLanguageLockTests.cs" Link="TurnLanguageLockTests.cs" />
     <Compile Include="..\Helper.Runtime.Tests\WebSearchOrchestratorTests.cs" Link="WebSearchOrchestratorTests.cs" />
     <Compile Include="..\Helper.Runtime.Tests\WebSearchProviderMuxTests.cs" Link="WebSearchProviderMuxTests.cs" />
