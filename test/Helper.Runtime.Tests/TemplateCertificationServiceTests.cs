@@ -11,7 +11,7 @@ public sealed class TemplateCertificationServiceTests
     {
         Environment.SetEnvironmentVariable("HELPER_TEMPLATE_PROMOTION_FORMAT_MODE", "off");
         Environment.SetEnvironmentVariable("HELPER_TEMPLATE_CERTIFICATION_REQUIRE_SCHEMA_V2", "false");
-        using var temp = new TempDirectoryScope();
+        using var temp = new TempDirectoryScope("helper_template_cert_test_");
         var templatesRoot = Path.Combine(temp.Path, "templates");
         var templateVersionRoot = Path.Combine(templatesRoot, "Template_Simple", "1.0.0");
         Directory.CreateDirectory(templateVersionRoot);
@@ -52,7 +52,7 @@ public sealed class Class1
         var lifecycle = new TemplateLifecycleService(templatesRoot);
         await lifecycle.ActivateVersionAsync("Template_Simple", "1.0.0");
 
-        var service = BuildSmokeService(templatesRoot, temp.Path);
+        var service = BuildRealBuildService(templatesRoot, temp.Path);
         var report = await service.CertifyAsync("Template_Simple", "1.0.0");
 
         Assert.True(report.Passed, string.Join(" | ", report.Errors));
@@ -64,7 +64,7 @@ public sealed class Class1
     {
         Environment.SetEnvironmentVariable("HELPER_TEMPLATE_PROMOTION_FORMAT_MODE", "off");
         Environment.SetEnvironmentVariable("HELPER_TEMPLATE_CERTIFICATION_REQUIRE_SCHEMA_V2", "false");
-        using var temp = new TempDirectoryScope();
+        using var temp = new TempDirectoryScope("helper_template_cert_test_");
         var templatesRoot = Path.Combine(temp.Path, "templates");
         var templateVersionRoot = Path.Combine(templatesRoot, "Template_Bad", "1.0.0");
         Directory.CreateDirectory(templateVersionRoot);
@@ -102,7 +102,7 @@ public sealed class Class1
         var lifecycle = new TemplateLifecycleService(templatesRoot);
         await lifecycle.ActivateVersionAsync("Template_Bad", "1.0.0");
 
-        var service = BuildLogicOnlyService(templatesRoot, temp.Path);
+        var service = BuildStubbedService(templatesRoot, temp.Path);
         var gate = await service.EvaluateGateAsync();
 
         Assert.False(gate.Passed);
@@ -114,7 +114,7 @@ public sealed class Class1
     {
         Environment.SetEnvironmentVariable("HELPER_TEMPLATE_PROMOTION_FORMAT_MODE", "off");
         Environment.SetEnvironmentVariable("HELPER_TEMPLATE_CERTIFICATION_REQUIRE_SCHEMA_V2", "false");
-        using var temp = new TempDirectoryScope();
+        using var temp = new TempDirectoryScope("helper_template_cert_test_");
         var templatesRoot = Path.Combine(temp.Path, "templates");
         var templateVersionRoot = Path.Combine(templatesRoot, "Template_Corrupt", "1.0.0");
         Directory.CreateDirectory(templateVersionRoot);
@@ -132,7 +132,7 @@ public sealed class Class1
 """);
         await File.WriteAllTextAsync(Path.Combine(templateVersionRoot, "Class1.cs"), "namespace Demo; public sealed class Class1 { }");
 
-        var service = BuildLogicOnlyService(templatesRoot, temp.Path);
+        var service = BuildStubbedService(templatesRoot, temp.Path);
         var report = await service.CertifyAsync("Template_Corrupt", "1.0.0");
 
         Assert.False(report.Passed);
@@ -144,7 +144,7 @@ public sealed class Class1
     {
         Environment.SetEnvironmentVariable("HELPER_TEMPLATE_PROMOTION_FORMAT_MODE", "off");
         Environment.SetEnvironmentVariable("HELPER_TEMPLATE_CERTIFICATION_REQUIRE_SCHEMA_V2", "false");
-        using var temp = new TempDirectoryScope();
+        using var temp = new TempDirectoryScope("helper_template_cert_test_");
         var templatesRoot = Path.Combine(temp.Path, "templates");
         var templateVersionRoot = Path.Combine(templatesRoot, "Template_NoArtifacts", "1.0.0");
         Directory.CreateDirectory(templateVersionRoot);
@@ -172,10 +172,12 @@ public sealed class Class1
 """);
         await File.WriteAllTextAsync(Path.Combine(templateVersionRoot, "Class1.cs"), "namespace Demo; public sealed class Class1 { }");
 
-        var service = BuildLogicOnlyService(
+        var service = BuildStubbedService(
             templatesRoot,
             temp.Path,
-            buildValidator: new EmptyBuildValidator());
+            compileGate: new PassingCompileGate(),
+            buildValidator: new EmptyBuildValidator(),
+            artifactValidator: new ForgeArtifactValidator());
         var report = await service.CertifyAsync("Template_NoArtifacts", "1.0.0");
 
         Assert.False(report.Passed);
@@ -187,7 +189,7 @@ public sealed class Class1
     {
         Environment.SetEnvironmentVariable("HELPER_TEMPLATE_PROMOTION_FORMAT_MODE", "off");
         Environment.SetEnvironmentVariable("HELPER_TEMPLATE_CERTIFICATION_REQUIRE_SCHEMA_V2", "false");
-        using var temp = new TempDirectoryScope();
+        using var temp = new TempDirectoryScope("helper_template_cert_test_");
         var templatesRoot = Path.Combine(temp.Path, "templates");
         var templateVersionRoot = Path.Combine(templatesRoot, "Template_Unsafe", "1.0.0");
         Directory.CreateDirectory(templateVersionRoot);
@@ -226,7 +228,7 @@ public static class Secrets
         var lifecycle = new TemplateLifecycleService(templatesRoot);
         await lifecycle.ActivateVersionAsync("Template_Unsafe", "1.0.0");
 
-        var service = BuildLogicOnlyService(templatesRoot, temp.Path);
+        var service = BuildStubbedService(templatesRoot, temp.Path);
         var report = await service.CertifyAsync("Template_Unsafe", "1.0.0");
 
         Assert.False(report.Passed);
@@ -239,7 +241,7 @@ public static class Secrets
     {
         Environment.SetEnvironmentVariable("HELPER_TEMPLATE_PROMOTION_FORMAT_MODE", "off");
         Environment.SetEnvironmentVariable("HELPER_TEMPLATE_CERTIFICATION_REQUIRE_SCHEMA_V2", "false");
-        using var temp = new TempDirectoryScope();
+        using var temp = new TempDirectoryScope("helper_template_cert_test_");
         var templatesRoot = Path.Combine(temp.Path, "templates");
         var templateVersionRoot = Path.Combine(templatesRoot, "Template_Placeholder", "1.0.0");
         Directory.CreateDirectory(templateVersionRoot);
@@ -282,7 +284,7 @@ public sealed class BrokenService
         var lifecycle = new TemplateLifecycleService(templatesRoot);
         await lifecycle.ActivateVersionAsync("Template_Placeholder", "1.0.0");
 
-        var service = BuildLogicOnlyService(templatesRoot, temp.Path);
+        var service = BuildStubbedService(templatesRoot, temp.Path);
         var report = await service.CertifyAsync("Template_Placeholder", "1.0.0");
 
         Assert.False(report.Passed);
@@ -296,7 +298,7 @@ public sealed class BrokenService
     {
         Environment.SetEnvironmentVariable("HELPER_TEMPLATE_PROMOTION_FORMAT_MODE", "off");
         Environment.SetEnvironmentVariable("HELPER_TEMPLATE_CERTIFICATION_REQUIRE_SCHEMA_V2", "false");
-        using var temp = new TempDirectoryScope();
+        using var temp = new TempDirectoryScope("helper_template_cert_test_");
         var templatesRoot = Path.Combine(temp.Path, "templates");
         var templateRoot = Path.Combine(templatesRoot, "Template_WorkspaceRoot");
         Directory.CreateDirectory(templateRoot);
@@ -333,7 +335,7 @@ public sealed class Class1
 }
 """);
 
-        var service = BuildSmokeService(templatesRoot, temp.Path);
+        var service = BuildStubbedService(templatesRoot, temp.Path);
         var report = await service.CertifyAsync("Template_WorkspaceRoot", "workspace", templatePath: templateRoot);
 
         Assert.True(report.Passed, string.Join(" | ", report.Errors));
@@ -348,7 +350,7 @@ public sealed class Class1
             return;
         }
 
-        var templateRoot = ResolveWorkspaceFile("library", "forge_templates", "Template_PdfEpubConverter");
+        var templateRoot = TestWorkspaceRoot.ResolveFile("library", "forge_templates", "Template_PdfEpubConverter");
         if (!Directory.Exists(templateRoot) || !IsCalibreAvailable())
         {
             return;
@@ -356,8 +358,8 @@ public sealed class Class1
 
         Environment.SetEnvironmentVariable("HELPER_TEMPLATE_PROMOTION_FORMAT_MODE", "off");
         Environment.SetEnvironmentVariable("HELPER_TEMPLATE_CERTIFICATION_REQUIRE_SCHEMA_V2", "false");
-        using var temp = new TempDirectoryScope();
-        var service = BuildSmokeService(Path.Combine(temp.Path, "templates"), temp.Path);
+        using var temp = new TempDirectoryScope("helper_template_cert_test_");
+        var service = BuildRealBuildService(Path.Combine(temp.Path, "templates"), temp.Path);
         var probeRoot = Path.Combine(temp.Path, "Template_PdfEpubConverter");
         CopyDirectory(templateRoot, probeRoot);
 
@@ -386,7 +388,7 @@ public sealed class Class1
         Assert.Contains("process.Kill(entireProcessTree: true);", program, StringComparison.Ordinal);
     }
 
-    private static TemplateCertificationService BuildSmokeService(
+    private static TemplateCertificationService BuildRealBuildService(
         string templatesRoot,
         string workspaceRoot,
         IBuildValidator? buildValidator = null,
@@ -408,18 +410,18 @@ public sealed class Class1
             workspaceRoot);
     }
 
-    private static TemplateCertificationService BuildLogicOnlyService(
+    private static TemplateCertificationService BuildStubbedService(
         string templatesRoot,
         string workspaceRoot,
+        IGenerationCompileGate? compileGate = null,
         IBuildValidator? buildValidator = null,
-        IForgeArtifactValidator? artifactValidator = null,
-        IGenerationCompileGate? compileGate = null)
+        IForgeArtifactValidator? artifactValidator = null)
     {
         var templateManager = new ProjectTemplateManager(templatesRoot);
         var lifecycle = new TemplateLifecycleService(templatesRoot);
         compileGate ??= new PassingCompileGate();
-        buildValidator ??= new EmptyBuildValidator();
-        artifactValidator ??= new ForgeArtifactValidator();
+        buildValidator ??= new PassingBuildValidator();
+        artifactValidator ??= new NoOpArtifactValidator();
         return new TemplateCertificationService(
             templateManager,
             lifecycle,
@@ -428,11 +430,6 @@ public sealed class Class1
             artifactValidator,
             templatesRoot,
             workspaceRoot);
-    }
-
-    private static string ResolveWorkspaceFile(params string[] segments)
-    {
-        return TestWorkspaceRoot.ResolveFile(segments);
     }
 
     private static bool IsCalibreAvailable()
@@ -485,42 +482,5 @@ public sealed class Class1
         }
     }
 
-    private sealed class PassingCompileGate : IGenerationCompileGate
-    {
-        public Task<CompileGateResult> ValidateAsync(string rawProjectRoot, CancellationToken ct = default)
-        {
-            var compileWorkspace = Path.Combine(
-                System.IO.Path.GetTempPath(),
-                "helper_template_compile_gate_pass_" + Guid.NewGuid().ToString("N"));
-            Directory.CreateDirectory(compileWorkspace);
-            return Task.FromResult(new CompileGateResult(true, Array.Empty<BuildError>(), compileWorkspace));
-        }
-    }
-
-    private sealed class TempDirectoryScope : IDisposable
-    {
-        public TempDirectoryScope()
-        {
-            Path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "helper_template_cert_test_" + Guid.NewGuid().ToString("N"));
-            Directory.CreateDirectory(Path);
-        }
-
-        public string Path { get; }
-
-        public void Dispose()
-        {
-            try
-            {
-                if (Directory.Exists(Path))
-                {
-                    Directory.Delete(Path, recursive: true);
-                }
-            }
-            catch
-            {
-                // best effort
-            }
-        }
-    }
 }
 

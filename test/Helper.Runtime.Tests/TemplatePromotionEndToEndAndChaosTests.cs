@@ -29,9 +29,10 @@ public sealed class TemplatePromotionEndToEndAndChaosTests
         var routing = new StaticRoutingService(templateId);
         var generalizer = new CopyingTemplateGeneralizer(templatesRoot);
         var lifecycle = new TemplateLifecycleService(templatesRoot);
-        var compileGate = new GenerationCompileGate(new DotnetService(), new CompileGateRepairService(new UsingInferenceService(new TypeTokenExtractor()), new MethodBodySemanticGuard()));
+        var dotnet = new DotnetService();
+        var compileGate = new GenerationCompileGate(dotnet, new CompileGateRepairService(new UsingInferenceService(new TypeTokenExtractor()), new MethodBodySemanticGuard()));
         var metrics = new GenerationMetricsService();
-        var certification = BuildCertificationService(templatesRoot, temp.Path, compileGate);
+        var certification = BuildCertificationService(templatesRoot, temp.Path, dotnet, compileGate);
         var promotion = new GenerationTemplatePromotionService(
             routing,
             generalizer,
@@ -58,6 +59,55 @@ public sealed class TemplatePromotionEndToEndAndChaosTests
         var status = TemplateCertificationStatusStore.TryRead(publishedRoot);
         Assert.NotNull(status);
         Assert.True(status!.Passed);
+
+        var versions = await lifecycle.GetVersionsAsync(templateId);
+        Assert.Contains(versions, x => x.IsActive && x.Version == result.Version);
+    }
+
+    [Theory]
+    [InlineData("Template_EngineeringCalculator", "engineering")]
+    [InlineData("Golden_Chess_v2", "chess")]
+    [InlineData("Template_PdfEpubConverter", "pdfepub")]
+    public async Task PromotionPipeline_E2E_RouteToActivation_PassesForStubbedGoldenSuite(string templateId, string scenario)
+    {
+        using var env = new EnvScope(new Dictionary<string, string?>
+        {
+            ["HELPER_FF_TEMPLATE_RUNTIME_PROMOTION_V1"] = "true",
+            ["HELPER_TEMPLATE_PROMOTION_AUTO_ACTIVATE"] = "true",
+            ["HELPER_TEMPLATE_PROMOTION_FORMAT_MODE"] = "off",
+            ["HELPER_TEMPLATE_CERTIFICATION_REQUIRE_SCHEMA_V2"] = "true"
+        });
+        using var temp = new TempDirectoryScope("helper_template_e2e_");
+
+        var templatesRoot = Path.Combine(temp.Path, "templates");
+        var generatedProject = Path.Combine(temp.Path, "generated");
+        Directory.CreateDirectory(generatedProject);
+        await CreateScenarioProjectAsync(generatedProject, scenario);
+
+        var routing = new StaticRoutingService(templateId);
+        var generalizer = new CopyingTemplateGeneralizer(templatesRoot);
+        var lifecycle = new TemplateLifecycleService(templatesRoot);
+        var promotion = new GenerationTemplatePromotionService(
+            routing,
+            generalizer,
+            lifecycle,
+            new StaticCompileGate(true, Array.Empty<BuildError>()),
+            new TemplatePromotionFeatureProfileService(),
+            new GenerationMetricsService(),
+            new StaticCertificationService(passed: true),
+            templatesRoot);
+
+        var result = await promotion.TryPromoteAsync(
+            new GenerationRequest($"generate {scenario} golden template", generatedProject, SessionId: $"run_{scenario}"),
+            new GenerationResult(true, new List<GeneratedFile>(), generatedProject, new List<BuildError>(), TimeSpan.FromSeconds(1)));
+
+        Assert.True(result.Attempted);
+        Assert.True(result.Success, string.Join(" | ", result.Errors));
+        Assert.NotNull(result.Version);
+
+        var publishedRoot = Path.Combine(templatesRoot, templateId, result.Version!);
+        Assert.True(Directory.Exists(publishedRoot));
+        Assert.True(File.Exists(Path.Combine(publishedRoot, "template.json")));
 
         var versions = await lifecycle.GetVersionsAsync(templateId);
         Assert.Contains(versions, x => x.IsActive && x.Version == result.Version);
@@ -177,11 +227,12 @@ public sealed class TemplatePromotionEndToEndAndChaosTests
     private static TemplateCertificationService BuildCertificationService(
         string templatesRoot,
         string workspaceRoot,
+        IDotnetService dotnet,
         IGenerationCompileGate compileGate)
     {
         var manager = new ProjectTemplateManager(templatesRoot);
         var lifecycle = new TemplateLifecycleService(templatesRoot);
-        var buildValidator = new MultiLanguageValidator(new LocalBuildExecutor(new DotnetService()));
+        var buildValidator = new MultiLanguageValidator(new LocalBuildExecutor(dotnet));
         var artifactValidator = new ForgeArtifactValidator();
         return new TemplateCertificationService(
             manager,

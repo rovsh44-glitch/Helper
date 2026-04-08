@@ -1,12 +1,14 @@
 param(
     [Parameter(Mandatory = $true)][string]$Target,
     [string[]]$Arguments = @("--no-build"),
+    [string]$ArgumentsJsonPath = "",
     [string]$LogPath = "temp/verification/dotnet_test.log",
     [string]$ErrorLogPath = "temp/verification/dotnet_test.stderr.log",
     [string]$StatusPath = "temp/verification/dotnet_test_status.json",
     [int]$MaxDurationSec = 0,
     [switch]$ShowProcessMonitor,
-    [int]$ProcessMonitorRefreshSec = 2
+    [int]$ProcessMonitorRefreshSec = 2,
+    [switch]$ReturnExitCode
 )
 
 $ErrorActionPreference = "Stop"
@@ -107,6 +109,71 @@ function Stop-ProcessTree {
     Stop-Process -Id $ProcessId -Force -ErrorAction SilentlyContinue
 }
 
+function Complete-Wrapper {
+    param(
+        [Parameter(Mandatory = $true)][int]$ExitCode,
+        [Parameter(Mandatory = $true)][switch]$ReturnExitCode
+    )
+
+    if ($ReturnExitCode) {
+        $global:LASTEXITCODE = $ExitCode
+        return $ExitCode
+    }
+
+    exit $ExitCode
+}
+
+function Set-ProcessEnvironmentVariables {
+    param([hashtable]$Values)
+
+    $snapshot = @{}
+    foreach ($entry in $Values.GetEnumerator()) {
+        $snapshot[$entry.Key] = [Environment]::GetEnvironmentVariable($entry.Key, "Process")
+        [Environment]::SetEnvironmentVariable($entry.Key, $entry.Value, "Process")
+    }
+
+    return $snapshot
+}
+
+function Restore-ProcessEnvironmentVariables {
+    param([hashtable]$Snapshot)
+
+    foreach ($entry in $Snapshot.GetEnumerator()) {
+        [Environment]::SetEnvironmentVariable($entry.Key, $entry.Value, "Process")
+    }
+}
+
+function Test-OutputContainsFailureSignal {
+    param(
+        [string]$ResolvedLogPath,
+        [string]$ResolvedErrorLogPath
+    )
+
+    $patterns = @(
+        '(?m)^\s*Failed!\s+-\s+Failed:',
+        '\[FAIL\]'
+    )
+
+    foreach ($path in @($ResolvedLogPath, $ResolvedErrorLogPath)) {
+        if (-not (Test-Path -LiteralPath $path)) {
+            continue
+        }
+
+        $content = Get-Content -LiteralPath $path -Raw -Encoding utf8 -ErrorAction SilentlyContinue
+        if ([string]::IsNullOrWhiteSpace($content)) {
+            continue
+        }
+
+        foreach ($pattern in $patterns) {
+            if ([System.Text.RegularExpressions.Regex]::IsMatch($content, $pattern)) {
+                return $true
+            }
+        }
+    }
+
+    return $false
+}
+
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $resolvedLogPath = if ([System.IO.Path]::IsPathRooted($LogPath)) { $LogPath } else { Join-Path $repoRoot $LogPath }
 $resolvedErrorLogPath = if ([System.IO.Path]::IsPathRooted($ErrorLogPath)) { $ErrorLogPath } else { Join-Path $repoRoot $ErrorLogPath }
@@ -122,7 +189,7 @@ foreach ($path in @($resolvedLogPath, $resolvedErrorLogPath, $resolvedStatusPath
 
 foreach ($stalePath in @($resolvedLogPath, $resolvedErrorLogPath, $resolvedStatusPath)) {
     if (Test-Path $stalePath) {
-        Remove-Item $stalePath -Force
+        Set-Content -Path $stalePath -Value $null -Encoding UTF8 -Force
     }
 }
 
@@ -134,7 +201,18 @@ if ($null -eq $dotnetCommand) {
     throw "[DotnetTest] dotnet executable not found."
 }
 
-$argumentList = @("test", $Target) + @($Arguments)
+$resolvedArguments = @($Arguments)
+if (-not [string]::IsNullOrWhiteSpace($ArgumentsJsonPath)) {
+    $resolvedArgumentsPath = if ([System.IO.Path]::IsPathRooted($ArgumentsJsonPath)) { $ArgumentsJsonPath } else { Join-Path $repoRoot $ArgumentsJsonPath }
+    if (-not (Test-Path -LiteralPath $resolvedArgumentsPath)) {
+        throw ("[DotnetTest] Arguments json not found: {0}" -f $resolvedArgumentsPath)
+    }
+
+    $decodedArguments = Get-Content -LiteralPath $resolvedArgumentsPath -Raw -Encoding utf8 | ConvertFrom-Json
+    $resolvedArguments = @($decodedArguments | ForEach-Object { [string]$_ })
+}
+
+$argumentList = @("test", $Target) + @($resolvedArguments)
 $commandDisplay = ("dotnet " + ($argumentList -join " "))
 $artifacts = [ordered]@{
     logPath = Get-RepoRelativePathOrOriginal -RepoRoot $repoRoot -Path $resolvedLogPath
@@ -146,12 +224,26 @@ $startedAtUtc = (Get-Date).ToUniversalTime()
 Write-TestStatusFile -ResolvedStatusPath $resolvedStatusPath -StartedAtUtc $startedAtUtc -Phase "starting" -Outcome "RUNNING" -Details "Launching dotnet test." -CommandDisplay $commandDisplay -Artifacts $artifacts
 Write-Host ("[DotnetTest][START] {0}" -f $commandDisplay) -ForegroundColor Cyan
 
-$process = Start-Process -FilePath $dotnetCommand.Source `
-    -ArgumentList $argumentList `
-    -WorkingDirectory $repoRoot `
-    -RedirectStandardOutput $resolvedLogPath `
-    -RedirectStandardError $resolvedErrorLogPath `
-    -PassThru
+$environmentSnapshot = $null
+try {
+    $dotnetRuntimeEnvironment = @{
+        DOTNET_CLI_WORKLOAD_UPDATE_NOTIFY_DISABLE = "1"
+        DOTNET_SKIP_FIRST_TIME_EXPERIENCE = "1"
+        DOTNET_NOLOGO = "1"
+    }
+    $environmentSnapshot = Set-ProcessEnvironmentVariables -Values $dotnetRuntimeEnvironment
+    $process = Start-Process -FilePath $dotnetCommand.Source `
+        -ArgumentList $argumentList `
+        -WorkingDirectory $repoRoot `
+        -RedirectStandardOutput $resolvedLogPath `
+        -RedirectStandardError $resolvedErrorLogPath `
+        -PassThru
+}
+finally {
+    if ($null -ne $environmentSnapshot) {
+        Restore-ProcessEnvironmentVariables -Snapshot $environmentSnapshot
+    }
+}
 
 Write-TestStatusFile -ResolvedStatusPath $resolvedStatusPath -StartedAtUtc $startedAtUtc -Phase "running" -Outcome "RUNNING" -Details "dotnet test is running." -CommandDisplay $commandDisplay -Artifacts $artifacts -ProcessId $process.Id
 
@@ -192,7 +284,8 @@ while (-not $process.HasExited) {
 if ($timedOut) {
     Write-TestStatusFile -ResolvedStatusPath $resolvedStatusPath -StartedAtUtc $startedAtUtc -Phase "failed" -Outcome "FAIL" -Details $timeoutDetails -CommandDisplay $commandDisplay -Artifacts $artifacts -ProcessId $process.Id -ExitCode 124
     Write-Host ("[DotnetTest][FAIL] {0}" -f $timeoutDetails) -ForegroundColor Red
-    exit 124
+    Complete-Wrapper -ExitCode 124 -ReturnExitCode:$ReturnExitCode
+    return
 }
 
 try {
@@ -221,19 +314,25 @@ else {
     ""
 }
 
-if ($exitCode -eq 0) {
+if ($exitCode -eq 0 -and -not (Test-OutputContainsFailureSignal -ResolvedLogPath $resolvedLogPath -ResolvedErrorLogPath $resolvedErrorLogPath)) {
     Write-TestStatusFile -ResolvedStatusPath $resolvedStatusPath -StartedAtUtc $startedAtUtc -Phase "completed" -Outcome "PASS" -Details "dotnet test completed successfully." -CommandDisplay $commandDisplay -Artifacts $artifacts -ProcessId $process.Id -ExitCode $exitCode
     Write-Host "[DotnetTest][PASS] dotnet test completed successfully." -ForegroundColor Green
-    exit 0
+    Complete-Wrapper -ExitCode 0 -ReturnExitCode:$ReturnExitCode
+    return
 }
 
-$failureDetails = if ([string]::IsNullOrWhiteSpace($stderrTail)) {
+$effectiveExitCode = if ($exitCode -eq 0) { 1 } else { $exitCode }
+
+$failureDetails = if ($exitCode -eq 0) {
+    "dotnet test emitted failure markers in stdout/stderr despite zero exit code."
+}
+elseif ([string]::IsNullOrWhiteSpace($stderrTail)) {
     ("dotnet test exited with code {0}." -f $exitCode)
 }
 else {
     ("dotnet test exited with code {0}. stderr: {1}" -f $exitCode, $stderrTail)
 }
 
-Write-TestStatusFile -ResolvedStatusPath $resolvedStatusPath -StartedAtUtc $startedAtUtc -Phase "failed" -Outcome "FAIL" -Details $failureDetails -CommandDisplay $commandDisplay -Artifacts $artifacts -ProcessId $process.Id -ExitCode $exitCode
+Write-TestStatusFile -ResolvedStatusPath $resolvedStatusPath -StartedAtUtc $startedAtUtc -Phase "failed" -Outcome "FAIL" -Details $failureDetails -CommandDisplay $commandDisplay -Artifacts $artifacts -ProcessId $process.Id -ExitCode $effectiveExitCode
 Write-Host ("[DotnetTest][FAIL] {0}" -f $failureDetails) -ForegroundColor Red
-exit $exitCode
+Complete-Wrapper -ExitCode $effectiveExitCode -ReturnExitCode:$ReturnExitCode

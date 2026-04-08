@@ -292,6 +292,57 @@ public sealed class WebPageFetcherTests
     }
 
     [Fact]
+    public async Task FetchAsync_UsesPartialRead_ForOversizedHtmlWithinAdmissionPolicy()
+    {
+        const int partialReadBudget = 16_384;
+        const string htmlPrefix = "<html><head><title>Large article</title></head><body><p>This large page still contains useful guidance in the leading portion of the document.</p><p>The early section should be enough for extraction.</p>";
+        var html = htmlPrefix + new string('x', partialReadBudget + 2_048) + "</body></html>";
+        var fetcher = CreateFetcher(
+            handler: new StubHttpMessageHandler(_ => BuildResponse(HttpStatusCode.OK, "text/html; charset=utf-8", html)),
+            contentTypeAdmissionPolicy: new ContentTypeAdmissionPolicy(partialReadBudget),
+            maxResponseBytes: partialReadBudget);
+
+        var result = await fetcher.FetchAsync("https://example.org/large-article", CancellationToken.None);
+
+        Assert.True(result.Success);
+        Assert.Equal("extracted", result.Outcome);
+        Assert.NotNull(result.ExtractedPage);
+        Assert.Contains("large page still contains useful guidance", result.ExtractedPage!.Body, StringComparison.Ordinal);
+        Assert.True(
+            result.Trace.Any(line => line.Contains("mode=partial_read", StringComparison.Ordinal)),
+            string.Join(Environment.NewLine, result.Trace));
+    }
+
+    [Fact]
+    public async Task FetchAsync_UsesPartialRead_ForOversizedHtml_WhenContentTypeIsMissing()
+    {
+        const int partialReadBudget = 16_384;
+        var html = "<html><head><title>Fallback article</title></head><body><p>Leading section remains extractable even when the server omits content type.</p></body></html>" + new string('x', partialReadBudget + 2_048);
+        var fetcher = CreateFetcher(
+            handler: new StubHttpMessageHandler(_ =>
+            {
+                var response = new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(html)
+                };
+                response.Content.Headers.ContentType = null;
+                return response;
+            }),
+            contentTypeAdmissionPolicy: new ContentTypeAdmissionPolicy(partialReadBudget),
+            maxResponseBytes: partialReadBudget);
+
+        var result = await fetcher.FetchAsync("https://example.org/missing-content-type", CancellationToken.None);
+
+        Assert.True(result.Success);
+        Assert.Equal("extracted", result.Outcome);
+        Assert.NotNull(result.ExtractedPage);
+        Assert.Contains("server omits content type", result.ExtractedPage!.Body, StringComparison.Ordinal);
+        Assert.True(
+            result.Trace.Any(line => line.Contains("content_length_over_budget_partial_read", StringComparison.Ordinal)),
+            string.Join(Environment.NewLine, result.Trace));
+    }
+
+    [Fact]
     public async Task FetchAsync_UsesBrowserRenderRecovery_WhenTransportFailsForDocumentLikeUrl()
     {
         var fetcher = CreateFetcher(
@@ -317,6 +368,28 @@ public sealed class WebPageFetcherTests
         Assert.Contains(result.Trace, line => line.Contains("web_page_fetch.render_recovery_attempt target=https://pmc.ncbi.nlm.nih.gov/articles/PMC5167494", StringComparison.Ordinal));
         Assert.Contains(result.Trace, line => line.Contains("web_page_fetch.render_recovery_succeeded target=https://pmc.ncbi.nlm.nih.gov/articles/PMC5167494", StringComparison.Ordinal));
         Assert.Contains(result.Trace, line => line.Contains("browser_render.extracted", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task FetchAsync_UsesBrowserRenderRecovery_ForUnknownTransportFailure_OnDocumentLikeUrl()
+    {
+        var fetcher = CreateFetcher(
+            handler: new StubHttpMessageHandler(_ => throw new HttpRequestException("Transport failed without classified inner exception.")),
+            hardPageDetectionPolicy: new HardPageDetectionPolicy(),
+            renderedPageBudgetPolicy: new RenderedPageBudgetPolicy(),
+            browserRenderFallbackService: new StubBrowserRenderFallbackService(BuildRenderedPage("https://legalacts.ru/doc/sample-guideline")));
+
+        var result = await fetcher.FetchAsync(
+            "https://legalacts.ru/doc/sample-guideline",
+            new WebPageFetchContext(1, 2, AllowBrowserRenderFallback: true, RenderBudgetRemaining: 1),
+            CancellationToken.None);
+
+        Assert.True(result.Success);
+        Assert.Equal("rendered", result.Outcome);
+        Assert.True(result.UsedBrowserRenderFallback);
+        Assert.NotNull(result.Diagnostics);
+        Assert.Equal("unknown_transport", result.Diagnostics!.FinalFailureCategory);
+        Assert.Contains(result.Trace, line => line.Contains("web_page_fetch.render_recovery_attempt target=https://legalacts.ru/doc/sample-guideline", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -355,7 +428,8 @@ public sealed class WebPageFetcherTests
         IRemoteDocumentExtractor? remoteDocumentExtractor = null,
         HttpMessageHandler? tlsCompatibilityHandler = null,
         HttpMessageHandler? proxyAwareHandler = null,
-        HttpMessageHandler? proxyTlsCompatibilityHandler = null)
+        HttpMessageHandler? proxyTlsCompatibilityHandler = null,
+        int? maxResponseBytes = null)
     {
         var effectiveSecurityPolicy = securityPolicy ?? new AllowAllSecurityPolicy();
         return new WebPageFetcher(
@@ -371,7 +445,8 @@ public sealed class WebPageFetcherTests
             handler,
             tlsCompatibilityHandler,
             proxyAwareHandler,
-            proxyTlsCompatibilityHandler);
+            proxyTlsCompatibilityHandler,
+            maxResponseBytes);
     }
 
     private static HttpResponseMessage BuildResponse(HttpStatusCode statusCode, string contentType, string content)

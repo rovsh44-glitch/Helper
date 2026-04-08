@@ -2,11 +2,9 @@ namespace Helper.Testing;
 
 public sealed class TempDirectoryScope : IDisposable
 {
-    public TempDirectoryScope()
+    public TempDirectoryScope(string prefix = "helper_test_")
     {
-        Path = System.IO.Path.Combine(
-            System.IO.Path.GetTempPath(),
-            $"helper-tests-{Guid.NewGuid():N}");
+        Path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), prefix + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(Path);
     }
 
@@ -23,6 +21,7 @@ public sealed class TempDirectoryScope : IDisposable
         }
         catch
         {
+            // best effort
         }
     }
 }

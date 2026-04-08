@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.2" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="Moq" Version="4.20.72" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Helper.Runtime\Helper.Runtime.csproj" />
+    <ProjectReference Include="..\..\src\Helper.Runtime.Knowledge\Helper.Runtime.Knowledge.csproj" />
+    <ProjectReference Include="..\..\src\Helper.Runtime.Evolution\Helper.Runtime.Evolution.csproj" />
+    <ProjectReference Include="..\..\src\Helper.Api\Helper.Api.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Helper.Runtime.Tests\TestCollectionConfig.cs" Link="TestCollectionConfig.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\TestInfrastructure\ProcessEnvironmentCollection.cs" Link="TestInfrastructure\ProcessEnvironmentCollection.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\TestInfrastructure\TempDirectoryScope.cs" Link="TestInfrastructure\TempDirectoryScope.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\TestInfrastructure\CompileLaneTestDoubles.cs" Link="TestInfrastructure\CompileLaneTestDoubles.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\TestWorkspaceRoot.cs" Link="TestWorkspaceRoot.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\BackendRebuildRuntimeTests.cs" Link="BackendRebuildRuntimeTests.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\CompileGateRepairDeterministicTests.cs" Link="CompileGateRepairDeterministicTests.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\DotnetServiceTraceBehaviorTests.cs" Link="DotnetServiceTraceBehaviorTests.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\DotnetTestCommandSupportTests.cs" Link="DotnetTestCommandSupportTests.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\GenerationGuardrailsTests.cs" Link="GenerationGuardrailsTests.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\TemplateCertificationServiceTests.cs" Link="TemplateCertificationServiceTests.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\TemplatePromotionEndToEndAndChaosTests.cs" Link="TemplatePromotionEndToEndAndChaosTests.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\Helper.Runtime.Tests\Fixtures\**\*.*" Link="Fixtures\%(RecursiveDir)%(Filename)%(Extension)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+</Project>

@@ -156,19 +156,7 @@ public sealed class RootLayoutScriptTests
 
     private static string ResolveWorkspaceFile(params string[] segments)
     {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            var marker = Path.Combine(current.FullName, "Helper.sln");
-            if (File.Exists(marker))
-            {
-                return Path.Combine(new[] { current.FullName }.Concat(segments).ToArray());
-            }
-
-            current = current.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Workspace root was not found.");
+        return TestWorkspaceRoot.ResolveFile(segments);
     }
 }
 

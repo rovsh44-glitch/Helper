@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.2" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Helper.Testing.WebResearch\Helper.Testing.WebResearch.csproj" />
+    <ProjectReference Include="..\..\src\Helper.Runtime.WebResearch\Helper.Runtime.WebResearch.csproj" />
+    <ProjectReference Include="..\..\src\Helper.Runtime.WebResearch.Browser\Helper.Runtime.WebResearch.Browser.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Helper.Runtime.Tests\TestCollectionConfig.cs" Link="TestCollectionConfig.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\BrowserRenderFallbackServiceTests.cs" Link="BrowserRenderFallbackServiceTests.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\WebPageFetcherTests.cs" Link="WebPageFetcherTests.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\WebSearchSessionCoordinator.DedupAndRenderBudgetTests.cs" Link="WebSearchSessionCoordinator.DedupAndRenderBudgetTests.cs" />
+  </ItemGroup>
+
+</Project>

@@ -35,7 +35,8 @@ public sealed partial class WebPageFetcher : IWebPageFetcher
         HttpMessageHandler? handler = null,
         HttpMessageHandler? tlsCompatibilityHandler = null,
         HttpMessageHandler? proxyAwareHandler = null,
-        HttpMessageHandler? proxyTlsCompatibilityHandler = null)
+        HttpMessageHandler? proxyTlsCompatibilityHandler = null,
+        int? maxResponseBytes = null)
     {
         ArgumentNullException.ThrowIfNull(securityPolicy);
         ArgumentNullException.ThrowIfNull(redirectGuard);
@@ -55,7 +56,9 @@ public sealed partial class WebPageFetcher : IWebPageFetcher
         _renderedPageBudgetPolicy = renderedPageBudgetPolicy;
         _browserRenderFallbackService = browserRenderFallbackService;
         _sourceTypeExtractorLibrary = new WebSourceTypeExtractorLibrary(remoteDocumentExtractor, contentExtractor);
-        _maxResponseBytes = WebPageFetchSettings.ReadMaxResponseBytes();
+        _maxResponseBytes = maxResponseBytes is int explicitMaxResponseBytes
+            ? Math.Clamp(explicitMaxResponseBytes, 16_384, 2_000_000)
+            : WebPageFetchSettings.ReadMaxResponseBytes();
         _httpClient = CreateHttpClient(handler, TransportClientProfile.Default);
         _tlsCompatibilityHttpClient = handler is null || tlsCompatibilityHandler is not null
             ? CreateHttpClient(tlsCompatibilityHandler, TransportClientProfile.TlsCompatibility)
@@ -161,16 +164,17 @@ public sealed partial class WebPageFetcher : IWebPageFetcher
                 var sourceType = WebSourceTypeClassifier.Classify(requestUri, currentUri, normalizedContentType);
                 trace.Add($"web_page_fetch.source_type={sourceType.Kind} target={currentUri}");
 
-                var bytes = await HttpFetchSupport.ReadBytesWithinBudgetAsync(
+                var readResult = await HttpFetchSupport.ReadBytesWithinBudgetAsync(
                     response.Content,
                     _maxResponseBytes,
                     ct).ConfigureAwait(false);
-                if (bytes is null)
+
+                if (readResult.Truncated)
                 {
-                    trace.Add($"web_page_fetch.content_length_exceeded target={currentUri} max_bytes={_maxResponseBytes}");
-                    return Failure(url, currentUri.AbsoluteUri, "content_length_exceeded", trace);
+                    trace.Add($"web_page_fetch.content_length_exceeded target={currentUri} max_bytes={_maxResponseBytes} mode=partial_read");
                 }
 
+                var bytes = readResult.Bytes;
                 var decodedContent = WebSourceTypeExtractionSupport.DecodeIfTextLike(
                     bytes,
                     normalizedContentType,
