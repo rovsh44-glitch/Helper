@@ -1,23 +1,7 @@
-using System.Collections.Concurrent;
 using Helper.Runtime.WebResearch.Extraction;
 using Helper.Runtime.WebResearch.Fetching;
-using Microsoft.Playwright;
 
 namespace Helper.Runtime.WebResearch.Rendering;
-
-public interface IBrowserRenderFallbackService
-{
-    Task<BrowserRenderFallbackResult> TryRenderAsync(
-        Uri requestedUri,
-        RenderFallbackBudgetDecision budget,
-        CancellationToken ct = default);
-}
-
-public sealed record BrowserRenderFallbackResult(
-    bool Success,
-    string Outcome,
-    ExtractedWebPage? Page,
-    IReadOnlyList<string> Trace);
 
 internal interface IBrowserRenderHost
 {
@@ -51,7 +35,7 @@ public sealed class BrowserRenderFallbackService : IBrowserRenderFallbackService
         : this(
             securityPolicy,
             contentExtractor,
-            new PlaywrightBrowserRenderHost(securityPolicy))
+            new UnavailableBrowserRenderHost())
     {
     }
 
@@ -151,159 +135,25 @@ public sealed class BrowserRenderFallbackService : IBrowserRenderFallbackService
     }
 }
 
-internal sealed class PlaywrightBrowserRenderHost : IBrowserRenderHost
+internal sealed class UnavailableBrowserRenderHost : IBrowserRenderHost
 {
-    private readonly IWebFetchSecurityPolicy _securityPolicy;
-
-    public PlaywrightBrowserRenderHost(IWebFetchSecurityPolicy securityPolicy)
-    {
-        _securityPolicy = securityPolicy;
-    }
-
     public async Task<BrowserRenderHostResult> RenderAsync(
         Uri requestedUri,
         BrowserRenderHostOptions options,
         CancellationToken ct = default)
     {
-        var trace = new List<string> { "browser_render.host=playwright" };
-        var blockedRequests = 0;
-        var blockedHeavyResources = 0;
-        var allowedRequests = 0;
-        var blockedSamples = new ConcurrentQueue<string>();
+        await Task.Yield();
 
-        try
-        {
-            using var playwright = await Playwright.CreateAsync().ConfigureAwait(false);
-            await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+        return new BrowserRenderHostResult(
+            false,
+            "browser_render_unavailable",
+            requestedUri.AbsoluteUri,
+            null,
+            null,
+            new[]
             {
-                Headless = true
-            }).ConfigureAwait(false);
-
-            var context = await browser.NewContextAsync(new BrowserNewContextOptions
-            {
-                UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
-            }).ConfigureAwait(false);
-
-            await context.RouteAsync("**/*", async route =>
-            {
-                var request = route.Request;
-                if (request.ResourceType is "image" or "media" or "font")
-                {
-                    Interlocked.Increment(ref blockedHeavyResources);
-                    await route.AbortAsync().ConfigureAwait(false);
-                    return;
-                }
-
-                if (!Uri.TryCreate(request.Url, UriKind.Absolute, out var resourceUri) ||
-                    (!resourceUri.Scheme.Equals(Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase) &&
-                     !resourceUri.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)))
-                {
-                    Interlocked.Increment(ref blockedRequests);
-                    blockedSamples.Enqueue("invalid_resource_uri");
-                    await route.AbortAsync().ConfigureAwait(false);
-                    return;
-                }
-
-                var securityDecision = await _securityPolicy.EvaluateAsync(
-                    resourceUri,
-                    WebFetchTargetKind.PageFetch,
-                    allowTrustedLoopback: false,
-                    ct).ConfigureAwait(false);
-                if (!securityDecision.Allowed)
-                {
-                    Interlocked.Increment(ref blockedRequests);
-                    if (blockedSamples.Count < 3)
-                    {
-                        blockedSamples.Enqueue(resourceUri.Host);
-                    }
-
-                    await route.AbortAsync().ConfigureAwait(false);
-                    return;
-                }
-
-                Interlocked.Increment(ref allowedRequests);
-                await route.ContinueAsync().ConfigureAwait(false);
-            }).ConfigureAwait(false);
-
-            var page = await context.NewPageAsync().ConfigureAwait(false);
-            await page.GotoAsync(
-                requestedUri.AbsoluteUri,
-                new PageGotoOptions
-                {
-                    WaitUntil = WaitUntilState.NetworkIdle,
-                    Timeout = (float)options.Timeout.TotalMilliseconds
-                }).ConfigureAwait(false);
-
-            var resolvedUrl = page.Url;
-            var resolvedUri = Uri.TryCreate(resolvedUrl, UriKind.Absolute, out var parsedResolvedUri)
-                ? parsedResolvedUri
-                : requestedUri;
-            var finalDecision = await _securityPolicy.EvaluateAsync(
-                resolvedUri,
-                WebFetchTargetKind.PageFetch,
-                allowTrustedLoopback: false,
-                ct).ConfigureAwait(false);
-            trace.AddRange(finalDecision.Trace.Select(static line => $"browser_render.final.{line}"));
-            if (!finalDecision.Allowed)
-            {
-                await context.CloseAsync().ConfigureAwait(false);
-                return new BrowserRenderHostResult(
-                    false,
-                    "blocked",
-                    resolvedUri.AbsoluteUri,
-                    null,
-                    null,
-                    trace);
-            }
-
-            var html = await page.ContentAsync().ConfigureAwait(false);
-            if (html.Length > options.MaxHtmlChars)
-            {
-                html = html[..options.MaxHtmlChars];
-                trace.Add($"browser_render.html_truncated max_chars={options.MaxHtmlChars}");
-            }
-
-            trace.Add(
-                $"browser_render.completed target={requestedUri} resolved={resolvedUri} allowed_requests={allowedRequests} blocked_requests={blockedRequests} heavy_resources_blocked={blockedHeavyResources}");
-            if (!blockedSamples.IsEmpty)
-            {
-                trace.Add($"browser_render.blocked_samples={string.Join(",", blockedSamples.Take(3))}");
-            }
-
-            await context.CloseAsync().ConfigureAwait(false);
-            return new BrowserRenderHostResult(
-                true,
-                "rendered",
-                resolvedUri.AbsoluteUri,
-                "text/html",
-                html,
-                trace);
-        }
-        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
-        {
-            trace.Add("browser_render.timeout");
-            return new BrowserRenderHostResult(false, "timeout", requestedUri.AbsoluteUri, null, null, trace);
-        }
-        catch (Exception ex)
-        {
-            var failure = BrowserRenderFailureClassifier.Classify(ex);
-            trace.Add($"browser_render.failure category={failure.Category} reason={Sanitize(failure.Reason)}");
-            trace.Add($"browser_render.unavailable category={failure.Category} reason={Sanitize(failure.Reason)}");
-            return new BrowserRenderHostResult(false, failure.Outcome, requestedUri.AbsoluteUri, null, null, trace);
-        }
-    }
-
-    private static string Sanitize(string message)
-    {
-        if (string.IsNullOrWhiteSpace(message))
-        {
-            return "unknown";
-        }
-
-        return message
-            .Replace('\r', ' ')
-            .Replace('\n', ' ')
-            .Trim();
+                $"browser_render.unavailable target={requestedUri} reason=browser_runtime_not_configured timeout_ms={(int)options.Timeout.TotalMilliseconds}"
+            });
     }
 }
 

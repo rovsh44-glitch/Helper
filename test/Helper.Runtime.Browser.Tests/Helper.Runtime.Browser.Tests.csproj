@@ -20,13 +20,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Helper.Testing.WebResearch\Helper.Testing.WebResearch.csproj" />
+    <ProjectReference Include="..\Helper.Testing.WebResearch\Helper.Testing.WebResearch.csproj" Condition="Exists('..\Helper.Testing.WebResearch\Helper.Testing.WebResearch.csproj')" />
     <ProjectReference Include="..\..\src\Helper.Runtime.WebResearch\Helper.Runtime.WebResearch.csproj" />
     <ProjectReference Include="..\..\src\Helper.Runtime.WebResearch.Browser\Helper.Runtime.WebResearch.Browser.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <Compile Include="..\Helper.Runtime.Tests\TestCollectionConfig.cs" Link="TestCollectionConfig.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\WebResearchTestDoubles.cs" Link="WebResearchTestDoubles.cs" Condition="!Exists('..\Helper.Testing.WebResearch\Helper.Testing.WebResearch.csproj')" />
     <Compile Include="..\Helper.Runtime.Tests\BrowserRenderFallbackServiceTests.cs" Link="BrowserRenderFallbackServiceTests.cs" />
     <Compile Include="..\Helper.Runtime.Tests\WebPageFetcherTests.cs" Link="WebPageFetcherTests.cs" />
     <Compile Include="..\Helper.Runtime.Tests\WebSearchSessionCoordinator.DedupAndRenderBudgetTests.cs" Link="WebSearchSessionCoordinator.DedupAndRenderBudgetTests.cs" />
