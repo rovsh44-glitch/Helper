@@ -223,10 +223,25 @@ public record ConversationPreferenceDto(
     string? Directness = null,
     string? DefaultAnswerShape = null,
     string? SearchLocalityHint = null,
+    string? DecisionAssertiveness = null,
+    string? ClarificationTolerance = null,
+    string? CitationPreference = null,
+    string? RepairStyle = null,
+    string? ReasoningStyle = null,
+    string? ReasoningEffort = null,
+    string? PersonaBundleId = null,
+    string? ProjectId = null,
+    string? ProjectLabel = null,
+    string? ProjectInstructions = null,
+    bool? ProjectMemoryEnabled = null,
+    bool? BackgroundResearchEnabled = null,
+    bool? ProactiveUpdatesEnabled = null,
     bool? PersonalMemoryConsentGranted = null,
     int? SessionMemoryTtlMinutes = null,
     int? TaskMemoryTtlHours = null,
     int? LongTermMemoryTtlDays = null);
+public record BackgroundTaskActionRequestDto(string? Reason = null);
+public record ProactiveTopicActionRequestDto(bool Enabled);
 public record ReasoningEfficiencyMetricsDto(
     bool PathActive,
     bool BranchingApplied,

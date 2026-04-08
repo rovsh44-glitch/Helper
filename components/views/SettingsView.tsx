@@ -7,6 +7,8 @@ import { SettingsInfrastructurePanel } from '../settings/SettingsInfrastructureP
 import { SettingsConversationStylePanel } from '../settings/SettingsConversationStylePanel';
 import { SettingsMemoryPolicyPanel } from '../settings/SettingsMemoryPolicyPanel';
 import { SettingsMemoryItemsPanel } from '../settings/SettingsMemoryItemsPanel';
+import { SettingsPersonalizationPanel } from '../settings/SettingsPersonalizationPanel';
+import { SettingsProjectContextPanel } from '../settings/SettingsProjectContextPanel';
 import { SettingsProviderProfilesPanel } from '../settings/SettingsProviderProfilesPanel';
 import { SettingsRuntimeDoctorPanel } from '../settings/SettingsRuntimeDoctorPanel';
 import { SettingsViewHeader } from '../settings/SettingsViewHeader';
@@ -59,6 +61,51 @@ export const SettingsView: React.FC = () => {
             onSaveDirectnessPreference={state.saveDirectnessPreference}
             onSaveDefaultAnswerShapePreference={state.saveDefaultAnswerShapePreference}
           />
+          <section id="settings-personalization">
+            <SettingsPersonalizationPanel
+              decisionAssertiveness={state.decisionAssertiveness}
+              clarificationTolerance={state.clarificationTolerance}
+              citationPreference={state.citationPreference}
+              repairStyle={state.repairStyle}
+              reasoningStyle={state.reasoningStyle}
+              reasoningEffort={state.reasoningEffort}
+              personaBundleId={state.personaBundleId}
+              onSaveDecisionAssertiveness={state.saveDecisionAssertiveness}
+              onSaveClarificationTolerance={state.saveClarificationTolerance}
+              onSaveCitationPreference={state.saveCitationPreference}
+              onSaveRepairStyle={state.saveRepairStyle}
+              onSaveReasoningStyle={state.saveReasoningStyle}
+              onSaveReasoningEffort={state.saveReasoningEffort}
+              onSavePersonaBundleId={state.savePersonaBundleId}
+            />
+          </section>
+          <section id="settings-project-context">
+            <SettingsProjectContextPanel
+              projectId={state.projectId}
+              projectLabel={state.projectLabel}
+              projectInstructions={state.projectInstructions}
+              projectMemoryEnabled={state.projectMemoryEnabled}
+              backgroundResearchEnabled={state.backgroundResearchEnabled}
+              proactiveUpdatesEnabled={state.proactiveUpdatesEnabled}
+              referenceArtifacts={state.projectReferenceArtifacts}
+              backgroundTasks={state.backgroundTasks}
+              proactiveTopics={state.proactiveTopics}
+              onSetProjectId={state.setProjectId}
+              onSetProjectLabel={state.setProjectLabel}
+              onSetProjectInstructions={state.setProjectInstructions}
+              onSetProjectMemoryEnabled={state.setProjectMemoryEnabled}
+              onSetBackgroundResearchEnabled={state.setBackgroundResearchEnabled}
+              onSetProactiveUpdatesEnabled={state.setProactiveUpdatesEnabled}
+              onSaveProjectContext={state.saveProjectContext}
+              onSaveContinuityControls={state.saveContinuityControls}
+              onCancelBackgroundTask={(taskId) => {
+                void state.cancelBackgroundTask(taskId);
+              }}
+              onSetProactiveTopicEnabled={(topicId, enabled) => {
+                void state.setProactiveTopicEnabled(topicId, enabled);
+              }}
+            />
+          </section>
           <section id="settings-memory-policy">
             <SettingsMemoryPolicyPanel
               memoryStatus={state.memoryStatus}

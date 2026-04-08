@@ -39,11 +39,18 @@ public sealed class ConversationState
     public string CitationPreference { get; set; } = "adaptive";
     public string RepairStyle { get; set; } = "direct_fix";
     public string ReasoningStyle { get; set; } = "concise";
+    public string ReasoningEffort { get; set; } = "balanced";
+    public string? PersonaBundleId { get; set; }
     public SharedUnderstandingState? SharedUnderstanding { get; set; }
     public UserUnderstandingState? UserUnderstanding { get; set; }
     public ProjectUnderstandingState? ProjectUnderstanding { get; set; }
     public ProjectContextState? ProjectContext { get; set; }
+    public PersonalizationProfile? PersonalizationProfile { get; set; }
     public CommunicationQualityState? CommunicationQuality { get; set; }
+    public bool BackgroundResearchEnabled { get; set; } = true;
+    public bool ProactiveUpdatesEnabled { get; set; }
+    public List<BackgroundConversationTask> BackgroundTasks { get; } = new();
+    public List<ProactiveTopicSubscription> ProactiveTopics { get; } = new();
     public string? ActiveTurnId { get; set; }
     public string? ActiveTurnUserMessage { get; set; }
     public DateTimeOffset? ActiveTurnStartedAt { get; set; }

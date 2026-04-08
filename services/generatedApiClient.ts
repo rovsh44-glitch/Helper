@@ -115,10 +115,16 @@ export interface ConversationMemoryItemDto {
   id: string;
   type: string;
   content: string;
+  scope?: string;
+  retention?: string;
+  whyRemembered?: string;
+  priority?: number;
   createdAt: string;
   expiresAt?: string;
   sourceTurnId?: string;
+  sourceProjectId?: string;
   isPersonal: boolean;
+  userEditable?: boolean;
 }
 
 export interface ConversationMemoryPolicyDto {
@@ -878,9 +884,48 @@ export class HelperApiClient {
         directness?: string;
         defaultAnswerShape?: string;
         searchLocalityHint?: string;
+        decisionAssertiveness?: string;
+        clarificationTolerance?: string;
+        citationPreference?: string;
+        repairStyle?: string;
+        reasoningStyle?: string;
+        reasoningEffort?: string;
+        personaBundleId?: string;
+        projectId?: string;
+        projectLabel?: string;
+        projectInstructions?: string;
+        projectMemoryEnabled?: boolean;
+        backgroundResearchEnabled?: boolean;
+        proactiveUpdatesEnabled?: boolean;
         memoryTags: string[];
         memoryItemsCount?: number;
       };
+      projectContext?: {
+        projectId: string;
+        label?: string;
+        instructions?: string;
+        memoryEnabled: boolean;
+        referenceArtifacts?: string[];
+        updatedAtUtc: string;
+      };
+      backgroundTasks?: Array<{
+        id: string;
+        kind: string;
+        title: string;
+        status: string;
+        createdAtUtc: string;
+        dueAtUtc?: string;
+        projectId?: string;
+        notes?: string;
+      }>;
+      proactiveTopics?: Array<{
+        id: string;
+        topic: string;
+        frequency: string;
+        enabled: boolean;
+        createdAtUtc: string;
+        projectId?: string;
+      }>;
     }>(`/chat/${encodeURIComponent(conversationId)}`, { method: 'GET' }, { profile: 'startup', label: 'Conversation restore' });
   }
 
@@ -928,6 +973,19 @@ export class HelperApiClient {
     directness?: string;
     defaultAnswerShape?: string;
     searchLocalityHint?: string;
+    decisionAssertiveness?: string;
+    clarificationTolerance?: string;
+    citationPreference?: string;
+    repairStyle?: string;
+    reasoningStyle?: string;
+    reasoningEffort?: string;
+    personaBundleId?: string;
+    projectId?: string;
+    projectLabel?: string;
+    projectInstructions?: string;
+    projectMemoryEnabled?: boolean;
+    backgroundResearchEnabled?: boolean;
+    proactiveUpdatesEnabled?: boolean;
     personalMemoryConsentGranted?: boolean;
     sessionMemoryTtlMinutes?: number;
     taskMemoryTtlHours?: number;
@@ -951,6 +1009,19 @@ export class HelperApiClient {
       directness?: string;
       defaultAnswerShape?: string;
       searchLocalityHint?: string;
+      decisionAssertiveness?: string;
+      clarificationTolerance?: string;
+      citationPreference?: string;
+      repairStyle?: string;
+      reasoningStyle?: string;
+      reasoningEffort?: string;
+      personaBundleId?: string;
+      projectId?: string;
+      projectLabel?: string;
+      projectInstructions?: string;
+      projectMemoryEnabled?: boolean;
+      backgroundResearchEnabled?: boolean;
+      proactiveUpdatesEnabled?: boolean;
     }>(`/chat/${encodeURIComponent(conversationId)}/preferences`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -969,6 +1040,22 @@ export class HelperApiClient {
   deleteConversationMemoryItem(conversationId: string, memoryId: string) {
     return request<{ success: boolean }>(`/chat/${encodeURIComponent(conversationId)}/memory/${encodeURIComponent(memoryId)}`, {
       method: 'DELETE',
+    });
+  }
+
+  cancelBackgroundTask(conversationId: string, taskId: string, body?: { reason?: string }) {
+    return request<{ success: boolean; taskId: string; status: string }>(`/chat/${encodeURIComponent(conversationId)}/background/${encodeURIComponent(taskId)}/cancel`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body ?? {}),
+    });
+  }
+
+  setProactiveTopicEnabled(conversationId: string, topicId: string, body: { enabled: boolean }) {
+    return request<{ success: boolean; topicId: string; enabled: boolean }>(`/chat/${encodeURIComponent(conversationId)}/topics/${encodeURIComponent(topicId)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
     });
   }
 

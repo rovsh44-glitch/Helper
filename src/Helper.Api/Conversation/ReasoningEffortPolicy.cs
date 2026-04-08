@@ -1,4 +1,5 @@
 using Helper.Runtime.Core;
+using Helper.Api.Backend.Providers;
 
 namespace Helper.Api.Conversation;
 
@@ -9,6 +10,13 @@ public interface IReasoningEffortPolicy
 
 public sealed class ReasoningEffortPolicy : IReasoningEffortPolicy
 {
+    private readonly IProviderProfileResolver? _providerProfileResolver;
+
+    public ReasoningEffortPolicy(IProviderProfileResolver? providerProfileResolver = null)
+    {
+        _providerProfileResolver = providerProfileResolver;
+    }
+
     public string Resolve(ChatTurnContext context, PersonalizationProfile profile)
     {
         ArgumentNullException.ThrowIfNull(context);
@@ -40,6 +48,9 @@ public sealed class ReasoningEffortPolicy : IReasoningEffortPolicy
             return "fast";
         }
 
-        return "balanced";
+        var profilePreference = _providerProfileResolver?.ResolvePreferredReasoningEffort();
+        return profilePreference is "fast" or "balanced" or "deep"
+            ? profilePreference
+            : "balanced";
     }
 }

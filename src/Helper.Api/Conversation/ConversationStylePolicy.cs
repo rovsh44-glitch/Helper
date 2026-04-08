@@ -18,7 +18,7 @@ public sealed record ConversationStyleRoute(
 
         return string.Join(
             " ",
-            $"User profile: language={effectiveLanguage}, detail={profile.DetailLevel}, formality={profile.Formality}, domain={profile.DomainFamiliarity}, structure={profile.PreferredStructure}, warmth={profile.Warmth}, enthusiasm={profile.Enthusiasm}, directness={profile.Directness}, answer_shape={profile.DefaultAnswerShape}.",
+            $"User profile: language={effectiveLanguage}, detail={profile.DetailLevel}, formality={profile.Formality}, domain={profile.DomainFamiliarity}, structure={profile.PreferredStructure}, warmth={profile.Warmth}, enthusiasm={profile.Enthusiasm}, directness={profile.Directness}, answer_shape={profile.DefaultAnswerShape}, decision_assertiveness={profile.DecisionAssertiveness}, clarification_tolerance={profile.ClarificationTolerance}, citation_preference={profile.CitationPreference}, repair_style={profile.RepairStyle}, reasoning_style={profile.ReasoningStyle}, reasoning_effort={profile.ReasoningEffort}.",
             $"Style route: mode={Mode}, tone_preset={TonePreset}.",
             $"Persona: {PersonaDescriptor}.",
             $"Mode guidance: {ModeDirective}");

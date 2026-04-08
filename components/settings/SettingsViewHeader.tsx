@@ -16,6 +16,8 @@ const SECTION_LINKS = [
   { id: 'settings-runtime-doctor', label: 'Doctor' },
   { id: 'settings-capability-coverage', label: 'Capability' },
   { id: 'settings-conversation-quality', label: 'Quality' },
+  { id: 'settings-personalization', label: 'Personalize' },
+  { id: 'settings-project-context', label: 'Project' },
   { id: 'settings-memory-policy', label: 'Memory' },
 ] as const;
 

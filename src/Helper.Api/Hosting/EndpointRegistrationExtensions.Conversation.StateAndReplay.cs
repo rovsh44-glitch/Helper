@@ -24,7 +24,7 @@ public static partial class EndpointRegistrationExtensions
 {
     private static void MapConversationStateAndReplayEndpoints(IEndpointRouteBuilder endpoints)
     {
-		endpoints.MapGet("/api/chat/{conversationId}", (Func<string, IConversationStore, IUserProfileService, IMemoryPolicyService, IResult>)delegate(string conversationId, IConversationStore store, IUserProfileService userProfile, IMemoryPolicyService memoryPolicy)
+		endpoints.MapGet("/api/chat/{conversationId}", (Func<string, IConversationStore, IUserProfileService, IMemoryPolicyService, IMemoryInspectionService, IResult>)delegate(string conversationId, IConversationStore store, IUserProfileService userProfile, IMemoryPolicyService memoryPolicy, IMemoryInspectionService memoryInspection)
 		{
 			if (!store.TryGet(conversationId, out ConversationState state))
 			{
@@ -35,7 +35,7 @@ public static partial class EndpointRegistrationExtensions
 			}
 			ConversationUserProfile conversationUserProfile = userProfile.Resolve(state);
 			ConversationMemoryPolicySnapshot policySnapshot = memoryPolicy.GetPolicySnapshot(state);
-			IReadOnlyList<ConversationMemoryItem> activeItems = memoryPolicy.GetActiveItems(state, DateTimeOffset.UtcNow);
+			IReadOnlyList<MemoryInspectionItem> activeItems = memoryInspection.BuildSnapshot(state, DateTimeOffset.UtcNow);
 			return Results.Ok(new
 			{
 				conversationId = state.Id,
@@ -66,9 +66,25 @@ public static partial class EndpointRegistrationExtensions
                     directness = conversationUserProfile.Directness,
                     defaultAnswerShape = conversationUserProfile.DefaultAnswerShape,
                     searchLocalityHint = conversationUserProfile.SearchLocalityHint,
+                    decisionAssertiveness = conversationUserProfile.DecisionAssertiveness,
+                    clarificationTolerance = conversationUserProfile.ClarificationTolerance,
+                    citationPreference = conversationUserProfile.CitationPreference,
+                    repairStyle = conversationUserProfile.RepairStyle,
+                    reasoningStyle = conversationUserProfile.ReasoningStyle,
+                    reasoningEffort = conversationUserProfile.ReasoningEffort,
+                    personaBundleId = conversationUserProfile.PersonaBundleId,
+                    projectId = state.ProjectContext?.ProjectId,
+                    projectLabel = state.ProjectContext?.Label,
+                    projectInstructions = state.ProjectContext?.Instructions,
+                    projectMemoryEnabled = state.ProjectContext?.MemoryEnabled,
+                    backgroundResearchEnabled = state.BackgroundResearchEnabled,
+                    proactiveUpdatesEnabled = state.ProactiveUpdatesEnabled,
 					memoryTags = state.Preferences.ToArray(),
 					memoryItemsCount = activeItems.Count
 				},
+                projectContext = state.ProjectContext,
+                backgroundTasks = state.BackgroundTasks,
+                proactiveTopics = state.ProactiveTopics,
 				branchSummaries = from x in state.BranchSummaries.Values.OrderBy<ConversationBranchSummary, string>((ConversationBranchSummary x) => x.BranchId, StringComparer.OrdinalIgnoreCase)
 					select new
 					{
@@ -121,10 +137,57 @@ public static partial class EndpointRegistrationExtensions
                 enthusiasm = conversationUserProfile.Enthusiasm,
                 directness = conversationUserProfile.Directness,
                 defaultAnswerShape = conversationUserProfile.DefaultAnswerShape,
-                searchLocalityHint = conversationUserProfile.SearchLocalityHint
+                searchLocalityHint = conversationUserProfile.SearchLocalityHint,
+                decisionAssertiveness = conversationUserProfile.DecisionAssertiveness,
+                clarificationTolerance = conversationUserProfile.ClarificationTolerance,
+                citationPreference = conversationUserProfile.CitationPreference,
+                repairStyle = conversationUserProfile.RepairStyle,
+                reasoningStyle = conversationUserProfile.ReasoningStyle,
+                reasoningEffort = conversationUserProfile.ReasoningEffort,
+                personaBundleId = conversationUserProfile.PersonaBundleId,
+                projectId = state.ProjectContext?.ProjectId,
+                projectLabel = state.ProjectContext?.Label,
+                projectInstructions = state.ProjectContext?.Instructions,
+                projectMemoryEnabled = state.ProjectContext?.MemoryEnabled,
+                backgroundResearchEnabled = state.BackgroundResearchEnabled,
+                proactiveUpdatesEnabled = state.ProactiveUpdatesEnabled
 			});
 		}));
-		endpoints.MapGet("/api/chat/{conversationId}/memory", (Func<string, IConversationStore, IMemoryPolicyService, IFeatureFlags, IResult>)delegate(string conversationId, IConversationStore store, IMemoryPolicyService memoryPolicy, IFeatureFlags flags)
+		endpoints.MapPost("/api/chat/{conversationId}/background/{taskId}/cancel", (Func<string, string, BackgroundTaskActionRequestDto?, IConversationFollowThroughProcessor, IResult>)((string conversationId, string taskId, [FromBody] BackgroundTaskActionRequestDto? dto, IConversationFollowThroughProcessor processor) =>
+		{
+			if (!processor.CancelTask(conversationId, taskId, dto?.Reason))
+			{
+				return Results.NotFound(new
+				{
+					success = false,
+					error = "Background task not found or cannot be canceled."
+				});
+			}
+			return Results.Ok(new
+			{
+				success = true,
+				taskId,
+				status = "canceled"
+			});
+		}));
+		endpoints.MapPost("/api/chat/{conversationId}/topics/{topicId}", (Func<string, string, ProactiveTopicActionRequestDto, IConversationFollowThroughProcessor, IResult>)((string conversationId, string topicId, [FromBody] ProactiveTopicActionRequestDto dto, IConversationFollowThroughProcessor processor) =>
+		{
+			if (!processor.SetTopicEnabled(conversationId, topicId, dto.Enabled))
+			{
+				return Results.NotFound(new
+				{
+					success = false,
+					error = "Proactive topic not found."
+				});
+			}
+			return Results.Ok(new
+			{
+				success = true,
+				topicId,
+				enabled = dto.Enabled
+			});
+		}));
+		endpoints.MapGet("/api/chat/{conversationId}/memory", (Func<string, IConversationStore, IMemoryPolicyService, IFeatureFlags, IMemoryInspectionService, IResult>)delegate(string conversationId, IConversationStore store, IMemoryPolicyService memoryPolicy, IFeatureFlags flags, IMemoryInspectionService memoryInspection)
 		{
 			if (!flags.MemoryV2Enabled)
 			{
@@ -144,7 +207,7 @@ public static partial class EndpointRegistrationExtensions
 			}
 			DateTimeOffset utcNow = DateTimeOffset.UtcNow;
 			ConversationMemoryPolicySnapshot policySnapshot = memoryPolicy.GetPolicySnapshot(state);
-			IReadOnlyList<ConversationMemoryItem> activeItems = memoryPolicy.GetActiveItems(state, utcNow);
+			IReadOnlyList<MemoryInspectionItem> activeItems = memoryInspection.BuildSnapshot(state, utcNow);
 			return Results.Ok(new
 			{
 				conversationId = state.Id,
@@ -157,15 +220,21 @@ public static partial class EndpointRegistrationExtensions
 					taskMemoryTtlHours = policySnapshot.TaskMemoryTtlHours,
 					longTermMemoryTtlDays = policySnapshot.LongTermMemoryTtlDays
 				},
-				items = activeItems.Select((ConversationMemoryItem item) => new
+				items = activeItems.Select((MemoryInspectionItem item) => new
 				{
 					id = item.Id,
 					type = item.Type,
 					content = item.Content,
+                    scope = item.Scope.ToString().ToLowerInvariant(),
+                    retention = item.Retention,
+                    whyRemembered = item.WhyRemembered,
+                    priority = item.Priority,
 					createdAt = item.CreatedAt,
 					expiresAt = item.ExpiresAt,
 					sourceTurnId = item.SourceTurnId,
-					isPersonal = item.IsPersonal
+                    sourceProjectId = item.SourceProjectId,
+					isPersonal = item.IsPersonal,
+                    userEditable = item.UserEditable
 				})
 			});
 		});
