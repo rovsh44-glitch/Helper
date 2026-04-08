@@ -2,9 +2,9 @@ namespace Helper.Runtime.Tests;
 
 internal sealed class TempDirectoryScope : IDisposable
 {
-    public TempDirectoryScope()
+    public TempDirectoryScope(string prefix = "helper-tests")
     {
-        Path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "helper-tests", Guid.NewGuid().ToString("N"));
+        Path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), prefix, Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(Path);
     }
 
