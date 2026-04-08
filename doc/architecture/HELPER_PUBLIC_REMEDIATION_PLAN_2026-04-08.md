@@ -1,6 +1,6 @@
 # HELPER Public Remediation Plan
 
-Status: `active plan`
+Status: `completed`
 Updated: `2026-04-08`
 Target repo: `https://github.com/rovsh44-glitch/Helper`
 Decision boundary: keep `0e95b9b` and `ed0ad59` private until an explicit paired-export decision is approved
@@ -212,3 +212,15 @@ Exit criteria:
 3. follow-through is either fully implemented or absent from public settings;
 4. the generated TS client cannot drift beyond public OpenAPI without failing CI;
 5. live voice stays private until the full paired export is intentionally approved.
+
+## Completion Note
+
+Completed on `2026-04-08`.
+
+Closed state:
+
+1. `PR 1` removed unsupported live-voice public traces and narrowed the public contract;
+2. `PR 2` exported non-voice personalization and project-context state with real round-trip persistence;
+3. `PR 3` exported non-voice follow-through, proactive topic controls, and richer memory inspection;
+4. `PR 4` added parity and lane guardrails, and follow-up lane hygiene work restored green `fast` and `integration` public test runs;
+5. `PR 5` was intentionally not executed, which matches the decision boundary to keep live voice private until an explicit paired export is approved.
