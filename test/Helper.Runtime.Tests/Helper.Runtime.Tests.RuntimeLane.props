@@ -6,7 +6,6 @@
       TestResults\**\*.cs;
       Fixtures\**\*.cs;
       EvalTestPackageFactory.cs;
-      TestInfrastructure\EnvironmentVariableScope.cs;
       ApiBindingPlanResolverTests.cs;
       ApiPortFileWriterTests.cs;
       BackendRebuildRuntimeTests.cs;

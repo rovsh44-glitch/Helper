@@ -1,0 +1,85 @@
+name: runtime-test-lanes
+
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      run_integration:
+        description: Run the integration lane in addition to fast
+        required: false
+        default: true
+        type: boolean
+      run_certification:
+        description: Run the certification lane
+        required: false
+        default: false
+        type: boolean
+      run_certification_compile:
+        description: Run the certification compile lane
+        required: false
+        default: false
+        type: boolean
+  schedule:
+    - cron: "0 2 * * *"
+
+jobs:
+  fast:
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      - name: Restore solution
+        shell: pwsh
+        run: dotnet restore Helper.sln
+      - name: Run fast lane
+        shell: pwsh
+        run: ./scripts/run_fast_tests.ps1 -Configuration Debug -NoRestore
+
+  integration:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_integration
+    runs-on: windows-latest
+    needs: fast
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      - name: Restore solution
+        shell: pwsh
+        run: dotnet restore Helper.sln
+      - name: Run integration lane
+        shell: pwsh
+        run: ./scripts/run_integration_tests.ps1 -Configuration Debug -NoRestore
+
+  certification:
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.run_certification)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      - name: Restore solution
+        shell: pwsh
+        run: dotnet restore Helper.sln
+      - name: Run certification lane
+        shell: pwsh
+        run: ./scripts/run_certification_tests.ps1 -Configuration Debug -NoRestore
+
+  certification_compile:
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.run_certification_compile)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      - name: Restore solution
+        shell: pwsh
+        run: dotnet restore Helper.sln
+      - name: Run certification compile lane
+        shell: pwsh
+        run: ./scripts/run_certification_compile_tests.ps1 -Configuration Debug -NoRestore

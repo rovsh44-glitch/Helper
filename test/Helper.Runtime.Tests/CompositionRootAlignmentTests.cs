@@ -50,17 +50,6 @@ public class CompositionRootAlignmentTests
 
     private static string ReadWorkspaceFile(params string[] segments)
     {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null)
-        {
-            if (File.Exists(Path.Combine(current.FullName, "Helper.sln")))
-            {
-                return File.ReadAllText(Path.Combine(new[] { current.FullName }.Concat(segments).ToArray()));
-            }
-
-            current = current.Parent;
-        }
-
-        throw new DirectoryNotFoundException("Workspace root was not found.");
+        return File.ReadAllText(TestWorkspaceRoot.ResolveFile(segments));
     }
 }

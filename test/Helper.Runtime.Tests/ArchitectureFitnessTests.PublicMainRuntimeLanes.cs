@@ -3,66 +3,43 @@ namespace Helper.Runtime.Tests;
 public sealed class ArchitectureFitnessTestsPublicMainRuntimeLanes
 {
     [Fact]
-    public void RuntimeTests_Project_Excludes_CompilePath_Tests()
+    public void RuntimeTests_Project_Uses_Manifest_Based_RuntimeLane_Layout()
     {
         var runtimeTestsProject = ResolveWorkspaceFile("test", "Helper.Runtime.Tests", "Helper.Runtime.Tests.csproj");
         var projectText = File.ReadAllText(runtimeTestsProject);
 
-        Assert.Contains("<Compile Remove=\"EvalHarnessTests.cs\" />", projectText, StringComparison.Ordinal);
-        Assert.Contains("<Compile Remove=\"TemplateCertificationServiceTests.cs\" />", projectText, StringComparison.Ordinal);
-        Assert.Contains("<Compile Remove=\"TemplatePromotionEndToEndAndChaosTests.cs\" />", projectText, StringComparison.Ordinal);
+        Assert.Contains("Helper.Runtime.Tests.RuntimeLane.props", projectText, StringComparison.Ordinal);
+        Assert.Contains("Helper.Runtime.Tests.ApiLane.props", projectText, StringComparison.Ordinal);
+        Assert.Contains("<Compile Remove=\"@(RuntimeApiLaneCompile)\" />", projectText, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void CompilePath_Project_Owns_Minimal_Compile_Surface_And_Is_Not_In_Solution()
+    public void CertificationCompile_Project_Replaces_Legacy_CompilePath_Project()
     {
-        var compilePathProject = ResolveWorkspaceFile("test", "Helper.Runtime.CompilePath.Tests", "Helper.Runtime.CompilePath.Tests.csproj");
-        var projectText = File.ReadAllText(compilePathProject);
+        var certificationCompileProject = ResolveWorkspaceFile("test", "Helper.Runtime.Certification.Compile.Tests", "Helper.Runtime.Certification.Compile.Tests.csproj");
+        var projectText = File.ReadAllText(certificationCompileProject);
         var solutionText = File.ReadAllText(ResolveWorkspaceFile("Helper.sln"));
 
-        Assert.DoesNotContain("TemplateCertificationServiceTests.cs", projectText, StringComparison.Ordinal);
-        Assert.DoesNotContain("TemplatePromotionEndToEndAndChaosTests.cs", projectText, StringComparison.Ordinal);
-        Assert.DoesNotContain("EvalHarnessTests.cs", projectText, StringComparison.Ordinal);
-        Assert.True(File.Exists(ResolveWorkspaceFile("test", "Helper.Runtime.CompilePath.Tests", "CompilePathTestInfrastructure.cs")));
-        Assert.True(File.Exists(ResolveWorkspaceFile("test", "Helper.Runtime.CompilePath.Tests", "GenerationCompileGateIntegrationTests.cs")));
-        Assert.True(File.Exists(ResolveWorkspaceFile("test", "Helper.Runtime.CompilePath.Tests", "FixLoopCompileGateSmokeTests.cs")));
-        Assert.True(File.Exists(ResolveWorkspaceFile("test", "Helper.Runtime.CompilePath.Tests", "TemplateCertificationCompileSmokeTests.cs")));
-        Assert.True(File.Exists(ResolveWorkspaceFile("test", "Helper.Runtime.CompilePath.Tests", "TemplatePromotionCompileSmokeTests.cs")));
+        Assert.Contains("TemplateCertificationServiceTests.cs", projectText, StringComparison.Ordinal);
+        Assert.Contains("TemplatePromotionEndToEndAndChaosTests.cs", projectText, StringComparison.Ordinal);
+        Assert.Contains("DotnetServiceTraceBehaviorTests.cs", projectText, StringComparison.Ordinal);
         Assert.DoesNotContain("Helper.Runtime.CompilePath.Tests", solutionText, StringComparison.Ordinal);
+        Assert.Contains("Helper.Runtime.Certification.Compile.Tests", solutionText, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void Public_CompilePath_Runner_Exists_And_Hardens_Cleanup()
+    public void Public_CertificationCompile_Runner_Exists_And_Hardens_Cleanup()
     {
-        var runnerPath = ResolveWorkspaceFile("scripts", "run_compile_path_tests.ps1");
+        var runnerPath = ResolveWorkspaceFile("scripts", "run_certification_compile_tests.ps1");
         Assert.True(File.Exists(runnerPath));
 
         var runnerText = File.ReadAllText(runnerPath);
-        Assert.Contains("Get-HelperMsbuildStateRoot", runnerText, StringComparison.Ordinal);
-        Assert.Contains("compile_path_lane.lock", runnerText, StringComparison.Ordinal);
+        Assert.Contains("Acquire-LaneLock", runnerText, StringComparison.Ordinal);
+        Assert.Contains("Release-LaneLock", runnerText, StringComparison.Ordinal);
         Assert.Contains("taskkill /PID", runnerText, StringComparison.Ordinal);
         Assert.Contains("helper_template_e2e_", runnerText, StringComparison.Ordinal);
         Assert.Contains("helper_template_cert_test_", runnerText, StringComparison.Ordinal);
-        Assert.Contains("helper_compile_gate_", runnerText, StringComparison.Ordinal);
-        Assert.Contains("helper_fix_applier_", runnerText, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void Eval_Project_Owns_Heavy_EvalHarness_Surface_And_Is_Not_In_Solution()
-    {
-        var evalProject = ResolveWorkspaceFile("test", "Helper.Runtime.Eval.Tests", "Helper.Runtime.Eval.Tests.csproj");
-        var projectText = File.ReadAllText(evalProject);
-        var solutionText = File.ReadAllText(ResolveWorkspaceFile("Helper.sln"));
-
-        Assert.Contains("EvalHarnessTests.cs", projectText, StringComparison.Ordinal);
-        Assert.DoesNotContain("Helper.Runtime.Eval.Tests", solutionText, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void Public_Eval_Runner_Exists()
-    {
-        var runnerPath = ResolveWorkspaceFile("scripts", "run_eval_harness_tests.ps1");
-        Assert.True(File.Exists(runnerPath));
+        Assert.Contains("Waiting for active certification compile lane to release lock", runnerText, StringComparison.Ordinal);
     }
 
     [Fact]
