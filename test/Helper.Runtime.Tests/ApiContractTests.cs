@@ -16,6 +16,8 @@ public class ApiContractTests
         Assert.Contains("/api/chat", json);
         Assert.Contains("/api/chat/{conversationId}/resume", json);
         Assert.Contains("/api/chat/{conversationId}/turns/{turnId}/regenerate", json);
+        Assert.Contains("/api/chat/{conversationId}/background/{taskId}/cancel", json);
+        Assert.Contains("/api/chat/{conversationId}/topics/{topicId}", json);
         Assert.Contains("/api/chat/{conversationId}/branches", json);
         Assert.Contains("/api/chat/{conversationId}/branches/compare", json);
         Assert.Contains("/api/chat/{conversationId}/branches/merge", json);
@@ -45,6 +47,7 @@ public class ApiContractTests
         Assert.Contains("/api/templates/certification-gate", json);
         Assert.Contains("X-API-KEY", json);
         Assert.Contains("bearer", json, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("/api/chat/{conversationId}/voice/session", json, StringComparison.Ordinal);
     }
 
     [Fact]

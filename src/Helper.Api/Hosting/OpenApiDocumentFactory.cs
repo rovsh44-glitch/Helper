@@ -95,6 +95,14 @@ public static class OpenApiDocumentFactory
                 {
                     post = new { summary = "Update conversation memory preferences" }
                 },
+                ["/api/chat/{conversationId}/background/{taskId}/cancel"] = new
+                {
+                    post = new { summary = "Cancel queued background follow-through task" }
+                },
+                ["/api/chat/{conversationId}/topics/{topicId}"] = new
+                {
+                    post = new { summary = "Enable or disable proactive topic subscription" }
+                },
                 ["/api/chat/{conversationId}/memory"] = new
                 {
                     get = new { summary = "List active conversation memory items and memory policy" }

@@ -197,6 +197,16 @@
         "summary": "Update conversation memory preferences"
       }
     },
+    "/api/chat/{conversationId}/background/{taskId}/cancel": {
+      "post": {
+        "summary": "Cancel queued background follow-through task"
+      }
+    },
+    "/api/chat/{conversationId}/topics/{topicId}": {
+      "post": {
+        "summary": "Enable or disable proactive topic subscription"
+      }
+    },
     "/api/chat/{conversationId}/memory": {
       "get": {
         "summary": "List active conversation memory items and memory policy"

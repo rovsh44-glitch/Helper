@@ -23,8 +23,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Helper.Testing\Helper.Testing.csproj" />
-    <ProjectReference Include="..\Helper.Testing.Evals\Helper.Testing.Evals.csproj" />
     <ProjectReference Include="..\..\src\Helper.Runtime\Helper.Runtime.csproj" />
     <ProjectReference Include="..\..\src\Helper.Runtime.Knowledge\Helper.Runtime.Knowledge.csproj" />
     <ProjectReference Include="..\..\src\Helper.Runtime.Evolution\Helper.Runtime.Evolution.csproj" />
@@ -32,7 +30,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\Helper.Runtime.Tests\EvalTestPackageFactory.cs" Link="EvalTestPackageFactory.cs" />
     <Compile Include="..\Helper.Runtime.Tests\TestCollectionConfig.cs" Link="TestCollectionConfig.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\TestInfrastructure\EnvironmentVariableScope.cs" Link="TestInfrastructure\EnvironmentVariableScope.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\TestInfrastructure\TempDirectoryScope.cs" Link="TestInfrastructure\TempDirectoryScope.cs" />
     <Compile Include="..\Helper.Runtime.Tests\TestInfrastructure\ProcessEnvironmentCollection.cs" Link="TestInfrastructure\ProcessEnvironmentCollection.cs" />
     <Compile Include="..\Helper.Runtime.Tests\TestWorkspaceRoot.cs" Link="TestWorkspaceRoot.cs" />
     <Compile Include="@(RuntimeApiLaneCompile)" Link="%(Link)" />

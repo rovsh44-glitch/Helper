@@ -18,9 +18,6 @@
     <RuntimeApiLaneCompile Include="$(MSBuildThisFileDirectory)ChatResilienceTelemetryTests.cs">
       <Link>ChatResilienceTelemetryTests.cs</Link>
     </RuntimeApiLaneCompile>
-    <RuntimeApiLaneCompile Include="$(MSBuildThisFileDirectory)ChatTurnPlannerTestFactory.cs">
-      <Link>ChatTurnPlannerTestFactory.cs</Link>
-    </RuntimeApiLaneCompile>
     <RuntimeApiLaneCompile Include="$(MSBuildThisFileDirectory)ChatTurnPlanningStepTests.cs">
       <Link>ChatTurnPlanningStepTests.cs</Link>
     </RuntimeApiLaneCompile>
@@ -42,14 +39,17 @@
     <RuntimeApiLaneCompile Include="$(MSBuildThisFileDirectory)ClarificationQualityPolicyTests.cs">
       <Link>ClarificationQualityPolicyTests.cs</Link>
     </RuntimeApiLaneCompile>
-    <RuntimeApiLaneCompile Include="$(MSBuildThisFileDirectory)CommunicationQualityPolicyTests.cs">
-      <Link>CommunicationQualityPolicyTests.cs</Link>
-    </RuntimeApiLaneCompile>
-    <RuntimeApiLaneCompile Include="$(MSBuildThisFileDirectory)ConversationCollaborationIntentTests.cs">
-      <Link>ConversationCollaborationIntentTests.cs</Link>
+    <RuntimeApiLaneCompile Include="$(MSBuildThisFileDirectory)ClientContractParityTests.cs">
+      <Link>ClientContractParityTests.cs</Link>
     </RuntimeApiLaneCompile>
     <RuntimeApiLaneCompile Include="$(MSBuildThisFileDirectory)ConversationModelSelectionPolicy.ProfileOverlayTests.cs">
       <Link>ConversationModelSelectionPolicy.ProfileOverlayTests.cs</Link>
+    </RuntimeApiLaneCompile>
+    <RuntimeApiLaneCompile Include="$(MSBuildThisFileDirectory)ConversationFollowThroughTests.cs">
+      <Link>ConversationFollowThroughTests.cs</Link>
+    </RuntimeApiLaneCompile>
+    <RuntimeApiLaneCompile Include="$(MSBuildThisFileDirectory)ConversationPreferencesRoundTripTests.cs">
+      <Link>ConversationPreferencesRoundTripTests.cs</Link>
     </RuntimeApiLaneCompile>
     <RuntimeApiLaneCompile Include="$(MSBuildThisFileDirectory)ConversationPromptPolicyTests.cs">
       <Link>ConversationPromptPolicyTests.cs</Link>
@@ -74,9 +74,6 @@
     </RuntimeApiLaneCompile>
     <RuntimeApiLaneCompile Include="$(MSBuildThisFileDirectory)FreshnessWindowPolicyTests.cs">
       <Link>FreshnessWindowPolicyTests.cs</Link>
-    </RuntimeApiLaneCompile>
-    <RuntimeApiLaneCompile Include="$(MSBuildThisFileDirectory)FrontierHumanCommunicationPolicyTests.cs">
-      <Link>FrontierHumanCommunicationPolicyTests.cs</Link>
     </RuntimeApiLaneCompile>
     <RuntimeApiLaneCompile Include="$(MSBuildThisFileDirectory)HelperModelGatewayProfileOverlayTests.cs">
       <Link>HelperModelGatewayProfileOverlayTests.cs</Link>
