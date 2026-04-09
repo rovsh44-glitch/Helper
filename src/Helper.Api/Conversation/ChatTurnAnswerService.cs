@@ -251,7 +251,7 @@ internal sealed class ChatTurnAnswerService
             context.RetrievalChunksUsed = assembly.RetrievalChunkCount;
         }
 
-        var profile = _deps.UserProfileService.Resolve(context.Conversation);
+        var profile = context.ResolvedUserProfile ?? _deps.UserProfileService.Resolve(context.Conversation);
         var resolvedTurnLanguage = context.ResolvedTurnLanguage
             ?? _deps.TurnLanguageResolver.Resolve(profile, context.Request.Message, context.History);
         context.ResolvedTurnLanguage = resolvedTurnLanguage;
@@ -301,4 +301,3 @@ internal sealed class ChatTurnAnswerService
         }
     }
 }
-

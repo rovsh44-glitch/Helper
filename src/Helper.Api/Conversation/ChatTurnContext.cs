@@ -62,6 +62,7 @@ public sealed class ChatTurnContext
     public int RetrievalChunksUsed { get; set; }
     public string? SelectedRetrievalPurpose { get; set; }
     public List<string> RetrievalTrace { get; } = new();
+    public ConversationUserProfile? ResolvedUserProfile { get; set; }
     public string? ResolvedTurnLanguage { get; set; }
     public string ResolvedLiveWebRequirement { get; set; } = "no_web_needed";
     public string? ResolvedLiveWebReason { get; set; }
@@ -138,4 +139,3 @@ public enum TurnExecutionState
     Completed,
     Failed
 }
-

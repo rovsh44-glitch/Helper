@@ -34,6 +34,23 @@ public sealed class UserProfileService : IUserProfileService
         }
     }
 
+    public ConversationUserProfile ApplyPersonalization(ConversationUserProfile profile, PersonalizationProfile personalization)
+    {
+        ArgumentNullException.ThrowIfNull(profile);
+        ArgumentNullException.ThrowIfNull(personalization);
+
+        return profile with
+        {
+            DetailLevel = NormalizeDetailLevel(personalization.ExplanationDepth),
+            DecisionAssertiveness = NormalizeDecisionAssertiveness(personalization.DecisionAssertiveness),
+            ClarificationTolerance = NormalizeClarificationTolerance(personalization.ClarificationTolerance),
+            CitationPreference = NormalizeCitationPreference(personalization.CitationPreference),
+            RepairStyle = NormalizeRepairStyle(personalization.RepairStyle),
+            ReasoningStyle = NormalizeReasoningStyle(personalization.ReasoningStyle),
+            ReasoningEffort = NormalizeReasoningEffort(personalization.ReasoningEffort)
+        };
+    }
+
     public void ApplyPreferences(
         ConversationState state,
         Helper.Api.Hosting.ConversationPreferenceDto dto,
@@ -452,4 +469,3 @@ public sealed class UserProfileService : IUserProfileService
         return presentFields.Contains(fieldName);
     }
 }
-

@@ -37,9 +37,8 @@ public sealed class TurnPersonalizationStep
     {
         _ = ct;
         var turn = planningContext.Turn;
-        planningState.Profile = _userProfileService.Resolve(turn.Conversation);
-        planningState.Personalization = _personalizationMergePolicy.Resolve(turn.Conversation, turn);
-        turn.ResolvedTurnLanguage = _turnLanguageResolver.Resolve(planningState.Profile, planningContext.TrimmedMessage, turn.History);
+        var baseProfile = _userProfileService.Resolve(turn.Conversation);
+        turn.ResolvedTurnLanguage = _turnLanguageResolver.Resolve(baseProfile, planningContext.TrimmedMessage, turn.History);
         turn.CollaborationIntent = _collaborationIntentDetector.Analyze(planningContext.TrimmedMessage, turn.ResolvedTurnLanguage);
         turn.IntentSignals.AddRange(turn.CollaborationIntent.Signals.Select(signal => $"collaboration:{signal}"));
         turn.CommunicationQualitySnapshot = _communicationQualityPolicy.GetSnapshot(turn.Conversation);
@@ -55,12 +54,15 @@ public sealed class TurnPersonalizationStep
             turn.IntentSignals.Add("interaction:compress_structure");
         }
         turn.ActiveProjectId = turn.Conversation.ProjectContext?.ProjectId;
+        turn.IsFactualPrompt = TurnPlanningRules.IsLikelyFactualPrompt(planningContext.TrimmedMessage);
+        planningState.Personalization = _personalizationMergePolicy.Resolve(turn.Conversation, turn);
+        planningState.Profile = _userProfileService.ApplyPersonalization(baseProfile, planningState.Personalization);
+        turn.ResolvedUserProfile = planningState.Profile;
         planningState.BenchmarkDecision = _localFirstBenchmarkPolicy.Evaluate(turn.Request, turn.ResolvedTurnLanguage);
         planningState.PriorClarificationTurns = TurnPlanningRules.GetPriorClarificationTurns(turn.Conversation);
         turn.IsLocalFirstBenchmarkTurn = planningState.BenchmarkDecision.IsBenchmark;
         turn.LocalFirstBenchmarkMode = planningState.BenchmarkDecision.Mode;
         turn.RequireExplicitBenchmarkUncertainty = planningState.BenchmarkDecision.RequireExplicitUncertainty;
-        turn.IsFactualPrompt = TurnPlanningRules.IsLikelyFactualPrompt(planningContext.TrimmedMessage);
         return Task.CompletedTask;
     }
 }
