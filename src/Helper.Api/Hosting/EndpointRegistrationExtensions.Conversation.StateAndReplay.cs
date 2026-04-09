@@ -119,7 +119,7 @@ public static partial class EndpointRegistrationExtensions
 					error = "Conversation not found."
 				});
 			}
-            ConversationPreferenceUpdate update;
+            ConversationPreferencePayloadReader.Update update;
             try
             {
                 update = await ReadConversationPreferenceUpdateAsync(request, ct);
@@ -373,5 +373,3 @@ public static partial class EndpointRegistrationExtensions
     }
 
 }
-
-
