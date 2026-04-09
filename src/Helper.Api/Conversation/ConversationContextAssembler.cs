@@ -21,15 +21,21 @@ public sealed class ConversationContextAssembler : IConversationContextAssembler
     private readonly IReflectionService _reflectionService;
     private readonly IRetrievalContextAssembler _retrievalAssembler;
     private readonly IReasoningAwareRetrievalPolicy _retrievalPolicy;
+    private readonly IProjectInstructionPolicy _projectInstructionPolicy;
+    private readonly ISharedUnderstandingService _sharedUnderstandingService;
 
     public ConversationContextAssembler(
         IReflectionService reflectionService,
         IRetrievalContextAssembler retrievalAssembler,
-        IReasoningAwareRetrievalPolicy retrievalPolicy)
+        IReasoningAwareRetrievalPolicy retrievalPolicy,
+        IProjectInstructionPolicy? projectInstructionPolicy = null,
+        ISharedUnderstandingService? sharedUnderstandingService = null)
     {
         _reflectionService = reflectionService;
         _retrievalAssembler = retrievalAssembler;
         _retrievalPolicy = retrievalPolicy;
+        _projectInstructionPolicy = projectInstructionPolicy ?? new ProjectInstructionPolicy();
+        _sharedUnderstandingService = sharedUnderstandingService ?? new SharedUnderstandingService();
     }
 
     public async Task<ConversationPromptAssembly> AssembleAsync(ChatTurnContext context, CancellationToken ct)
@@ -50,6 +56,7 @@ public sealed class ConversationContextAssembler : IConversationContextAssembler
         }
 
         AppendSystemContextBlocks(context.History, selection, contextBlocks, usedLayers);
+        AppendDerivedContextBlocks(context, contextBlocks, usedLayers);
         var proceduralLessons = await TryLoadLessonsAsync(context, selection, contextBlocks, usedLayers, ct).ConfigureAwait(false);
         var retrievalChunks = await TryLoadRetrievalAsync(context, selection, contextBlocks, usedLayers, ct).ConfigureAwait(false);
 
@@ -92,6 +99,26 @@ public sealed class ConversationContextAssembler : IConversationContextAssembler
                 contextBlocks.Add(message.Content);
                 usedLayers.Add("conversation_profile");
             }
+        }
+    }
+
+    private void AppendDerivedContextBlocks(
+        ChatTurnContext context,
+        List<string> contextBlocks,
+        List<string> usedLayers)
+    {
+        var projectBlock = _projectInstructionPolicy.BuildContextBlock(context.Conversation.ProjectContext, context);
+        if (!string.IsNullOrWhiteSpace(projectBlock))
+        {
+            contextBlocks.Add(projectBlock);
+            usedLayers.Add("project_context");
+        }
+
+        var sharedUnderstandingBlock = _sharedUnderstandingService.BuildContextBlock(context.Conversation, context);
+        if (!string.IsNullOrWhiteSpace(sharedUnderstandingBlock))
+        {
+            contextBlocks.Add(sharedUnderstandingBlock);
+            usedLayers.Add("shared_understanding");
         }
     }
 
