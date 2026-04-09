@@ -16,6 +16,5 @@ public sealed record ConversationUserProfile(
     string CitationPreference = "adaptive",
     string RepairStyle = "direct_fix",
     string ReasoningStyle = "concise",
-    string ReasoningEffort = "balanced",
-    string? PersonaBundleId = null);
+    string ReasoningEffort = "balanced");
 

@@ -34,7 +34,6 @@ internal sealed class PersistedConversationState
     public string RepairStyle { get; set; } = "direct_fix";
     public string ReasoningStyle { get; set; } = "concise";
     public string ReasoningEffort { get; set; } = "balanced";
-    public string? PersonaBundleId { get; set; }
     public SharedUnderstandingState? SharedUnderstanding { get; set; }
     public UserUnderstandingState? UserUnderstanding { get; set; }
     public ProjectUnderstandingState? ProjectUnderstanding { get; set; }
@@ -108,7 +107,6 @@ internal static class ConversationPersistenceModelMapper
                 RepairStyle = state.RepairStyle,
                 ReasoningStyle = state.ReasoningStyle,
                 ReasoningEffort = state.ReasoningEffort,
-                PersonaBundleId = state.PersonaBundleId,
                 SharedUnderstanding = state.SharedUnderstanding,
                 UserUnderstanding = state.UserUnderstanding,
                 ProjectUnderstanding = state.ProjectUnderstanding,
@@ -161,7 +159,6 @@ internal static class ConversationPersistenceModelMapper
             RepairStyle = string.IsNullOrWhiteSpace(item.RepairStyle) ? "direct_fix" : item.RepairStyle,
             ReasoningStyle = string.IsNullOrWhiteSpace(item.ReasoningStyle) ? "concise" : item.ReasoningStyle,
             ReasoningEffort = string.IsNullOrWhiteSpace(item.ReasoningEffort) ? "balanced" : item.ReasoningEffort,
-            PersonaBundleId = string.IsNullOrWhiteSpace(item.PersonaBundleId) ? null : item.PersonaBundleId.Trim(),
             SharedUnderstanding = item.SharedUnderstanding,
             UserUnderstanding = item.UserUnderstanding,
             ProjectUnderstanding = item.ProjectUnderstanding,

@@ -69,14 +69,12 @@ export const SettingsView: React.FC = () => {
               repairStyle={state.repairStyle}
               reasoningStyle={state.reasoningStyle}
               reasoningEffort={state.reasoningEffort}
-              personaBundleId={state.personaBundleId}
               onSaveDecisionAssertiveness={state.saveDecisionAssertiveness}
               onSaveClarificationTolerance={state.saveClarificationTolerance}
               onSaveCitationPreference={state.saveCitationPreference}
               onSaveRepairStyle={state.saveRepairStyle}
               onSaveReasoningStyle={state.saveReasoningStyle}
               onSaveReasoningEffort={state.saveReasoningEffort}
-              onSavePersonaBundleId={state.savePersonaBundleId}
             />
           </section>
           <section id="settings-project-context">

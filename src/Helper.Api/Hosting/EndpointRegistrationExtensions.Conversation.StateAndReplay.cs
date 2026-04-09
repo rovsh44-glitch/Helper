@@ -36,6 +36,12 @@ public static partial class EndpointRegistrationExtensions
 			ConversationUserProfile conversationUserProfile = userProfile.Resolve(state);
 			ConversationMemoryPolicySnapshot policySnapshot = memoryPolicy.GetPolicySnapshot(state);
 			IReadOnlyList<MemoryInspectionItem> activeItems = memoryInspection.BuildSnapshot(state, DateTimeOffset.UtcNow);
+            string[] visibleMemoryTags = activeItems
+                .Where(item => item.Type.Equals("long_term", StringComparison.OrdinalIgnoreCase))
+                .Select(item => item.Content)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Take(64)
+                .ToArray();
 			return Results.Ok(new
 			{
 				conversationId = state.Id,
@@ -72,14 +78,13 @@ public static partial class EndpointRegistrationExtensions
                     repairStyle = conversationUserProfile.RepairStyle,
                     reasoningStyle = conversationUserProfile.ReasoningStyle,
                     reasoningEffort = conversationUserProfile.ReasoningEffort,
-                    personaBundleId = conversationUserProfile.PersonaBundleId,
                     projectId = state.ProjectContext?.ProjectId,
                     projectLabel = state.ProjectContext?.Label,
                     projectInstructions = state.ProjectContext?.Instructions,
                     projectMemoryEnabled = state.ProjectContext?.MemoryEnabled,
                     backgroundResearchEnabled = state.BackgroundResearchEnabled,
                     proactiveUpdatesEnabled = state.ProactiveUpdatesEnabled,
-					memoryTags = state.Preferences.ToArray(),
+					memoryTags = visibleMemoryTags,
 					memoryItemsCount = activeItems.Count
 				},
                 projectContext = state.ProjectContext,
@@ -96,7 +101,7 @@ public static partial class EndpointRegistrationExtensions
 					}
 			});
 		});
-		endpoints.MapPost("/api/chat/{conversationId}/preferences", (Func<string, ConversationPreferenceDto, IConversationStore, IUserProfileService, IMemoryPolicyService, IFeatureFlags, IResult>)((string conversationId, [FromBody] ConversationPreferenceDto dto, IConversationStore store, IUserProfileService userProfile, IMemoryPolicyService memoryPolicy, IFeatureFlags flags) =>
+		endpoints.MapPost("/api/chat/{conversationId}/preferences", (Func<string, HttpRequest, IConversationStore, IUserProfileService, IMemoryPolicyService, IFeatureFlags, CancellationToken, Task<IResult>>)(async (string conversationId, HttpRequest request, IConversationStore store, IUserProfileService userProfile, IMemoryPolicyService memoryPolicy, IFeatureFlags flags, CancellationToken ct) =>
 		{
 			if (!flags.MemoryV2Enabled)
 			{
@@ -114,8 +119,21 @@ public static partial class EndpointRegistrationExtensions
 					error = "Conversation not found."
 				});
 			}
-			userProfile.ApplyPreferences(state, dto);
-			memoryPolicy.ApplyPreferences(state, dto, DateTimeOffset.UtcNow);
+            ConversationPreferenceUpdate update;
+            try
+            {
+                update = await ReadConversationPreferenceUpdateAsync(request, ct);
+            }
+            catch (JsonException)
+            {
+                return Results.BadRequest(new
+                {
+                    success = false,
+                    error = "Invalid preferences payload."
+                });
+            }
+			userProfile.ApplyPreferences(state, update.Preferences, update.PresentFields);
+			memoryPolicy.ApplyPreferences(state, update.Preferences, DateTimeOffset.UtcNow);
 			store.MarkUpdated(state);
 			ConversationUserProfile conversationUserProfile = userProfile.Resolve(state);
 			ConversationMemoryPolicySnapshot policySnapshot = memoryPolicy.GetPolicySnapshot(state);
@@ -144,7 +162,6 @@ public static partial class EndpointRegistrationExtensions
                 repairStyle = conversationUserProfile.RepairStyle,
                 reasoningStyle = conversationUserProfile.ReasoningStyle,
                 reasoningEffort = conversationUserProfile.ReasoningEffort,
-                personaBundleId = conversationUserProfile.PersonaBundleId,
                 projectId = state.ProjectContext?.ProjectId,
                 projectLabel = state.ProjectContext?.Label,
                 projectInstructions = state.ProjectContext?.Instructions,
@@ -354,6 +371,7 @@ public static partial class EndpointRegistrationExtensions
 			}
 		}));
     }
+
 }
 
 

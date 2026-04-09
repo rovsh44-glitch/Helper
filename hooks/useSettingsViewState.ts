@@ -28,6 +28,19 @@ import type { ContinuityBackgroundTask, ContinuityProactiveTopic } from '../serv
 
 type ConversationPreferenceOverride = Partial<Parameters<typeof setConversationPreferences>[1]>;
 
+function normalizeClearableTextValue(value: string | null | undefined): string | null | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (value === null) {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
 export function useSettingsViewState() {
   const [actionStatus, setActionStatus] = useState<string | null>(null);
   const [responseStyle, setResponseStyle] = useState(() => readStoredPreference(RESPONSE_STYLE_KEY, 'balanced'));
@@ -44,7 +57,6 @@ export function useSettingsViewState() {
   const [repairStyle, setRepairStyle] = useState('direct_fix');
   const [reasoningStyle, setReasoningStyle] = useState('concise');
   const [reasoningEffort, setReasoningEffort] = useState('balanced');
-  const [personaBundleId, setPersonaBundleId] = useState('');
   const [projectId, setProjectId] = useState('');
   const [projectLabel, setProjectLabel] = useState('');
   const [projectInstructions, setProjectInstructions] = useState('');
@@ -91,6 +103,32 @@ export function useSettingsViewState() {
     defaultAnswerShape,
   }), [defaultAnswerShape, directness, enthusiasm, preferredLanguage, responseStyle, warmth]);
 
+  const resetConversationScopedState = (memoryStatusMessage: string) => {
+    setMemoryEnabled(true);
+    setPersonalConsent(false);
+    setDecisionAssertiveness('balanced');
+    setClarificationTolerance('balanced');
+    setCitationPreference('adaptive');
+    setRepairStyle('direct_fix');
+    setReasoningStyle('concise');
+    setReasoningEffort('balanced');
+    setProjectId('');
+    setProjectLabel('');
+    setProjectInstructions('');
+    setProjectMemoryEnabled(true);
+    setBackgroundResearchEnabled(true);
+    setProactiveUpdatesEnabled(false);
+    setProjectReferenceArtifacts([]);
+    setBackgroundTasks([]);
+    setProactiveTopics([]);
+    setSessionTtlMinutes(720);
+    setTaskTtlHours(336);
+    setLongTermTtlDays(180);
+    setMemoryItems([]);
+    setMemoryError(null);
+    setMemoryStatus(memoryStatusMessage);
+  };
+
   useEffect(() => {
     if (!actionStatus) {
       return;
@@ -102,9 +140,7 @@ export function useSettingsViewState() {
 
   const reloadMemory = async () => {
     if (!conversationId) {
-      setMemoryItems([]);
-      setMemoryStatus('No active conversation. Memory preferences will apply after chat starts.');
-      setMemoryError(null);
+      resetConversationScopedState('No active conversation. Memory preferences will apply after chat starts.');
       return;
     }
 
@@ -132,9 +168,7 @@ export function useSettingsViewState() {
 
     const hydrateConversationPreferences = async () => {
       if (!conversationId) {
-        setMemoryItems([]);
-        setMemoryError(null);
-        setMemoryStatus('No active conversation. Start a chat to sync memory controls.');
+        resetConversationScopedState('No active conversation. Start a chat to sync memory controls.');
         return;
       }
 
@@ -144,6 +178,7 @@ export function useSettingsViewState() {
           return;
         }
 
+        resetConversationScopedState('Memory snapshot refreshed.');
         setMemoryEnabled(!!data.preferences.longTermMemoryEnabled);
         setPersonalConsent(!!data.preferences.personalMemoryConsentGranted);
         if (data.preferences.preferredLanguage) {
@@ -188,9 +223,6 @@ export function useSettingsViewState() {
         }
         if (data.preferences.reasoningEffort) {
           setReasoningEffort(data.preferences.reasoningEffort);
-        }
-        if (typeof data.preferences.personaBundleId === 'string') {
-          setPersonaBundleId(data.preferences.personaBundleId);
         }
         if (typeof data.preferences.projectId === 'string') {
           setProjectId(data.preferences.projectId);
@@ -251,7 +283,7 @@ export function useSettingsViewState() {
 
     setIsSavingPreferences(true);
     try {
-      await setConversationPreferences(conversationId, {
+      const requestBody: ConversationPreferenceOverride = {
         longTermMemoryEnabled: override?.longTermMemoryEnabled ?? memoryEnabled,
         preferredLanguage: override?.preferredLanguage ?? preferredLanguage,
         detailLevel: override?.detailLevel ?? responseStyle,
@@ -265,18 +297,29 @@ export function useSettingsViewState() {
         repairStyle: override?.repairStyle ?? repairStyle,
         reasoningStyle: override?.reasoningStyle ?? reasoningStyle,
         reasoningEffort: override?.reasoningEffort ?? reasoningEffort,
-        personaBundleId: override?.personaBundleId ?? (personaBundleId.trim() || undefined),
-        projectId: override?.projectId ?? (projectId.trim() || undefined),
-        projectLabel: override?.projectLabel ?? (projectLabel.trim() || undefined),
-        projectInstructions: override?.projectInstructions ?? (projectInstructions.trim() || undefined),
-        projectMemoryEnabled: override?.projectMemoryEnabled ?? projectMemoryEnabled,
-        backgroundResearchEnabled: override?.backgroundResearchEnabled ?? backgroundResearchEnabled,
-        proactiveUpdatesEnabled: override?.proactiveUpdatesEnabled ?? proactiveUpdatesEnabled,
         personalMemoryConsentGranted: override?.personalMemoryConsentGranted ?? personalConsent,
         sessionMemoryTtlMinutes: override?.sessionMemoryTtlMinutes ?? sessionTtlMinutes,
         taskMemoryTtlHours: override?.taskMemoryTtlHours ?? taskTtlHours,
         longTermMemoryTtlDays: override?.longTermMemoryTtlDays ?? longTermTtlDays,
-      });
+      };
+
+      if (override && 'searchLocalityHint' in override) {
+        requestBody.searchLocalityHint = normalizeClearableTextValue(override.searchLocalityHint);
+      }
+
+      if (override && ('projectId' in override || 'projectLabel' in override || 'projectInstructions' in override || 'projectMemoryEnabled' in override)) {
+        requestBody.projectId = normalizeClearableTextValue(override.projectId);
+        requestBody.projectLabel = normalizeClearableTextValue(override.projectLabel);
+        requestBody.projectInstructions = normalizeClearableTextValue(override.projectInstructions);
+        requestBody.projectMemoryEnabled = override.projectMemoryEnabled ?? projectMemoryEnabled;
+      }
+
+      if (override && ('backgroundResearchEnabled' in override || 'proactiveUpdatesEnabled' in override)) {
+        requestBody.backgroundResearchEnabled = override.backgroundResearchEnabled ?? backgroundResearchEnabled;
+        requestBody.proactiveUpdatesEnabled = override.proactiveUpdatesEnabled ?? proactiveUpdatesEnabled;
+      }
+
+      await setConversationPreferences(conversationId, requestBody);
       await reloadMemory();
       setMemoryError(null);
       setMemoryStatus(`Preferences saved at ${new Date().toLocaleTimeString()}.`);
@@ -354,16 +397,11 @@ export function useSettingsViewState() {
     void savePreferences({ reasoningEffort: value });
   };
 
-  const savePersonaBundleId = (value: string) => {
-    setPersonaBundleId(value);
-    void savePreferences({ personaBundleId: value.trim() || undefined });
-  };
-
   const saveProjectContext = (override?: ConversationPreferenceOverride) => {
     void savePreferences({
-      projectId: override?.projectId ?? (projectId.trim() || undefined),
-      projectLabel: override?.projectLabel ?? (projectLabel.trim() || undefined),
-      projectInstructions: override?.projectInstructions ?? (projectInstructions.trim() || undefined),
+      projectId: normalizeClearableTextValue(override?.projectId ?? projectId),
+      projectLabel: normalizeClearableTextValue(override?.projectLabel ?? projectLabel),
+      projectInstructions: normalizeClearableTextValue(override?.projectInstructions ?? projectInstructions),
       projectMemoryEnabled: override?.projectMemoryEnabled ?? projectMemoryEnabled,
     });
   };
@@ -528,7 +566,6 @@ export function useSettingsViewState() {
       repairStyle,
       reasoningStyle,
       reasoningEffort,
-      personaBundleId: personaBundleId.trim() || null,
     },
     projectContext: {
       projectId: projectId.trim() || null,
@@ -572,7 +609,6 @@ export function useSettingsViewState() {
     memoryItems,
     memoryStatus,
     personalConsent,
-    personaBundleId,
     preferredLanguage,
     projectId,
     projectInstructions,
@@ -723,7 +759,6 @@ export function useSettingsViewState() {
     repairStyle,
     reasoningStyle,
     reasoningEffort,
-    personaBundleId,
     projectId,
     projectLabel,
     projectInstructions,
@@ -770,7 +805,6 @@ export function useSettingsViewState() {
     saveRepairStyle,
     saveReasoningStyle,
     saveReasoningEffort,
-    savePersonaBundleId,
     saveProjectContext,
     saveContinuityControls,
     setMemoryEnabled,

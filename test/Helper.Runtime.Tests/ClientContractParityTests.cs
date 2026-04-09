@@ -34,13 +34,15 @@ public sealed class ClientContractParityTests
         AssertAdvancedField("RepairStyle", "repairStyle?: string;", contracts, client);
         AssertAdvancedField("ReasoningStyle", "reasoningStyle?: string;", contracts, client);
         AssertAdvancedField("ReasoningEffort", "reasoningEffort?: string;", contracts, client);
-        AssertAdvancedField("PersonaBundleId", "personaBundleId?: string;", contracts, client);
-        AssertAdvancedField("ProjectId", "projectId?: string;", contracts, client);
-        AssertAdvancedField("ProjectLabel", "projectLabel?: string;", contracts, client);
-        AssertAdvancedField("ProjectInstructions", "projectInstructions?: string;", contracts, client);
+        AssertAdvancedField("SearchLocalityHint", "searchLocalityHint?: string | null;", contracts, client);
+        AssertAdvancedField("ProjectId", "projectId?: string | null;", contracts, client);
+        AssertAdvancedField("ProjectLabel", "projectLabel?: string | null;", contracts, client);
+        AssertAdvancedField("ProjectInstructions", "projectInstructions?: string | null;", contracts, client);
         AssertAdvancedField("ProjectMemoryEnabled", "projectMemoryEnabled?: boolean;", contracts, client);
         AssertAdvancedField("BackgroundResearchEnabled", "backgroundResearchEnabled?: boolean;", contracts, client);
         AssertAdvancedField("ProactiveUpdatesEnabled", "proactiveUpdatesEnabled?: boolean;", contracts, client);
+        Assert.DoesNotContain("PersonaBundleId", contracts, StringComparison.Ordinal);
+        Assert.DoesNotContain("personaBundleId", client, StringComparison.Ordinal);
     }
 
     private static void AssertAdvancedField(string contractsToken, string clientToken, string contracts, string client)

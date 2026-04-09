@@ -7,8 +7,7 @@ public sealed record PersonalizationProfile(
     string CitationPreference,
     string RepairStyle,
     string ReasoningStyle,
-    string ReasoningEffort,
-    string? PersonaBundleId)
+    string ReasoningEffort)
 {
     public static readonly PersonalizationProfile Default = new(
         ExplanationDepth: "balanced",
@@ -17,6 +16,5 @@ public sealed record PersonalizationProfile(
         CitationPreference: "adaptive",
         RepairStyle: "direct_fix",
         ReasoningStyle: "concise",
-        ReasoningEffort: "balanced",
-        PersonaBundleId: null);
+        ReasoningEffort: "balanced");
 }

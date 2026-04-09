@@ -7,14 +7,12 @@ type SettingsPersonalizationPanelProps = {
   repairStyle: string;
   reasoningStyle: string;
   reasoningEffort: string;
-  personaBundleId: string;
   onSaveDecisionAssertiveness: (value: string) => void;
   onSaveClarificationTolerance: (value: string) => void;
   onSaveCitationPreference: (value: string) => void;
   onSaveRepairStyle: (value: string) => void;
   onSaveReasoningStyle: (value: string) => void;
   onSaveReasoningEffort: (value: string) => void;
-  onSavePersonaBundleId: (value: string) => void;
 };
 
 export const SettingsPersonalizationPanel: React.FC<SettingsPersonalizationPanelProps> = ({
@@ -24,14 +22,12 @@ export const SettingsPersonalizationPanel: React.FC<SettingsPersonalizationPanel
   repairStyle,
   reasoningStyle,
   reasoningEffort,
-  personaBundleId,
   onSaveDecisionAssertiveness,
   onSaveClarificationTolerance,
   onSaveCitationPreference,
   onSaveRepairStyle,
   onSaveReasoningStyle,
   onSaveReasoningEffort,
-  onSavePersonaBundleId,
 }) => (
   <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
     <h3 className="text-sm font-bold text-primary-400 uppercase mb-4">Personalization</h3>
@@ -85,15 +81,6 @@ export const SettingsPersonalizationPanel: React.FC<SettingsPersonalizationPanel
           <option value="balanced">Balanced</option>
           <option value="deep">Deep</option>
         </select>
-      </label>
-      <label className="space-y-2 md:col-span-2">
-        <span className="text-xs text-slate-500 uppercase">Persona Bundle</span>
-        <input
-          value={personaBundleId}
-          onChange={(e) => onSavePersonaBundleId(e.target.value)}
-          placeholder="e.g. operator, research-mentor, concise-reviewer"
-          className="w-full bg-black/40 border border-slate-800 rounded px-3 py-2 text-xs text-slate-200"
-        />
       </label>
     </div>
   </div>

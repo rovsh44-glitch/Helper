@@ -883,17 +883,16 @@ export class HelperApiClient {
         enthusiasm?: string;
         directness?: string;
         defaultAnswerShape?: string;
-        searchLocalityHint?: string;
+        searchLocalityHint?: string | null;
         decisionAssertiveness?: string;
         clarificationTolerance?: string;
         citationPreference?: string;
         repairStyle?: string;
         reasoningStyle?: string;
         reasoningEffort?: string;
-        personaBundleId?: string;
-        projectId?: string;
-        projectLabel?: string;
-        projectInstructions?: string;
+        projectId?: string | null;
+        projectLabel?: string | null;
+        projectInstructions?: string | null;
         projectMemoryEnabled?: boolean;
         backgroundResearchEnabled?: boolean;
         proactiveUpdatesEnabled?: boolean;
@@ -902,8 +901,8 @@ export class HelperApiClient {
       };
       projectContext?: {
         projectId: string;
-        label?: string;
-        instructions?: string;
+        label?: string | null;
+        instructions?: string | null;
         memoryEnabled: boolean;
         referenceArtifacts?: string[];
         updatedAtUtc: string;
@@ -915,7 +914,7 @@ export class HelperApiClient {
         status: string;
         createdAtUtc: string;
         dueAtUtc?: string;
-        projectId?: string;
+        projectId?: string | null;
         notes?: string;
       }>;
       proactiveTopics?: Array<{
@@ -924,7 +923,7 @@ export class HelperApiClient {
         frequency: string;
         enabled: boolean;
         createdAtUtc: string;
-        projectId?: string;
+        projectId?: string | null;
       }>;
     }>(`/chat/${encodeURIComponent(conversationId)}`, { method: 'GET' }, { profile: 'startup', label: 'Conversation restore' });
   }
@@ -972,17 +971,16 @@ export class HelperApiClient {
     enthusiasm?: string;
     directness?: string;
     defaultAnswerShape?: string;
-    searchLocalityHint?: string;
+    searchLocalityHint?: string | null;
     decisionAssertiveness?: string;
     clarificationTolerance?: string;
     citationPreference?: string;
     repairStyle?: string;
     reasoningStyle?: string;
     reasoningEffort?: string;
-    personaBundleId?: string;
-    projectId?: string;
-    projectLabel?: string;
-    projectInstructions?: string;
+    projectId?: string | null;
+    projectLabel?: string | null;
+    projectInstructions?: string | null;
     projectMemoryEnabled?: boolean;
     backgroundResearchEnabled?: boolean;
     proactiveUpdatesEnabled?: boolean;
@@ -1008,17 +1006,16 @@ export class HelperApiClient {
       enthusiasm?: string;
       directness?: string;
       defaultAnswerShape?: string;
-      searchLocalityHint?: string;
+      searchLocalityHint?: string | null;
       decisionAssertiveness?: string;
       clarificationTolerance?: string;
       citationPreference?: string;
       repairStyle?: string;
       reasoningStyle?: string;
       reasoningEffort?: string;
-      personaBundleId?: string;
-      projectId?: string;
-      projectLabel?: string;
-      projectInstructions?: string;
+      projectId?: string | null;
+      projectLabel?: string | null;
+      projectInstructions?: string | null;
       projectMemoryEnabled?: boolean;
       backgroundResearchEnabled?: boolean;
       proactiveUpdatesEnabled?: boolean;

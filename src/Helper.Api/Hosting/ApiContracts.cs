@@ -229,7 +229,6 @@ public record ConversationPreferenceDto(
     string? RepairStyle = null,
     string? ReasoningStyle = null,
     string? ReasoningEffort = null,
-    string? PersonaBundleId = null,
     string? ProjectId = null,
     string? ProjectLabel = null,
     string? ProjectInstructions = null,

@@ -40,7 +40,6 @@ public sealed class ConversationState
     public string RepairStyle { get; set; } = "direct_fix";
     public string ReasoningStyle { get; set; } = "concise";
     public string ReasoningEffort { get; set; } = "balanced";
-    public string? PersonaBundleId { get; set; }
     public SharedUnderstandingState? SharedUnderstanding { get; set; }
     public UserUnderstandingState? UserUnderstanding { get; set; }
     public ProjectUnderstandingState? ProjectUnderstanding { get; set; }

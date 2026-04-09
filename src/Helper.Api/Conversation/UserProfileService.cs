@@ -30,12 +30,14 @@ public sealed class UserProfileService : IUserProfileService
                 NormalizeCitationPreference(state.CitationPreference),
                 NormalizeRepairStyle(state.RepairStyle),
                 NormalizeReasoningStyle(state.ReasoningStyle),
-                NormalizeReasoningEffort(state.ReasoningEffort),
-                NormalizePersonaBundleId(state.PersonaBundleId));
+                NormalizeReasoningEffort(state.ReasoningEffort));
         }
     }
 
-    public void ApplyPreferences(ConversationState state, Helper.Api.Hosting.ConversationPreferenceDto dto)
+    public void ApplyPreferences(
+        ConversationState state,
+        Helper.Api.Hosting.ConversationPreferenceDto dto,
+        IReadOnlySet<string>? presentFields = null)
     {
         ArgumentNullException.ThrowIfNull(state);
         ArgumentNullException.ThrowIfNull(dto);
@@ -92,7 +94,8 @@ public sealed class UserProfileService : IUserProfileService
                 state.DefaultAnswerShape = NormalizeAnswerShape(dto.DefaultAnswerShape);
             }
 
-            if (dto.SearchLocalityHint is not null)
+            var searchLocalityHintProvided = FieldWasProvided(presentFields, nameof(Helper.Api.Hosting.ConversationPreferenceDto.SearchLocalityHint), dto.SearchLocalityHint is not null);
+            if (searchLocalityHintProvided)
             {
                 state.SearchLocalityHint = NormalizeSearchLocalityHint(dto.SearchLocalityHint);
             }
@@ -127,11 +130,6 @@ public sealed class UserProfileService : IUserProfileService
                 state.ReasoningEffort = NormalizeReasoningEffort(dto.ReasoningEffort);
             }
 
-            if (dto.PersonaBundleId is not null)
-            {
-                state.PersonaBundleId = NormalizePersonaBundleId(dto.PersonaBundleId);
-            }
-
             if (dto.BackgroundResearchEnabled.HasValue)
             {
                 state.BackgroundResearchEnabled = dto.BackgroundResearchEnabled.Value;
@@ -142,24 +140,33 @@ public sealed class UserProfileService : IUserProfileService
                 state.ProactiveUpdatesEnabled = dto.ProactiveUpdatesEnabled.Value;
             }
 
-            if (!string.IsNullOrWhiteSpace(dto.ProjectId))
+            var projectIdProvided = FieldWasProvided(presentFields, nameof(Helper.Api.Hosting.ConversationPreferenceDto.ProjectId), dto.ProjectId is not null);
+            var projectLabelProvided = FieldWasProvided(presentFields, nameof(Helper.Api.Hosting.ConversationPreferenceDto.ProjectLabel), dto.ProjectLabel is not null);
+            var projectInstructionsProvided = FieldWasProvided(presentFields, nameof(Helper.Api.Hosting.ConversationPreferenceDto.ProjectInstructions), dto.ProjectInstructions is not null);
+            var projectMemoryEnabledProvided = FieldWasProvided(presentFields, nameof(Helper.Api.Hosting.ConversationPreferenceDto.ProjectMemoryEnabled), dto.ProjectMemoryEnabled.HasValue);
+
+            if (projectIdProvided && string.IsNullOrWhiteSpace(dto.ProjectId))
+            {
+                state.ProjectContext = null;
+            }
+            else if (projectIdProvided && !string.IsNullOrWhiteSpace(dto.ProjectId))
             {
                 state.ProjectContext = (state.ProjectContext ?? ProjectContextState.Empty(dto.ProjectId)) with
                 {
                     ProjectId = dto.ProjectId.Trim(),
-                    Label = dto.ProjectLabel is null ? state.ProjectContext?.Label : NormalizeProjectField(dto.ProjectLabel),
-                    Instructions = dto.ProjectInstructions is null ? state.ProjectContext?.Instructions : NormalizeProjectField(dto.ProjectInstructions),
-                    MemoryEnabled = dto.ProjectMemoryEnabled ?? state.ProjectContext?.MemoryEnabled ?? true,
+                    Label = projectLabelProvided ? NormalizeProjectField(dto.ProjectLabel) : state.ProjectContext?.Label,
+                    Instructions = projectInstructionsProvided ? NormalizeProjectField(dto.ProjectInstructions) : state.ProjectContext?.Instructions,
+                    MemoryEnabled = projectMemoryEnabledProvided ? dto.ProjectMemoryEnabled ?? state.ProjectContext?.MemoryEnabled ?? true : state.ProjectContext?.MemoryEnabled ?? true,
                     UpdatedAtUtc = DateTimeOffset.UtcNow
                 };
             }
-            else if ((dto.ProjectLabel is not null || dto.ProjectInstructions is not null || dto.ProjectMemoryEnabled.HasValue) && state.ProjectContext is not null)
+            else if ((projectLabelProvided || projectInstructionsProvided || projectMemoryEnabledProvided) && state.ProjectContext is not null)
             {
                 state.ProjectContext = state.ProjectContext with
                 {
-                    Label = dto.ProjectLabel is null ? state.ProjectContext.Label : NormalizeProjectField(dto.ProjectLabel),
-                    Instructions = dto.ProjectInstructions is null ? state.ProjectContext.Instructions : NormalizeProjectField(dto.ProjectInstructions),
-                    MemoryEnabled = dto.ProjectMemoryEnabled ?? state.ProjectContext.MemoryEnabled,
+                    Label = projectLabelProvided ? NormalizeProjectField(dto.ProjectLabel) : state.ProjectContext.Label,
+                    Instructions = projectInstructionsProvided ? NormalizeProjectField(dto.ProjectInstructions) : state.ProjectContext.Instructions,
+                    MemoryEnabled = projectMemoryEnabledProvided ? dto.ProjectMemoryEnabled ?? state.ProjectContext.MemoryEnabled : state.ProjectContext.MemoryEnabled,
                     UpdatedAtUtc = DateTimeOffset.UtcNow
                 };
             }
@@ -171,8 +178,7 @@ public sealed class UserProfileService : IUserProfileService
                 CitationPreference: state.CitationPreference,
                 RepairStyle: state.RepairStyle,
                 ReasoningStyle: state.ReasoningStyle,
-                ReasoningEffort: state.ReasoningEffort,
-                PersonaBundleId: state.PersonaBundleId);
+                ReasoningEffort: state.ReasoningEffort);
 
             state.UpdatedAt = DateTimeOffset.UtcNow;
         }
@@ -426,7 +432,7 @@ public sealed class UserProfileService : IUserProfileService
         };
     }
 
-    private static string? NormalizePersonaBundleId(string? value)
+    private static string? NormalizeProjectField(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
         {
@@ -436,14 +442,14 @@ public sealed class UserProfileService : IUserProfileService
         return value.Trim();
     }
 
-    private static string? NormalizeProjectField(string? value)
+    private static bool FieldWasProvided(IReadOnlySet<string>? presentFields, string fieldName, bool legacyFallback)
     {
-        if (string.IsNullOrWhiteSpace(value))
+        if (presentFields is null)
         {
-            return null;
+            return legacyFallback;
         }
 
-        return value.Trim();
+        return presentFields.Contains(fieldName);
     }
 }
 
