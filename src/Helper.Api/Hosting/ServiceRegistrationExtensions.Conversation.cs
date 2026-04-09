@@ -27,7 +27,8 @@ public static partial class ServiceRegistrationExtensions
             sp.GetRequiredService<IConversationSummarizer>(),
             sp.GetRequiredService<IConversationPersistenceEngine>(),
             sp.GetRequiredService<IConversationWriteBehindQueue>(),
-            sp.GetRequiredService<IConversationStageMetricsService>()));
+            sp.GetRequiredService<IConversationStageMetricsService>(),
+            sp.GetRequiredService<IProjectMemoryBoundaryPolicy>()));
         services.AddSingleton<IConversationStore>(sp => sp.GetRequiredService<InMemoryConversationStore>());
         services.AddSingleton<IConversationPersistenceHealth>(sp =>
             (IConversationPersistenceHealth)sp.GetRequiredService<InMemoryConversationStore>());

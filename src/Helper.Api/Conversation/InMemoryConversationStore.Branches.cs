@@ -13,7 +13,10 @@ public sealed partial class InMemoryConversationStore
         var limit = Math.Clamp(maxHistory, 1, 200);
         lock (state.SyncRoot)
         {
-            _memoryPolicy.GetActiveItems(state, DateTimeOffset.UtcNow);
+            var activeMemoryItems = _memoryPolicy.GetActiveItems(state, DateTimeOffset.UtcNow);
+            var visibleMemoryItems = activeMemoryItems
+                .Where(item => _projectMemoryBoundaryPolicy.ShouldInclude(item, state.ProjectContext))
+                .ToList();
             var branchMessages = state.Messages
                 .Where(m => string.Equals(m.BranchId ?? "main", branchId, StringComparison.OrdinalIgnoreCase))
                 .ToList();
@@ -30,9 +33,16 @@ public sealed partial class InMemoryConversationStore
                 messages.Insert(0, new ChatMessageDto("system", $"Conversation summary: {state.RollingSummary}", DateTimeOffset.UtcNow));
             }
 
-            if (state.Preferences.Count > 0)
+            var visiblePreferences = visibleMemoryItems
+                .Where(item => item.Type.Equals("long_term", StringComparison.OrdinalIgnoreCase))
+                .Select(item => item.Content)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Take(6)
+                .ToArray();
+
+            if (visiblePreferences.Length > 0)
             {
-                messages.Insert(0, new ChatMessageDto("system", $"User preferences: {string.Join(", ", state.Preferences.Take(6))}.", DateTimeOffset.UtcNow));
+                messages.Insert(0, new ChatMessageDto("system", $"User preferences: {string.Join(", ", visiblePreferences)}.", DateTimeOffset.UtcNow));
             }
 
             if (!string.Equals(state.PreferredLanguage, "auto", StringComparison.OrdinalIgnoreCase) ||
@@ -51,9 +61,17 @@ public sealed partial class InMemoryConversationStore
                     DateTimeOffset.UtcNow));
             }
 
-            if (state.OpenTasks.Count > 0)
+            var visibleTasks = visibleMemoryItems
+                .Where(item => item.Type.Equals("task", StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(item => item.CreatedAt)
+                .Select(item => item.Content)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Take(4)
+                .ToArray();
+
+            if (visibleTasks.Length > 0)
             {
-                messages.Insert(0, new ChatMessageDto("system", $"Open tasks: {string.Join(" | ", state.OpenTasks.Take(4))}", DateTimeOffset.UtcNow));
+                messages.Insert(0, new ChatMessageDto("system", $"Open tasks: {string.Join(" | ", visibleTasks)}", DateTimeOffset.UtcNow));
             }
 
             return messages;

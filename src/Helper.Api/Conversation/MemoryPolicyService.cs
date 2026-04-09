@@ -39,6 +39,8 @@ public sealed class MemoryPolicyService : IMemoryPolicyService
         {
             CleanupExpiredUnsafe(state, now);
             var content = message.Content.Trim();
+            var projectMemoryActive = IsProjectMemoryActive(state.ProjectContext);
+            var activeProjectId = projectMemoryActive ? state.ProjectContext?.ProjectId : null;
             if (string.IsNullOrWhiteSpace(content))
             {
                 return;
@@ -57,7 +59,7 @@ public sealed class MemoryPolicyService : IMemoryPolicyService
                 retention: "session_ttl",
                 whyRemembered: "recent_conversation_continuity",
                 priority: _priorityPolicy.Score(MemoryScope.Session, false, sessionContent),
-                sourceProjectId: state.ProjectContext?.ProjectId,
+                sourceProjectId: activeProjectId,
                 userEditable: false);
 
             if (ContainsAnyToken(content, TaskMarkers))
@@ -70,11 +72,11 @@ public sealed class MemoryPolicyService : IMemoryPolicyService
                     now.AddHours(ClampTaskTtlHours(state.TaskMemoryTtlHours)),
                     message.TurnId,
                     isPersonal: false,
-                    scope: state.ProjectContext is null ? MemoryScope.Task : MemoryScope.Project,
-                    retention: state.ProjectContext is null ? "task_ttl" : "project_ttl",
-                    whyRemembered: state.ProjectContext is null ? "task_signal" : "project_task_signal",
-                    priority: _priorityPolicy.Score(state.ProjectContext is null ? MemoryScope.Task : MemoryScope.Project, false, content),
-                    sourceProjectId: state.ProjectContext?.ProjectId,
+                    scope: projectMemoryActive ? MemoryScope.Project : MemoryScope.Task,
+                    retention: projectMemoryActive ? "project_ttl" : "task_ttl",
+                    whyRemembered: projectMemoryActive ? "project_task_signal" : "task_signal",
+                    priority: _priorityPolicy.Score(projectMemoryActive ? MemoryScope.Project : MemoryScope.Task, false, content),
+                    sourceProjectId: activeProjectId,
                     userEditable: true);
             }
 
@@ -93,11 +95,11 @@ public sealed class MemoryPolicyService : IMemoryPolicyService
                             now.AddDays(ClampLongTermTtlDays(state.LongTermMemoryTtlDays)),
                             message.TurnId,
                             isPersonal,
-                            scope: isPersonal ? MemoryScope.User : (state.ProjectContext is null ? MemoryScope.Session : MemoryScope.Project),
+                            scope: isPersonal ? MemoryScope.User : (projectMemoryActive ? MemoryScope.Project : MemoryScope.Session),
                             retention: "long_term_ttl",
                             whyRemembered: "explicit_remember_directive",
-                            priority: _priorityPolicy.Score(isPersonal ? MemoryScope.User : (state.ProjectContext is null ? MemoryScope.Session : MemoryScope.Project), isPersonal, fact),
-                            sourceProjectId: state.ProjectContext?.ProjectId,
+                            priority: _priorityPolicy.Score(isPersonal ? MemoryScope.User : (projectMemoryActive ? MemoryScope.Project : MemoryScope.Session), isPersonal, fact),
+                            sourceProjectId: isPersonal ? null : activeProjectId,
                             userEditable: true);
                     }
                 }
@@ -312,6 +314,13 @@ public sealed class MemoryPolicyService : IMemoryPolicyService
                fact.Contains("телефон", StringComparison.OrdinalIgnoreCase) ||
                fact.Contains("address", StringComparison.OrdinalIgnoreCase) ||
                fact.Contains("адрес", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsProjectMemoryActive(ProjectContextState? projectContext)
+    {
+        return projectContext is not null &&
+               projectContext.MemoryEnabled &&
+               !string.IsNullOrWhiteSpace(projectContext.ProjectId);
     }
 
     private static string Truncate(string value, int maxLength)

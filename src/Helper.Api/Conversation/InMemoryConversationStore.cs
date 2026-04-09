@@ -9,6 +9,7 @@ public sealed partial class InMemoryConversationStore : IConversationStore, IDis
     private readonly ConcurrentDictionary<string, ConversationState> _conversations = new();
     private readonly ConcurrentDictionary<string, byte> _dirtyConversationIds = new(StringComparer.OrdinalIgnoreCase);
     private readonly IMemoryPolicyService _memoryPolicy;
+    private readonly IProjectMemoryBoundaryPolicy _projectMemoryBoundaryPolicy;
     private readonly IConversationSummarizer _summarizer;
     private readonly DebouncedPersistenceScheduler? _persistenceScheduler;
     private readonly IConversationPersistenceEngine? _persistenceEngine;
@@ -49,9 +50,11 @@ public sealed partial class InMemoryConversationStore : IConversationStore, IDis
         IConversationSummarizer summarizer,
         IConversationPersistenceEngine? persistenceEngine,
         IConversationWriteBehindQueue? writeBehindQueue,
-        IConversationStageMetricsService? stageMetrics = null)
+        IConversationStageMetricsService? stageMetrics = null,
+        IProjectMemoryBoundaryPolicy? projectMemoryBoundaryPolicy = null)
     {
         _memoryPolicy = memoryPolicy ?? throw new ArgumentNullException(nameof(memoryPolicy));
+        _projectMemoryBoundaryPolicy = projectMemoryBoundaryPolicy ?? new ProjectMemoryBoundaryPolicy();
         _summarizer = summarizer ?? throw new ArgumentNullException(nameof(summarizer));
         _persistenceEngine = persistenceEngine;
         _writeBehindQueue = writeBehindQueue;

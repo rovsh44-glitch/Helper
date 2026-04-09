@@ -22,6 +22,13 @@ public interface IMemoryInspectionService
 
 public sealed class MemoryInspectionService : IMemoryInspectionService
 {
+    private readonly IProjectMemoryBoundaryPolicy _projectMemoryBoundaryPolicy;
+
+    public MemoryInspectionService(IProjectMemoryBoundaryPolicy? projectMemoryBoundaryPolicy = null)
+    {
+        _projectMemoryBoundaryPolicy = projectMemoryBoundaryPolicy ?? new ProjectMemoryBoundaryPolicy();
+    }
+
     public IReadOnlyList<MemoryInspectionItem> BuildSnapshot(ConversationState state, DateTimeOffset now)
     {
         ArgumentNullException.ThrowIfNull(state);
@@ -30,6 +37,7 @@ public sealed class MemoryInspectionService : IMemoryInspectionService
         {
             return state.MemoryItems
                 .Where(item => !item.ExpiresAt.HasValue || item.ExpiresAt.Value > now)
+                .Where(item => _projectMemoryBoundaryPolicy.ShouldInclude(item, state.ProjectContext))
                 .OrderByDescending(item => item.Priority)
                 .ThenByDescending(item => item.CreatedAt)
                 .Select(item => new MemoryInspectionItem(

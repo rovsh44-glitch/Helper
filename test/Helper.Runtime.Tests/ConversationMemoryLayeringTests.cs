@@ -388,6 +388,145 @@ public class ConversationMemoryLayeringTests
         Assert.Contains(context.RetrievalTrace, trace => trace.Contains("retrieval_quality:discarded_low_fit", StringComparison.Ordinal));
     }
 
+    [Fact]
+    public void InMemoryConversationStore_GetRecentMessages_Uses_ProjectBoundaryFiltered_Legacy_Memory_Summaries()
+    {
+        var store = new InMemoryConversationStore(
+            new MemoryPolicyService(),
+            new ConversationSummarizer(),
+            persistenceEngine: null,
+            writeBehindQueue: null);
+        var state = store.GetOrCreate("conv-boundary-prompt");
+        state.ProjectContext = new ProjectContextState("project-a", "Project A", "Stay within project A.", MemoryEnabled: true, Array.Empty<string>(), DateTimeOffset.UtcNow);
+        state.MemoryItems.Add(new ConversationMemoryItem(
+            "pref-a",
+            "long_term",
+            "Prefer project A release notes.",
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow.AddDays(7),
+            null,
+            IsPersonal: false,
+            Scope: MemoryScope.Project,
+            Retention: "long_term_ttl",
+            WhyRemembered: "explicit_remember_directive",
+            Priority: 10,
+            SourceProjectId: "project-a",
+            UserEditable: true));
+        state.MemoryItems.Add(new ConversationMemoryItem(
+            "pref-b",
+            "long_term",
+            "Prefer project B migration notes.",
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow.AddDays(7),
+            null,
+            IsPersonal: false,
+            Scope: MemoryScope.Project,
+            Retention: "long_term_ttl",
+            WhyRemembered: "explicit_remember_directive",
+            Priority: 9,
+            SourceProjectId: "project-b",
+            UserEditable: true));
+        state.MemoryItems.Add(new ConversationMemoryItem(
+            "task-a",
+            "task",
+            "Review project A rollout gate.",
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow.AddDays(1),
+            null,
+            IsPersonal: false,
+            Scope: MemoryScope.Project,
+            Retention: "project_ttl",
+            WhyRemembered: "project_task_signal",
+            Priority: 8,
+            SourceProjectId: "project-a",
+            UserEditable: true));
+        state.MemoryItems.Add(new ConversationMemoryItem(
+            "task-b",
+            "task",
+            "Review project B rollout gate.",
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow.AddDays(1),
+            null,
+            IsPersonal: false,
+            Scope: MemoryScope.Project,
+            Retention: "project_ttl",
+            WhyRemembered: "project_task_signal",
+            Priority: 7,
+            SourceProjectId: "project-b",
+            UserEditable: true));
+        store.AddMessage(state, new ChatMessageDto("user", "What should we do next?", DateTimeOffset.UtcNow, "turn-1", BranchId: "main"));
+
+        var messages = store.GetRecentMessages(state, "main", 20);
+        var prompt = string.Join("\n", messages.Select(message => message.Content));
+
+        Assert.Contains("Prefer project A release notes.", prompt);
+        Assert.Contains("Review project A rollout gate.", prompt);
+        Assert.DoesNotContain("project B migration notes", prompt, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("project B rollout gate", prompt, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void MemoryInspectionService_And_CaptureLogic_Respect_ProjectMemoryBoundary_Mode()
+    {
+        var state = new ConversationState("conv-boundary-memory")
+        {
+            ProjectContext = new ProjectContextState("project-a", "Project A", "Stay within project A.", MemoryEnabled: true, Array.Empty<string>(), DateTimeOffset.UtcNow)
+        };
+        state.MemoryItems.Add(new ConversationMemoryItem(
+            "visible-project",
+            "long_term",
+            "Visible project fact.",
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow.AddDays(3),
+            null,
+            IsPersonal: false,
+            Scope: MemoryScope.Project,
+            Retention: "long_term_ttl",
+            WhyRemembered: "explicit_remember_directive",
+            Priority: 10,
+            SourceProjectId: "project-a",
+            UserEditable: true));
+        state.MemoryItems.Add(new ConversationMemoryItem(
+            "hidden-project",
+            "long_term",
+            "Hidden project fact.",
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow.AddDays(3),
+            null,
+            IsPersonal: false,
+            Scope: MemoryScope.Project,
+            Retention: "long_term_ttl",
+            WhyRemembered: "explicit_remember_directive",
+            Priority: 9,
+            SourceProjectId: "project-b",
+            UserEditable: true));
+
+        var inspection = new MemoryInspectionService();
+        var scopedSnapshot = inspection.BuildSnapshot(state, DateTimeOffset.UtcNow);
+
+        Assert.Single(scopedSnapshot);
+        Assert.Contains(scopedSnapshot, item => item.Content == "Visible project fact.");
+
+        state.ProjectContext = state.ProjectContext with { MemoryEnabled = false };
+        var memoryPolicy = new MemoryPolicyService();
+        memoryPolicy.CaptureFromUserMessage(
+            state,
+            new ChatMessageDto("user", "Need to fix the rollout checklist.", DateTimeOffset.UtcNow, "turn-boundary"),
+            DateTimeOffset.UtcNow);
+
+        var unscopedTask = state.MemoryItems
+            .Single(item => item.Type.Equals("task", StringComparison.OrdinalIgnoreCase) &&
+                            item.Content.Contains("Need to fix", StringComparison.OrdinalIgnoreCase));
+
+        Assert.Equal(MemoryScope.Task, unscopedTask.Scope);
+        Assert.Null(unscopedTask.SourceProjectId);
+
+        var conversationWideSnapshot = inspection.BuildSnapshot(state, DateTimeOffset.UtcNow);
+        Assert.Equal(4, conversationWideSnapshot.Count);
+        Assert.Contains(conversationWideSnapshot, item => item.Content == "Hidden project fact.");
+        Assert.Contains(conversationWideSnapshot, item => item.Content.Contains("Need to fix", StringComparison.OrdinalIgnoreCase));
+    }
+
     private static KnowledgeChunk CreateRetrievedChunk(
         string id,
         string content,
