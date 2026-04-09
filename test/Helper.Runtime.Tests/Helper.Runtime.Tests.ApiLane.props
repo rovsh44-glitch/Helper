@@ -48,6 +48,9 @@
     <RuntimeApiLaneCompile Include="$(MSBuildThisFileDirectory)ConversationFollowThroughTests.cs">
       <Link>ConversationFollowThroughTests.cs</Link>
     </RuntimeApiLaneCompile>
+    <RuntimeApiLaneCompile Include="$(MSBuildThisFileDirectory)ConversationPreferenceEndpointArchitectureTests.cs">
+      <Link>ConversationPreferenceEndpointArchitectureTests.cs</Link>
+    </RuntimeApiLaneCompile>
     <RuntimeApiLaneCompile Include="$(MSBuildThisFileDirectory)ConversationPreferencePayloadReaderTests.cs">
       <Link>ConversationPreferencePayloadReaderTests.cs</Link>
     </RuntimeApiLaneCompile>
