@@ -35,13 +35,15 @@ public sealed class ConversationFollowThroughProcessor : IConversationFollowThro
             }
 
             var message = BuildCompletionMessage(state, task, now);
-            var activeBranchId = _store.GetActiveBranchId(state);
+            var targetBranchId = string.IsNullOrWhiteSpace(task.BranchId)
+                ? _store.GetActiveBranchId(state)
+                : task.BranchId!;
             _store.AddMessage(state, new ChatMessageDto(
                 "assistant",
                 message,
                 now,
                 TurnId: $"background-{task.Id}",
-                BranchId: activeBranchId,
+                BranchId: targetBranchId,
                 ToolCalls: new[] { "background_research_follow_through" }));
 
             CompleteTask(state, task.Id, now);

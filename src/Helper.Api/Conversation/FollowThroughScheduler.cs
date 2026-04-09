@@ -33,7 +33,8 @@ public sealed class FollowThroughScheduler : IFollowThroughScheduler
                     now,
                     now.AddHours(4),
                     state.ProjectContext?.ProjectId,
-                    context.Request.Message.Trim()));
+                    context.Request.Message.Trim(),
+                    BranchId: state.ActiveBranchId));
             }
 
             if (state.ProactiveUpdatesEnabled &&

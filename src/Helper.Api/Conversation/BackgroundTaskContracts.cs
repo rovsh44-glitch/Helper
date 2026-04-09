@@ -8,7 +8,8 @@ public sealed record BackgroundConversationTask(
     DateTimeOffset CreatedAtUtc,
     DateTimeOffset? DueAtUtc = null,
     string? ProjectId = null,
-    string? Notes = null);
+    string? Notes = null,
+    string? BranchId = null);
 
 public sealed record ProactiveTopicSubscription(
     string Id,
