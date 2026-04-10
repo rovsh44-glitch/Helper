@@ -24,16 +24,18 @@ internal static class ConversationPreferencePayloadReader
 
         using var document = await JsonDocument.ParseAsync(request.Body, cancellationToken: ct);
         var root = document.RootElement;
+        if (root.ValueKind != JsonValueKind.Object)
+        {
+            throw new JsonException("Preferences payload must be a JSON object.");
+        }
+
         var preferences = JsonSerializer.Deserialize<ConversationPreferenceDto>(root.GetRawText(), JsonOptions)
             ?? new ConversationPreferenceDto(null, null, null);
         var presentFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        if (root.ValueKind == JsonValueKind.Object)
+        foreach (var property in root.EnumerateObject())
         {
-            foreach (var property in root.EnumerateObject())
-            {
-                presentFields.Add(property.Name);
-            }
+            presentFields.Add(property.Name);
         }
 
         return new Update(preferences, presentFields);

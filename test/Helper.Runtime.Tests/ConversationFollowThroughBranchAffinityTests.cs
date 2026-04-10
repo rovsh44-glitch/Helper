@@ -1,5 +1,6 @@
 using Helper.Api.Conversation;
 using Helper.Api.Backend.Persistence;
+using Helper.Api.Hosting;
 using Helper.Runtime.Core;
 
 namespace Helper.Runtime.Tests;

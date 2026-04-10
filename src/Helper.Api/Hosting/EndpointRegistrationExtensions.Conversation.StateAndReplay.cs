@@ -101,75 +101,7 @@ public static partial class EndpointRegistrationExtensions
 					}
 			});
 		});
-		endpoints.MapPost("/api/chat/{conversationId}/preferences", (Func<string, HttpRequest, IConversationStore, IUserProfileService, IMemoryPolicyService, IFeatureFlags, CancellationToken, Task<IResult>>)(async (string conversationId, HttpRequest request, IConversationStore store, IUserProfileService userProfile, IMemoryPolicyService memoryPolicy, IFeatureFlags flags, CancellationToken ct) =>
-		{
-			if (!flags.MemoryV2Enabled)
-			{
-				return Results.Json(new
-				{
-					success = false,
-					error = "Memory v2 is disabled."
-				}, (JsonSerializerOptions?)null, (string?)null, (int?)403);
-			}
-			if (!store.TryGet(conversationId, out ConversationState state))
-			{
-				return Results.NotFound(new
-				{
-					success = false,
-					error = "Conversation not found."
-				});
-			}
-            ConversationPreferencePayloadReader.Update update;
-            try
-            {
-                update = await ReadConversationPreferenceUpdateAsync(request, ct);
-            }
-            catch (JsonException)
-            {
-                return Results.BadRequest(new
-                {
-                    success = false,
-                    error = "Invalid preferences payload."
-                });
-            }
-			userProfile.ApplyPreferences(state, update.Preferences, update.PresentFields);
-			memoryPolicy.ApplyPreferences(state, update.Preferences, DateTimeOffset.UtcNow);
-			store.MarkUpdated(state);
-			ConversationUserProfile conversationUserProfile = userProfile.Resolve(state);
-			ConversationMemoryPolicySnapshot policySnapshot = memoryPolicy.GetPolicySnapshot(state);
-			return Results.Ok(new
-			{
-				success = true,
-				longTermMemoryEnabled = policySnapshot.LongTermMemoryEnabled,
-				personalMemoryConsentGranted = policySnapshot.PersonalMemoryConsentGranted,
-				personalMemoryConsentAt = policySnapshot.PersonalMemoryConsentAt,
-				sessionMemoryTtlMinutes = policySnapshot.SessionMemoryTtlMinutes,
-				taskMemoryTtlHours = policySnapshot.TaskMemoryTtlHours,
-				longTermMemoryTtlDays = policySnapshot.LongTermMemoryTtlDays,
-				preferredLanguage = conversationUserProfile.Language,
-				detailLevel = conversationUserProfile.DetailLevel,
-				formality = conversationUserProfile.Formality,
-				domainFamiliarity = conversationUserProfile.DomainFamiliarity,
-				preferredStructure = conversationUserProfile.PreferredStructure,
-                warmth = conversationUserProfile.Warmth,
-                enthusiasm = conversationUserProfile.Enthusiasm,
-                directness = conversationUserProfile.Directness,
-                defaultAnswerShape = conversationUserProfile.DefaultAnswerShape,
-                searchLocalityHint = conversationUserProfile.SearchLocalityHint,
-                decisionAssertiveness = conversationUserProfile.DecisionAssertiveness,
-                clarificationTolerance = conversationUserProfile.ClarificationTolerance,
-                citationPreference = conversationUserProfile.CitationPreference,
-                repairStyle = conversationUserProfile.RepairStyle,
-                reasoningStyle = conversationUserProfile.ReasoningStyle,
-                reasoningEffort = conversationUserProfile.ReasoningEffort,
-                projectId = state.ProjectContext?.ProjectId,
-                projectLabel = state.ProjectContext?.Label,
-                projectInstructions = state.ProjectContext?.Instructions,
-                projectMemoryEnabled = state.ProjectContext?.MemoryEnabled,
-                backgroundResearchEnabled = state.BackgroundResearchEnabled,
-                proactiveUpdatesEnabled = state.ProactiveUpdatesEnabled
-			});
-		}));
+		endpoints.MapPost("/api/chat/{conversationId}/preferences", ConversationPreferenceEndpointHandler.HandleAsync);
 		endpoints.MapPost("/api/chat/{conversationId}/background/{taskId}/cancel", (Func<string, string, BackgroundTaskActionRequestDto?, IConversationFollowThroughProcessor, IResult>)((string conversationId, string taskId, [FromBody] BackgroundTaskActionRequestDto? dto, IConversationFollowThroughProcessor processor) =>
 		{
 			if (!processor.CancelTask(conversationId, taskId, dto?.Reason))

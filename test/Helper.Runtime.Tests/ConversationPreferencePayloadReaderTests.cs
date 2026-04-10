@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 using Helper.Api.Hosting;
 using Microsoft.AspNetCore.Http;
 
@@ -46,5 +47,15 @@ public sealed class ConversationPreferencePayloadReaderTests
         Assert.Null(update.Preferences.ProjectId);
         Assert.Contains("searchLocalityHint", update.PresentFields);
         Assert.Contains("projectId", update.PresentFields);
+    }
+
+    [Fact]
+    public async Task ReadAsync_Rejects_TopLevel_Null_Payload()
+    {
+        var context = new DefaultHttpContext();
+        context.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes("null"));
+
+        await Assert.ThrowsAsync<JsonException>(() =>
+            ConversationPreferencePayloadReader.ReadAsync(context.Request, CancellationToken.None));
     }
 }
