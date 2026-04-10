@@ -46,6 +46,15 @@ function normalizeClearableTextValue(value: string | null | undefined): string |
   return trimmed.length > 0 ? trimmed : null;
 }
 
+function normalizeProjectScopeId(value: string | null | undefined): string | null {
+  const normalized = normalizeClearableTextValue(value);
+  return typeof normalized === 'string' ? normalized.toLowerCase() : null;
+}
+
+function isSameProjectScope(left: string | null | undefined, right: string | null | undefined): boolean {
+  return normalizeProjectScopeId(left) === normalizeProjectScopeId(right);
+}
+
 export function useSettingsViewState() {
   const [actionStatus, setActionStatus] = useState<string | null>(null);
   const [responseStyle, setResponseStyle] = useState(() => readStoredPreference(RESPONSE_STYLE_KEY, 'balanced'));
@@ -62,6 +71,10 @@ export function useSettingsViewState() {
   const [repairStyle, setRepairStyle] = useState('direct_fix');
   const [reasoningStyle, setReasoningStyle] = useState('concise');
   const [reasoningEffort, setReasoningEffort] = useState('balanced');
+  const [activeProjectScopeId, setActiveProjectScopeId] = useState('');
+  const [savedProjectLabel, setSavedProjectLabel] = useState('');
+  const [savedProjectInstructions, setSavedProjectInstructions] = useState('');
+  const [savedProjectMemoryEnabled, setSavedProjectMemoryEnabled] = useState(true);
   const [projectId, setProjectId] = useState('');
   const [projectLabel, setProjectLabel] = useState('');
   const [projectInstructions, setProjectInstructions] = useState('');
@@ -117,6 +130,10 @@ export function useSettingsViewState() {
     setRepairStyle('direct_fix');
     setReasoningStyle('concise');
     setReasoningEffort('balanced');
+    setActiveProjectScopeId('');
+    setSavedProjectLabel('');
+    setSavedProjectInstructions('');
+    setSavedProjectMemoryEnabled(true);
     setProjectId('');
     setProjectLabel('');
     setProjectInstructions('');
@@ -173,10 +190,18 @@ export function useSettingsViewState() {
     setRepairStyle(data.preferences.repairStyle ?? 'direct_fix');
     setReasoningStyle(data.preferences.reasoningStyle ?? 'concise');
     setReasoningEffort(data.preferences.reasoningEffort ?? 'balanced');
-    setProjectId(typeof data.preferences.projectId === 'string' ? data.preferences.projectId : '');
-    setProjectLabel(typeof data.preferences.projectLabel === 'string' ? data.preferences.projectLabel : '');
-    setProjectInstructions(typeof data.preferences.projectInstructions === 'string' ? data.preferences.projectInstructions : '');
-    setProjectMemoryEnabled(typeof data.preferences.projectMemoryEnabled === 'boolean' ? data.preferences.projectMemoryEnabled : true);
+    const nextProjectId = typeof data.preferences.projectId === 'string' ? data.preferences.projectId : '';
+    const nextProjectLabel = typeof data.preferences.projectLabel === 'string' ? data.preferences.projectLabel : '';
+    const nextProjectInstructions = typeof data.preferences.projectInstructions === 'string' ? data.preferences.projectInstructions : '';
+    const nextProjectMemoryEnabled = typeof data.preferences.projectMemoryEnabled === 'boolean' ? data.preferences.projectMemoryEnabled : true;
+    setActiveProjectScopeId(nextProjectId);
+    setSavedProjectLabel(nextProjectLabel);
+    setSavedProjectInstructions(nextProjectInstructions);
+    setSavedProjectMemoryEnabled(nextProjectMemoryEnabled);
+    setProjectId(nextProjectId);
+    setProjectLabel(nextProjectLabel);
+    setProjectInstructions(nextProjectInstructions);
+    setProjectMemoryEnabled(nextProjectMemoryEnabled);
     setBackgroundResearchEnabled(typeof data.preferences.backgroundResearchEnabled === 'boolean' ? data.preferences.backgroundResearchEnabled : true);
     setProactiveUpdatesEnabled(typeof data.preferences.proactiveUpdatesEnabled === 'boolean' ? data.preferences.proactiveUpdatesEnabled : false);
     setProjectReferenceArtifacts(data.projectContext?.referenceArtifacts ?? []);
@@ -292,10 +317,21 @@ export function useSettingsViewState() {
       }
 
       if (override && ('projectId' in override || 'projectLabel' in override || 'projectInstructions' in override || 'projectMemoryEnabled' in override)) {
-        requestBody.projectId = normalizeClearableTextValue(override.projectId);
-        requestBody.projectLabel = normalizeClearableTextValue(override.projectLabel);
-        requestBody.projectInstructions = normalizeClearableTextValue(override.projectInstructions);
-        requestBody.projectMemoryEnabled = override.projectMemoryEnabled ?? projectMemoryEnabled;
+        if ('projectId' in override) {
+          requestBody.projectId = normalizeClearableTextValue(override.projectId);
+        }
+
+        if ('projectLabel' in override) {
+          requestBody.projectLabel = normalizeClearableTextValue(override.projectLabel);
+        }
+
+        if ('projectInstructions' in override) {
+          requestBody.projectInstructions = normalizeClearableTextValue(override.projectInstructions);
+        }
+
+        if ('projectMemoryEnabled' in override) {
+          requestBody.projectMemoryEnabled = override.projectMemoryEnabled ?? projectMemoryEnabled;
+        }
       }
 
       if (override && ('backgroundResearchEnabled' in override || 'proactiveUpdatesEnabled' in override)) {
@@ -382,13 +418,72 @@ export function useSettingsViewState() {
     void savePreferences({ reasoningEffort: value });
   };
 
+  const setProjectIdDraft = (value: string) => {
+    const currentDraftProjectId = normalizeProjectScopeId(projectId);
+    const nextDraftProjectId = normalizeProjectScopeId(value);
+    const persistedProjectScopeId = normalizeProjectScopeId(activeProjectScopeId);
+
+    if (nextDraftProjectId === persistedProjectScopeId) {
+      setProjectLabel(savedProjectLabel);
+      setProjectInstructions(savedProjectInstructions);
+      setProjectMemoryEnabled(savedProjectMemoryEnabled);
+    } else if (currentDraftProjectId === persistedProjectScopeId) {
+      setProjectLabel('');
+      setProjectInstructions('');
+      setProjectMemoryEnabled(true);
+    }
+
+    setProjectId(value);
+  };
+
+  const buildProjectContextSaveOverride = (override?: ConversationPreferenceOverride): ConversationPreferenceOverride => {
+    const nextProjectId = normalizeClearableTextValue(override && 'projectId' in override ? override.projectId : projectId);
+    const nextProjectLabel = normalizeClearableTextValue(override && 'projectLabel' in override ? override.projectLabel : projectLabel);
+    const nextProjectInstructions = normalizeClearableTextValue(override && 'projectInstructions' in override ? override.projectInstructions : projectInstructions);
+    const nextProjectMemoryEnabled = override && 'projectMemoryEnabled' in override
+      ? override.projectMemoryEnabled ?? true
+      : projectMemoryEnabled;
+    const persistedProjectId = normalizeClearableTextValue(activeProjectScopeId);
+    const persistedProjectLabel = normalizeClearableTextValue(savedProjectLabel);
+    const persistedProjectInstructions = normalizeClearableTextValue(savedProjectInstructions);
+    const isProjectSwitch = !isSameProjectScope(nextProjectId, persistedProjectId);
+    const projectContextOverride: ConversationPreferenceOverride = {};
+
+    if (isProjectSwitch) {
+      projectContextOverride.projectId = nextProjectId;
+
+      if (nextProjectLabel !== null) {
+        projectContextOverride.projectLabel = nextProjectLabel;
+      }
+
+      if (nextProjectInstructions !== null) {
+        projectContextOverride.projectInstructions = nextProjectInstructions;
+      }
+
+      if (nextProjectMemoryEnabled !== true) {
+        projectContextOverride.projectMemoryEnabled = nextProjectMemoryEnabled;
+      }
+
+      return projectContextOverride;
+    }
+
+    if (nextProjectLabel !== persistedProjectLabel) {
+      projectContextOverride.projectLabel = nextProjectLabel;
+    }
+
+    if (nextProjectInstructions !== persistedProjectInstructions) {
+      projectContextOverride.projectInstructions = nextProjectInstructions;
+    }
+
+    if (nextProjectMemoryEnabled !== savedProjectMemoryEnabled) {
+      projectContextOverride.projectMemoryEnabled = nextProjectMemoryEnabled;
+    }
+
+    return projectContextOverride;
+  };
+
   const saveProjectContext = (override?: ConversationPreferenceOverride) => {
-    void savePreferences({
-      projectId: normalizeClearableTextValue(override?.projectId ?? projectId),
-      projectLabel: normalizeClearableTextValue(override?.projectLabel ?? projectLabel),
-      projectInstructions: normalizeClearableTextValue(override?.projectInstructions ?? projectInstructions),
-      projectMemoryEnabled: override?.projectMemoryEnabled ?? projectMemoryEnabled,
-    });
+    void savePreferences(buildProjectContextSaveOverride(override));
   };
 
   const saveContinuityControls = (override?: ConversationPreferenceOverride) => {
@@ -448,13 +543,15 @@ export function useSettingsViewState() {
     }
   };
 
+  const hasUnsavedProjectScopeChange = !isSameProjectScope(projectId, activeProjectScopeId);
+
   const projectScopedBackgroundTasks = useMemo(
-    () => filterProjectScopedBackgroundTasks(backgroundTasks, projectId),
-    [backgroundTasks, projectId],
+    () => filterProjectScopedBackgroundTasks(backgroundTasks, activeProjectScopeId),
+    [activeProjectScopeId, backgroundTasks],
   );
   const projectScopedProactiveTopics = useMemo(
-    () => filterProjectScopedProactiveTopics(proactiveTopics, projectId),
-    [projectId, proactiveTopics],
+    () => filterProjectScopedProactiveTopics(proactiveTopics, activeProjectScopeId),
+    [activeProjectScopeId, proactiveTopics],
   );
 
 
@@ -561,6 +658,7 @@ export function useSettingsViewState() {
     },
     projectContext: {
       projectId: projectId.trim() || null,
+      activeProjectScopeId: activeProjectScopeId.trim() || null,
       projectLabel: projectLabel.trim() || null,
       projectInstructions: projectInstructions.trim() || null,
       projectMemoryEnabled,
@@ -603,6 +701,7 @@ export function useSettingsViewState() {
     personalConsent,
     preferredLanguage,
     projectId,
+    activeProjectScopeId,
     projectInstructions,
     projectLabel,
     projectMemoryEnabled,
@@ -751,6 +850,8 @@ export function useSettingsViewState() {
     repairStyle,
     reasoningStyle,
     reasoningEffort,
+    activeProjectScopeId,
+    hasUnsavedProjectScopeChange,
     projectId,
     projectLabel,
     projectInstructions,
@@ -801,7 +902,7 @@ export function useSettingsViewState() {
     saveContinuityControls,
     setMemoryEnabled,
     setPersonalConsent,
-    setProjectId,
+    setProjectId: setProjectIdDraft,
     setProjectLabel,
     setProjectInstructions,
     setProjectMemoryEnabled,

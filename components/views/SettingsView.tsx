@@ -79,6 +79,8 @@ export const SettingsView: React.FC = () => {
           </section>
           <section id="settings-project-context">
             <SettingsProjectContextPanel
+              activeProjectScopeId={state.activeProjectScopeId}
+              hasUnsavedProjectScopeChange={state.hasUnsavedProjectScopeChange}
               projectId={state.projectId}
               projectLabel={state.projectLabel}
               projectInstructions={state.projectInstructions}

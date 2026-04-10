@@ -2,6 +2,8 @@ import React from 'react';
 import type { ContinuityBackgroundTask, ContinuityProactiveTopic } from '../../services/settingsContinuityContracts';
 
 type SettingsProjectContextPanelProps = {
+  activeProjectScopeId: string;
+  hasUnsavedProjectScopeChange: boolean;
   projectId: string;
   projectLabel: string;
   projectInstructions: string;
@@ -24,6 +26,8 @@ type SettingsProjectContextPanelProps = {
 };
 
 export const SettingsProjectContextPanel: React.FC<SettingsProjectContextPanelProps> = ({
+  activeProjectScopeId,
+  hasUnsavedProjectScopeChange,
   projectId,
   projectLabel,
   projectInstructions,
@@ -44,7 +48,7 @@ export const SettingsProjectContextPanel: React.FC<SettingsProjectContextPanelPr
   onCancelBackgroundTask,
   onSetProactiveTopicEnabled,
 }) => {
-  const hasActiveProject = projectId.trim().length > 0;
+  const hasSavedProjectScope = activeProjectScopeId.trim().length > 0;
 
   return (
   <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 space-y-6">
@@ -61,6 +65,14 @@ export const SettingsProjectContextPanel: React.FC<SettingsProjectContextPanelPr
         Save Project Context
       </button>
     </div>
+
+    {hasUnsavedProjectScopeChange && (
+      <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100">
+        Continuity state below reflects the saved project scope
+        {hasSavedProjectScope ? ` ${activeProjectScopeId}` : ' with no active project'}
+        {' '}until you save this draft.
+      </div>
+    )}
 
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <label className="space-y-2">
@@ -111,15 +123,15 @@ export const SettingsProjectContextPanel: React.FC<SettingsProjectContextPanelPr
       <div className="grid gap-4 lg:grid-cols-3">
         <ContinuityCard
           title="Reference Artifacts"
-          emptyText={hasActiveProject
-            ? 'No shared references have been attached to the active project yet.'
+          emptyText={hasSavedProjectScope
+            ? 'No shared references have been attached to the saved project yet.'
             : 'Set and save a project id to scope shared references to one active project.'}
           items={referenceArtifacts.map((item) => ({ id: item, label: item }))}
         />
         <ContinuityCard
           title="Background Tasks"
-          emptyText={hasActiveProject
-            ? 'No queued research follow-through tasks for the active project.'
+          emptyText={hasSavedProjectScope
+            ? 'No queued research follow-through tasks for the saved project.'
             : 'No active project. Project-scoped background tasks appear here after a project context is saved.'}
           items={backgroundTasks.map((task) => ({
             id: task.id,
@@ -133,8 +145,8 @@ export const SettingsProjectContextPanel: React.FC<SettingsProjectContextPanelPr
         />
         <ContinuityCard
           title="Proactive Topics"
-          emptyText={hasActiveProject
-            ? 'No proactive follow-up topics are registered for the active project.'
+          emptyText={hasSavedProjectScope
+            ? 'No proactive follow-up topics are registered for the saved project.'
             : 'No active project. Project-scoped proactive topics appear here after a project context is saved.'}
           items={proactiveTopics.map((topic) => ({
             id: topic.id,

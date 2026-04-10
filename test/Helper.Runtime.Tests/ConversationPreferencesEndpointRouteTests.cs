@@ -68,6 +68,34 @@ public sealed class ConversationPreferencesEndpointRouteTests
     }
 
     [Fact]
+    public async Task PreferencesEndpoint_ProjectId_Only_Switch_Creates_Fresh_Project_Context()
+    {
+        using var harness = CreateHarness();
+        var state = harness.Store.GetOrCreate("conv-preferences-project-switch");
+        state.ProjectContext = new ProjectContextState(
+            "project-a",
+            "Project A",
+            "Carry release notes.",
+            MemoryEnabled: false,
+            new[] { "a-spec.md", "a-audit.json" },
+            DateTimeOffset.UtcNow);
+
+        var result = await harness.InvokeAsync(state.Id, """
+            {
+              "projectId": "project-b"
+            }
+            """);
+
+        Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
+        Assert.Equal("project-b", state.ProjectContext?.ProjectId);
+        Assert.Null(state.ProjectContext?.Label);
+        Assert.Null(state.ProjectContext?.Instructions);
+        Assert.True(state.ProjectContext?.MemoryEnabled);
+        Assert.Empty(state.ProjectContext?.ReferenceArtifacts ?? Array.Empty<string>());
+        Assert.True(ReadBooleanProperty(result.Body, "success"));
+    }
+
+    [Fact]
     public async Task PreferencesEndpoint_Returns_BadRequest_For_TopLevel_Null_Payload()
     {
         using var harness = CreateHarness();
