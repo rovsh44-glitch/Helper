@@ -44,7 +44,22 @@ public sealed class ConversationPreferencesRoundTripTests
 
         userProfile.ApplyPreferences(state, dto);
         memoryPolicy.ApplyPreferences(state, dto, now);
-        state.BackgroundTasks.Add(new BackgroundConversationTask("task-1", "research_follow_through", "Continue review", "queued", now, now.AddHours(1), "helper-public", "queued for parity"));
+        state.ProjectContext = state.ProjectContext! with
+        {
+            ReferenceArtifacts = new[] { "spec.md", "audit.json" }
+        };
+        state.BackgroundTasks.Add(new BackgroundConversationTask(
+            "task-1",
+            "research_follow_through",
+            "Continue review",
+            "queued",
+            now,
+            now.AddHours(1),
+            "helper-public",
+            "queued for parity",
+            ProjectLabelSnapshot: "Helper Public",
+            ReferenceArtifactsSnapshot: new[] { "spec.md", "audit.json" },
+            ProactiveTopicSnapshot: new[] { "public parity" }));
         state.ProactiveTopics.Add(new ProactiveTopicSubscription("topic-1", "public parity", "manual", true, now, "helper-public"));
 
         var persisted = ConversationPersistenceModelMapper.ToPersistenceModel(state);
@@ -66,6 +81,9 @@ public sealed class ConversationPreferencesRoundTripTests
         Assert.Single(restored.BackgroundTasks);
         Assert.Single(restored.ProactiveTopics);
         Assert.Equal("deep", restored.PersonalizationProfile?.ReasoningEffort);
+        Assert.Equal("Helper Public", restored.BackgroundTasks[0].ProjectLabelSnapshot);
+        Assert.Equal(new[] { "spec.md", "audit.json" }, restored.BackgroundTasks[0].ReferenceArtifactsSnapshot);
+        Assert.Equal(new[] { "public parity" }, restored.BackgroundTasks[0].ProactiveTopicSnapshot);
     }
 
     [Fact]
@@ -159,5 +177,61 @@ public sealed class ConversationPreferencesRoundTripTests
         Assert.Equal("berlin", state.SearchLocalityHint);
         Assert.NotNull(state.ProjectContext);
         Assert.Equal("helper-public", state.ProjectContext?.ProjectId);
+    }
+
+    [Fact]
+    public void ApplyPreferences_Switching_ProjectId_Resets_Stale_Project_Metadata_And_Artifacts()
+    {
+        var state = new ConversationState("conv-switch")
+        {
+            ProjectContext = new ProjectContextState(
+                "project-a",
+                "Project A",
+                "Keep project A release notes in focus.",
+                MemoryEnabled: false,
+                new[] { "a-spec.md", "a-audit.json" },
+                DateTimeOffset.UtcNow)
+        };
+        var userProfile = new UserProfileService();
+        var presentFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "projectId"
+        };
+
+        userProfile.ApplyPreferences(state, new ConversationPreferenceDto(
+            LongTermMemoryEnabled: null,
+            PreferredLanguage: null,
+            DetailLevel: null,
+            Formality: null,
+            DomainFamiliarity: null,
+            PreferredStructure: null,
+            Warmth: null,
+            Enthusiasm: null,
+            Directness: null,
+            DefaultAnswerShape: null,
+            SearchLocalityHint: null,
+            DecisionAssertiveness: null,
+            ClarificationTolerance: null,
+            CitationPreference: null,
+            RepairStyle: null,
+            ReasoningStyle: null,
+            ReasoningEffort: null,
+            ProjectId: "project-b",
+            ProjectLabel: null,
+            ProjectInstructions: null,
+            ProjectMemoryEnabled: null,
+            BackgroundResearchEnabled: null,
+            ProactiveUpdatesEnabled: null,
+            PersonalMemoryConsentGranted: null,
+            SessionMemoryTtlMinutes: null,
+            TaskMemoryTtlHours: null,
+            LongTermMemoryTtlDays: null),
+            presentFields);
+
+        Assert.Equal("project-b", state.ProjectContext?.ProjectId);
+        Assert.Null(state.ProjectContext?.Label);
+        Assert.Null(state.ProjectContext?.Instructions);
+        Assert.True(state.ProjectContext?.MemoryEnabled);
+        Assert.Empty(state.ProjectContext?.ReferenceArtifacts ?? Array.Empty<string>());
     }
 }

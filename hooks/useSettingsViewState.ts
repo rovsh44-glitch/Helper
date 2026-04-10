@@ -16,6 +16,10 @@ import {
   setConversationProactiveTopicEnabled,
   setConversationPreferences,
 } from '../services/conversationApi';
+import {
+  filterProjectScopedBackgroundTasks,
+  filterProjectScopedProactiveTopics,
+} from '../services/projectContextContinuityScope';
 import { useCapabilityCatalog } from './useCapabilityCatalog';
 import { useControlPlaneTelemetry } from './useControlPlaneTelemetry';
 import { useHumanLikeConversationDashboard } from './useHumanLikeConversationDashboard';
@@ -27,6 +31,7 @@ import type { SettingsAlertItem } from '../components/settings/SettingsAlertsPan
 import type { ContinuityBackgroundTask, ContinuityProactiveTopic } from '../services/settingsContinuityContracts';
 
 type ConversationPreferenceOverride = Partial<Parameters<typeof setConversationPreferences>[1]>;
+type ConversationSnapshot = Awaited<ReturnType<typeof getConversationSnapshot>>;
 
 function normalizeClearableTextValue(value: string | null | undefined): string | null | undefined {
   if (value === undefined) {
@@ -129,6 +134,59 @@ export function useSettingsViewState() {
     setMemoryStatus(memoryStatusMessage);
   };
 
+  const applyConversationSnapshot = (data: ConversationSnapshot) => {
+    if (!data.preferences) {
+      return;
+    }
+
+    setMemoryEnabled(!!data.preferences.longTermMemoryEnabled);
+    setPersonalConsent(!!data.preferences.personalMemoryConsentGranted);
+    if (data.preferences.preferredLanguage) {
+      setPreferredLanguage(data.preferences.preferredLanguage);
+      writeStoredPreference(PREFERRED_LANGUAGE_KEY, data.preferences.preferredLanguage);
+    }
+    if (data.preferences.detailLevel) {
+      const detailLevel = data.preferences.detailLevel === 'deep' ? 'detailed' : data.preferences.detailLevel;
+      setResponseStyle(detailLevel);
+      writeStoredPreference(RESPONSE_STYLE_KEY, detailLevel);
+    }
+    if (data.preferences.warmth) {
+      setWarmth(data.preferences.warmth);
+      writeStoredPreference(WARMTH_KEY, data.preferences.warmth);
+    }
+    if (data.preferences.enthusiasm) {
+      setEnthusiasm(data.preferences.enthusiasm);
+      writeStoredPreference(ENTHUSIASM_KEY, data.preferences.enthusiasm);
+    }
+    if (data.preferences.directness) {
+      setDirectness(data.preferences.directness);
+      writeStoredPreference(DIRECTNESS_KEY, data.preferences.directness);
+    }
+    if (data.preferences.defaultAnswerShape) {
+      setDefaultAnswerShape(data.preferences.defaultAnswerShape);
+      writeStoredPreference(DEFAULT_ANSWER_SHAPE_KEY, data.preferences.defaultAnswerShape);
+    }
+
+    setDecisionAssertiveness(data.preferences.decisionAssertiveness ?? 'balanced');
+    setClarificationTolerance(data.preferences.clarificationTolerance ?? 'balanced');
+    setCitationPreference(data.preferences.citationPreference ?? 'adaptive');
+    setRepairStyle(data.preferences.repairStyle ?? 'direct_fix');
+    setReasoningStyle(data.preferences.reasoningStyle ?? 'concise');
+    setReasoningEffort(data.preferences.reasoningEffort ?? 'balanced');
+    setProjectId(typeof data.preferences.projectId === 'string' ? data.preferences.projectId : '');
+    setProjectLabel(typeof data.preferences.projectLabel === 'string' ? data.preferences.projectLabel : '');
+    setProjectInstructions(typeof data.preferences.projectInstructions === 'string' ? data.preferences.projectInstructions : '');
+    setProjectMemoryEnabled(typeof data.preferences.projectMemoryEnabled === 'boolean' ? data.preferences.projectMemoryEnabled : true);
+    setBackgroundResearchEnabled(typeof data.preferences.backgroundResearchEnabled === 'boolean' ? data.preferences.backgroundResearchEnabled : true);
+    setProactiveUpdatesEnabled(typeof data.preferences.proactiveUpdatesEnabled === 'boolean' ? data.preferences.proactiveUpdatesEnabled : false);
+    setProjectReferenceArtifacts(data.projectContext?.referenceArtifacts ?? []);
+    setBackgroundTasks(data.backgroundTasks ?? []);
+    setProactiveTopics(data.proactiveTopics ?? []);
+    setSessionTtlMinutes(typeof data.preferences.sessionMemoryTtlMinutes === 'number' ? data.preferences.sessionMemoryTtlMinutes : 720);
+    setTaskTtlHours(typeof data.preferences.taskMemoryTtlHours === 'number' ? data.preferences.taskMemoryTtlHours : 336);
+    setLongTermTtlDays(typeof data.preferences.longTermMemoryTtlDays === 'number' ? data.preferences.longTermMemoryTtlDays : 180);
+  };
+
   useEffect(() => {
     if (!actionStatus) {
       return;
@@ -179,81 +237,7 @@ export function useSettingsViewState() {
         }
 
         resetConversationScopedState('Memory snapshot refreshed.');
-        setMemoryEnabled(!!data.preferences.longTermMemoryEnabled);
-        setPersonalConsent(!!data.preferences.personalMemoryConsentGranted);
-        if (data.preferences.preferredLanguage) {
-          setPreferredLanguage(data.preferences.preferredLanguage);
-          writeStoredPreference(PREFERRED_LANGUAGE_KEY, data.preferences.preferredLanguage);
-        }
-        if (data.preferences.detailLevel) {
-          const detailLevel = data.preferences.detailLevel === 'deep' ? 'detailed' : data.preferences.detailLevel;
-          setResponseStyle(detailLevel);
-          writeStoredPreference(RESPONSE_STYLE_KEY, detailLevel);
-        }
-        if (data.preferences.warmth) {
-          setWarmth(data.preferences.warmth);
-          writeStoredPreference(WARMTH_KEY, data.preferences.warmth);
-        }
-        if (data.preferences.enthusiasm) {
-          setEnthusiasm(data.preferences.enthusiasm);
-          writeStoredPreference(ENTHUSIASM_KEY, data.preferences.enthusiasm);
-        }
-        if (data.preferences.directness) {
-          setDirectness(data.preferences.directness);
-          writeStoredPreference(DIRECTNESS_KEY, data.preferences.directness);
-        }
-        if (data.preferences.defaultAnswerShape) {
-          setDefaultAnswerShape(data.preferences.defaultAnswerShape);
-          writeStoredPreference(DEFAULT_ANSWER_SHAPE_KEY, data.preferences.defaultAnswerShape);
-        }
-        if (data.preferences.decisionAssertiveness) {
-          setDecisionAssertiveness(data.preferences.decisionAssertiveness);
-        }
-        if (data.preferences.clarificationTolerance) {
-          setClarificationTolerance(data.preferences.clarificationTolerance);
-        }
-        if (data.preferences.citationPreference) {
-          setCitationPreference(data.preferences.citationPreference);
-        }
-        if (data.preferences.repairStyle) {
-          setRepairStyle(data.preferences.repairStyle);
-        }
-        if (data.preferences.reasoningStyle) {
-          setReasoningStyle(data.preferences.reasoningStyle);
-        }
-        if (data.preferences.reasoningEffort) {
-          setReasoningEffort(data.preferences.reasoningEffort);
-        }
-        if (typeof data.preferences.projectId === 'string') {
-          setProjectId(data.preferences.projectId);
-        }
-        if (typeof data.preferences.projectLabel === 'string') {
-          setProjectLabel(data.preferences.projectLabel);
-        }
-        if (typeof data.preferences.projectInstructions === 'string') {
-          setProjectInstructions(data.preferences.projectInstructions);
-        }
-        if (typeof data.preferences.projectMemoryEnabled === 'boolean') {
-          setProjectMemoryEnabled(data.preferences.projectMemoryEnabled);
-        }
-        if (typeof data.preferences.backgroundResearchEnabled === 'boolean') {
-          setBackgroundResearchEnabled(data.preferences.backgroundResearchEnabled);
-        }
-        if (typeof data.preferences.proactiveUpdatesEnabled === 'boolean') {
-          setProactiveUpdatesEnabled(data.preferences.proactiveUpdatesEnabled);
-        }
-        setProjectReferenceArtifacts(data.projectContext?.referenceArtifacts ?? []);
-        setBackgroundTasks(data.backgroundTasks ?? []);
-        setProactiveTopics(data.proactiveTopics ?? []);
-        if (typeof data.preferences.sessionMemoryTtlMinutes === 'number') {
-          setSessionTtlMinutes(data.preferences.sessionMemoryTtlMinutes);
-        }
-        if (typeof data.preferences.taskMemoryTtlHours === 'number') {
-          setTaskTtlHours(data.preferences.taskMemoryTtlHours);
-        }
-        if (typeof data.preferences.longTermMemoryTtlDays === 'number') {
-          setLongTermTtlDays(data.preferences.longTermMemoryTtlDays);
-        }
+        applyConversationSnapshot(data);
       } catch (error) {
         if (!isMounted) {
           return;
@@ -320,6 +304,7 @@ export function useSettingsViewState() {
       }
 
       await setConversationPreferences(conversationId, requestBody);
+      applyConversationSnapshot(await getConversationSnapshot(conversationId));
       await reloadMemory();
       setMemoryError(null);
       setMemoryStatus(`Preferences saved at ${new Date().toLocaleTimeString()}.`);
@@ -441,8 +426,7 @@ export function useSettingsViewState() {
 
     try {
       await cancelConversationBackgroundTask(conversationId, taskId, 'Canceled from settings project context.');
-      const snapshot = await getConversationSnapshot(conversationId);
-      setBackgroundTasks(snapshot.backgroundTasks ?? []);
+      applyConversationSnapshot(await getConversationSnapshot(conversationId));
       setActionStatus('Background task canceled.');
     } catch (error) {
       setActionStatus(mapSettingsApiError(error));
@@ -457,13 +441,21 @@ export function useSettingsViewState() {
 
     try {
       await setConversationProactiveTopicEnabled(conversationId, topicId, enabled);
-      const snapshot = await getConversationSnapshot(conversationId);
-      setProactiveTopics(snapshot.proactiveTopics ?? []);
+      applyConversationSnapshot(await getConversationSnapshot(conversationId));
       setActionStatus(enabled ? 'Proactive topic enabled.' : 'Proactive topic disabled.');
     } catch (error) {
       setActionStatus(mapSettingsApiError(error));
     }
   };
+
+  const projectScopedBackgroundTasks = useMemo(
+    () => filterProjectScopedBackgroundTasks(backgroundTasks, projectId),
+    [backgroundTasks, projectId],
+  );
+  const projectScopedProactiveTopics = useMemo(
+    () => filterProjectScopedProactiveTopics(proactiveTopics, projectId),
+    [projectId, proactiveTopics],
+  );
 
 
   const infrastructureCards = useMemo(() => {
@@ -577,8 +569,8 @@ export function useSettingsViewState() {
     continuity: {
       backgroundResearchEnabled,
       proactiveUpdatesEnabled,
-      backgroundTasks,
-      proactiveTopics,
+      backgroundTasks: projectScopedBackgroundTasks,
+      proactiveTopics: projectScopedProactiveTopics,
     },
     memoryItems: memoryItems.slice(0, 20).map(item => ({
       id: item.id,
@@ -617,8 +609,8 @@ export function useSettingsViewState() {
     projectReferenceArtifacts,
     backgroundResearchEnabled,
     proactiveUpdatesEnabled,
-    backgroundTasks,
-    proactiveTopics,
+    projectScopedBackgroundTasks,
+    projectScopedProactiveTopics,
     reasoningEffort,
     reasoningStyle,
     repairStyle,
@@ -766,8 +758,8 @@ export function useSettingsViewState() {
     backgroundResearchEnabled,
     proactiveUpdatesEnabled,
     projectReferenceArtifacts,
-    backgroundTasks,
-    proactiveTopics,
+    projectScopedBackgroundTasks,
+    projectScopedProactiveTopics,
     sessionTtlMinutes,
     taskTtlHours,
     longTermTtlDays,

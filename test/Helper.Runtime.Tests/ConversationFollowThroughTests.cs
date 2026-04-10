@@ -12,7 +12,7 @@ public sealed class ConversationFollowThroughTests
     {
         var state = new ConversationState("conv-follow-through")
         {
-            ProjectContext = new ProjectContextState("helper", "Helper", "keep researching", MemoryEnabled: true, Array.Empty<string>(), DateTimeOffset.UtcNow),
+            ProjectContext = new ProjectContextState("helper", "Helper", "keep researching", MemoryEnabled: true, new[] { "spec.md" }, DateTimeOffset.UtcNow),
             ProactiveUpdatesEnabled = true
         };
         var context = new ChatTurnContext
@@ -37,6 +37,9 @@ public sealed class ConversationFollowThroughTests
         Assert.Single(state.BackgroundTasks);
         Assert.Equal("research_follow_through", state.BackgroundTasks[0].Kind);
         Assert.Equal("helper", state.BackgroundTasks[0].ProjectId);
+        Assert.Equal("Helper", state.BackgroundTasks[0].ProjectLabelSnapshot);
+        Assert.Equal(new[] { "spec.md" }, state.BackgroundTasks[0].ReferenceArtifactsSnapshot);
+        Assert.Equal(new[] { "Monitor this topic and continue research." }, state.BackgroundTasks[0].ProactiveTopicSnapshot);
         Assert.Single(state.ProactiveTopics);
     }
 

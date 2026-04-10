@@ -86,8 +86,8 @@ export const SettingsView: React.FC = () => {
               backgroundResearchEnabled={state.backgroundResearchEnabled}
               proactiveUpdatesEnabled={state.proactiveUpdatesEnabled}
               referenceArtifacts={state.projectReferenceArtifacts}
-              backgroundTasks={state.backgroundTasks}
-              proactiveTopics={state.proactiveTopics}
+              backgroundTasks={state.projectScopedBackgroundTasks}
+              proactiveTopics={state.projectScopedProactiveTopics}
               onSetProjectId={state.setProjectId}
               onSetProjectLabel={state.setProjectLabel}
               onSetProjectInstructions={state.setProjectInstructions}

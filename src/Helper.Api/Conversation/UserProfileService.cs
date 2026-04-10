@@ -168,12 +168,18 @@ public sealed class UserProfileService : IUserProfileService
             }
             else if (projectIdProvided && !string.IsNullOrWhiteSpace(dto.ProjectId))
             {
-                state.ProjectContext = (state.ProjectContext ?? ProjectContextState.Empty(dto.ProjectId)) with
+                var normalizedProjectId = dto.ProjectId.Trim();
+                var switchingProjects = !string.Equals(state.ProjectContext?.ProjectId, normalizedProjectId, StringComparison.OrdinalIgnoreCase);
+                var baseProjectContext = switchingProjects || state.ProjectContext is null
+                    ? ProjectContextState.Empty(normalizedProjectId)
+                    : state.ProjectContext;
+
+                state.ProjectContext = baseProjectContext with
                 {
-                    ProjectId = dto.ProjectId.Trim(),
-                    Label = projectLabelProvided ? NormalizeProjectField(dto.ProjectLabel) : state.ProjectContext?.Label,
-                    Instructions = projectInstructionsProvided ? NormalizeProjectField(dto.ProjectInstructions) : state.ProjectContext?.Instructions,
-                    MemoryEnabled = projectMemoryEnabledProvided ? dto.ProjectMemoryEnabled ?? state.ProjectContext?.MemoryEnabled ?? true : state.ProjectContext?.MemoryEnabled ?? true,
+                    ProjectId = normalizedProjectId,
+                    Label = projectLabelProvided ? NormalizeProjectField(dto.ProjectLabel) : baseProjectContext.Label,
+                    Instructions = projectInstructionsProvided ? NormalizeProjectField(dto.ProjectInstructions) : baseProjectContext.Instructions,
+                    MemoryEnabled = projectMemoryEnabledProvided ? dto.ProjectMemoryEnabled ?? baseProjectContext.MemoryEnabled : baseProjectContext.MemoryEnabled,
                     UpdatedAtUtc = DateTimeOffset.UtcNow
                 };
             }

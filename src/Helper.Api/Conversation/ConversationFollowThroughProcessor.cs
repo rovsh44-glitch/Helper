@@ -160,14 +160,34 @@ public sealed class ConversationFollowThroughProcessor : IConversationFollowThro
 
     private static string BuildCompletionMessage(ConversationState state, BackgroundConversationTask task, DateTimeOffset now)
     {
-        var projectLabel = state.ProjectContext?.Label ?? state.ProjectContext?.ProjectId ?? task.ProjectId ?? "this conversation";
-        var references = state.ProjectContext?.ReferenceArtifacts ?? Array.Empty<string>();
+        var currentProjectMatchesTask = !string.IsNullOrWhiteSpace(task.ProjectId) &&
+            string.Equals(state.ProjectContext?.ProjectId, task.ProjectId, StringComparison.OrdinalIgnoreCase);
+        var projectLabel = !string.IsNullOrWhiteSpace(task.ProjectLabelSnapshot)
+            ? task.ProjectLabelSnapshot
+            : currentProjectMatchesTask
+                ? state.ProjectContext?.Label ?? state.ProjectContext?.ProjectId ?? task.ProjectId ?? "this conversation"
+                : task.ProjectId ?? "this conversation";
+        var references = task.ReferenceArtifactsSnapshot?.Count > 0
+            ? task.ReferenceArtifactsSnapshot
+            : currentProjectMatchesTask
+                ? state.ProjectContext?.ReferenceArtifacts ?? Array.Empty<string>()
+                : Array.Empty<string>();
         var referenceSummary = references.Count == 0
             ? "No shared multimodal references were active."
             : $"Active references: {string.Join(", ", references.Take(3))}.";
-        var proactiveSummary = state.ProactiveTopics.Count == 0
+        var relevantTopics = task.ProactiveTopicSnapshot?.Count > 0
+            ? task.ProactiveTopicSnapshot
+                .Where(topic => !string.IsNullOrWhiteSpace(topic))
+                .Take(3)
+                .ToArray()
+            : state.ProactiveTopics
+                .Where(topic => topic.Enabled && TopicMatchesProject(topic, task.ProjectId))
+                .Select(topic => topic.Topic)
+                .Take(3)
+                .ToArray();
+        var proactiveSummary = relevantTopics.Length == 0
             ? "No proactive topics are currently enabled."
-            : $"Enabled follow-up topics: {string.Join(", ", state.ProactiveTopics.Where(topic => topic.Enabled).Select(topic => topic.Topic).Take(3))}.";
+            : $"Enabled follow-up topics: {string.Join(", ", relevantTopics)}.";
         var dueLabel = task.DueAtUtc?.ToString("u") ?? "immediate";
 
         return
@@ -176,6 +196,16 @@ public sealed class ConversationFollowThroughProcessor : IConversationFollowThro
             $"Notes: {(string.IsNullOrWhiteSpace(task.Notes) ? "n/a" : task.Notes.Trim())}. " +
             $"{referenceSummary} {proactiveSummary} " +
             $"Queued due time was {dueLabel}. Resume this conversation if you want the next pass synthesized into a fresh user-visible answer.";
+    }
+
+    private static bool TopicMatchesProject(ProactiveTopicSubscription topic, string? taskProjectId)
+    {
+        if (string.IsNullOrWhiteSpace(taskProjectId))
+        {
+            return string.IsNullOrWhiteSpace(topic.ProjectId);
+        }
+
+        return string.Equals(topic.ProjectId, taskProjectId, StringComparison.OrdinalIgnoreCase);
     }
 
     private static string BuildCanceledNotes(string? existingNotes, string? reason)

@@ -43,7 +43,10 @@ export const SettingsProjectContextPanel: React.FC<SettingsProjectContextPanelPr
   onSaveContinuityControls,
   onCancelBackgroundTask,
   onSetProactiveTopicEnabled,
-}) => (
+}) => {
+  const hasActiveProject = projectId.trim().length > 0;
+
+  return (
   <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 space-y-6">
     <div className="flex items-center justify-between gap-3">
       <div>
@@ -108,12 +111,16 @@ export const SettingsProjectContextPanel: React.FC<SettingsProjectContextPanelPr
       <div className="grid gap-4 lg:grid-cols-3">
         <ContinuityCard
           title="Reference Artifacts"
-          emptyText="No shared references have been attached to the active project yet."
+          emptyText={hasActiveProject
+            ? 'No shared references have been attached to the active project yet.'
+            : 'Set and save a project id to scope shared references to one active project.'}
           items={referenceArtifacts.map((item) => ({ id: item, label: item }))}
         />
         <ContinuityCard
           title="Background Tasks"
-          emptyText="No queued research follow-through tasks."
+          emptyText={hasActiveProject
+            ? 'No queued research follow-through tasks for the active project.'
+            : 'No active project. Project-scoped background tasks appear here after a project context is saved.'}
           items={backgroundTasks.map((task) => ({
             id: task.id,
             label: task.title,
@@ -126,7 +133,9 @@ export const SettingsProjectContextPanel: React.FC<SettingsProjectContextPanelPr
         />
         <ContinuityCard
           title="Proactive Topics"
-          emptyText="No proactive follow-up topics are registered."
+          emptyText={hasActiveProject
+            ? 'No proactive follow-up topics are registered for the active project.'
+            : 'No active project. Project-scoped proactive topics appear here after a project context is saved.'}
           items={proactiveTopics.map((topic) => ({
             id: topic.id,
             label: topic.topic,
@@ -138,7 +147,8 @@ export const SettingsProjectContextPanel: React.FC<SettingsProjectContextPanelPr
       </div>
     </div>
   </div>
-);
+  );
+};
 
 type ContinuityCardProps = {
   title: string;

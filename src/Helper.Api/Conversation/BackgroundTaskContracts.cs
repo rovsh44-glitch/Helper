@@ -9,7 +9,10 @@ public sealed record BackgroundConversationTask(
     DateTimeOffset? DueAtUtc = null,
     string? ProjectId = null,
     string? Notes = null,
-    string? BranchId = null);
+    string? BranchId = null,
+    string? ProjectLabelSnapshot = null,
+    IReadOnlyList<string>? ReferenceArtifactsSnapshot = null,
+    IReadOnlyList<string>? ProactiveTopicSnapshot = null);
 
 public sealed record ProactiveTopicSubscription(
     string Id,

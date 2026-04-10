@@ -88,8 +88,26 @@ public static partial class EndpointRegistrationExtensions
 					memoryItemsCount = activeItems.Count
 				},
                 projectContext = state.ProjectContext,
-                backgroundTasks = state.BackgroundTasks,
-                proactiveTopics = state.ProactiveTopics,
+                backgroundTasks = state.BackgroundTasks.Select(task => new
+                {
+                    id = task.Id,
+                    kind = task.Kind,
+                    title = task.Title,
+                    status = task.Status,
+                    createdAtUtc = task.CreatedAtUtc,
+                    dueAtUtc = task.DueAtUtc,
+                    projectId = task.ProjectId,
+                    notes = task.Notes
+                }),
+                proactiveTopics = state.ProactiveTopics.Select(topic => new
+                {
+                    id = topic.Id,
+                    topic = topic.Topic,
+                    frequency = topic.Frequency,
+                    enabled = topic.Enabled,
+                    createdAtUtc = topic.CreatedAtUtc,
+                    projectId = topic.ProjectId
+                }),
 				branchSummaries = from x in state.BranchSummaries.Values.OrderBy<ConversationBranchSummary, string>((ConversationBranchSummary x) => x.BranchId, StringComparer.OrdinalIgnoreCase)
 					select new
 					{
