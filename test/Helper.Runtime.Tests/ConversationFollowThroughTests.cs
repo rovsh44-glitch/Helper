@@ -75,6 +75,57 @@ public sealed class ConversationFollowThroughTests
     }
 
     [Fact]
+    public void FollowThroughScheduler_Scopes_Queued_Tasks_By_Project_And_Branch()
+    {
+        var state = new ConversationState("conv-follow-through-scopes")
+        {
+            BackgroundResearchEnabled = true,
+            ActiveBranchId = "main",
+            ProjectContext = new ProjectContextState("project-a", "Project A", null, MemoryEnabled: true, Array.Empty<string>(), DateTimeOffset.UtcNow)
+        };
+        var scheduler = new FollowThroughScheduler();
+
+        scheduler.QueueResearchFollowThrough(state, CreateResearchContext(state, "Monitor scoped follow-through.", "main"), DateTimeOffset.UtcNow);
+        scheduler.QueueResearchFollowThrough(state, CreateResearchContext(state, "Monitor scoped follow-through.", "main"), DateTimeOffset.UtcNow.AddMinutes(1));
+
+        state.ProjectContext = new ProjectContextState("project-b", "Project B", null, MemoryEnabled: true, Array.Empty<string>(), DateTimeOffset.UtcNow);
+        scheduler.QueueResearchFollowThrough(state, CreateResearchContext(state, "Monitor scoped follow-through.", "main"), DateTimeOffset.UtcNow.AddMinutes(2));
+
+        state.ProjectContext = new ProjectContextState("project-a", "Project A", null, MemoryEnabled: true, Array.Empty<string>(), DateTimeOffset.UtcNow);
+        state.ActiveBranchId = "branch-alt";
+        scheduler.QueueResearchFollowThrough(state, CreateResearchContext(state, "Monitor scoped follow-through.", "branch-alt"), DateTimeOffset.UtcNow.AddMinutes(3));
+
+        Assert.Equal(3, state.BackgroundTasks.Count(task => task.Status == "queued"));
+        Assert.Contains(state.BackgroundTasks, task => task.Status == "queued" && task.ProjectId == "project-a" && task.BranchId == "main");
+        Assert.Contains(state.BackgroundTasks, task => task.Status == "queued" && task.ProjectId == "project-b" && task.BranchId == "main");
+        Assert.Contains(state.BackgroundTasks, task => task.Status == "queued" && task.ProjectId == "project-a" && task.BranchId == "branch-alt");
+    }
+
+    [Fact]
+    public void FollowThroughScheduler_Deduplicates_Proactive_Topics_Within_Project_Scope()
+    {
+        var state = new ConversationState("conv-follow-through-topic-scope")
+        {
+            BackgroundResearchEnabled = false,
+            ProactiveUpdatesEnabled = true,
+            ActiveBranchId = "main",
+            ProjectContext = new ProjectContextState("project-a", "Project A", null, MemoryEnabled: true, Array.Empty<string>(), DateTimeOffset.UtcNow)
+        };
+        var scheduler = new FollowThroughScheduler();
+
+        scheduler.QueueResearchFollowThrough(state, CreateResearchContext(state, "Monitor parity drift.", "main"), DateTimeOffset.UtcNow);
+        scheduler.QueueResearchFollowThrough(state, CreateResearchContext(state, "Monitor parity drift.", "main"), DateTimeOffset.UtcNow.AddMinutes(1));
+
+        state.ProjectContext = new ProjectContextState("project-b", "Project B", null, MemoryEnabled: true, Array.Empty<string>(), DateTimeOffset.UtcNow);
+        scheduler.QueueResearchFollowThrough(state, CreateResearchContext(state, "Monitor parity drift.", "main"), DateTimeOffset.UtcNow.AddMinutes(2));
+        scheduler.QueueResearchFollowThrough(state, CreateResearchContext(state, "Monitor parity drift.", "main"), DateTimeOffset.UtcNow.AddMinutes(3));
+
+        Assert.Equal(2, state.ProactiveTopics.Count);
+        Assert.Equal(1, state.ProactiveTopics.Count(topic => topic.ProjectId == "project-a" && topic.Topic == "Monitor parity drift."));
+        Assert.Equal(1, state.ProactiveTopics.Count(topic => topic.ProjectId == "project-b" && topic.Topic == "Monitor parity drift."));
+    }
+
+    [Fact]
     public void ConversationFollowThroughProcessor_Completes_Queued_Task_And_Appends_Assistant_Message()
     {
         var store = new InMemoryConversationStore(
@@ -135,5 +186,25 @@ public sealed class ConversationFollowThroughTests
         Assert.True(processor.SetTopicEnabled(state.Id, "topic-1", enabled: false));
         Assert.Contains(state.BackgroundTasks, task => task.Id == "bg-task-2" && task.Status == "canceled");
         Assert.Contains(state.ProactiveTopics, topic => topic.Id == "topic-1" && !topic.Enabled);
+    }
+
+    private static ChatTurnContext CreateResearchContext(ConversationState state, string message, string branchId)
+    {
+        return new ChatTurnContext
+        {
+            TurnId = $"turn-{Guid.NewGuid():N}",
+            Request = new ChatRequestDto(message, state.Id, 12, null, BranchId: branchId),
+            Conversation = state,
+            History = Array.Empty<ChatMessageDto>(),
+            Intent = new IntentAnalysis(IntentType.Research, "test-model"),
+            CollaborationIntent = new CollaborationIntentAnalysis(
+                IsGuidanceSeeking: false,
+                TrustsBestJudgment: true,
+                SeeksDelegatedExecution: false,
+                PrefersAnswerOverClarification: true,
+                HasHardConstraintLanguage: false,
+                PrimaryMode: "follow_through",
+                Signals: new[] { "best_judgment" })
+        };
     }
 }

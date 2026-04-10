@@ -21,9 +21,15 @@ public sealed class FollowThroughScheduler : IFollowThroughScheduler
 
         lock (state.SyncRoot)
         {
+            var projectId = state.ProjectContext?.ProjectId;
+            var branchId = state.ActiveBranchId;
+
             if (state.ProactiveUpdatesEnabled &&
                 _topicPolicy.ShouldRegister(context) &&
-                !state.ProactiveTopics.Any(topic => topic.Enabled && topic.Topic.Equals(context.Request.Message.Trim(), StringComparison.OrdinalIgnoreCase)))
+                !state.ProactiveTopics.Any(topic =>
+                    topic.Enabled &&
+                    topic.Topic.Equals(context.Request.Message.Trim(), StringComparison.OrdinalIgnoreCase) &&
+                    TopicMatchesProject(topic.ProjectId, projectId)))
             {
                 state.ProactiveTopics.Add(new ProactiveTopicSubscription(
                     Guid.NewGuid().ToString("N"),
@@ -36,9 +42,8 @@ public sealed class FollowThroughScheduler : IFollowThroughScheduler
 
             if (state.BackgroundResearchEnabled &&
                 context.Intent.Intent == Helper.Runtime.Core.IntentType.Research &&
-                !state.BackgroundTasks.Any(task => task.Status == "queued"))
+                !state.BackgroundTasks.Any(task => TaskMatchesQueuedScope(task, projectId, branchId)))
             {
-                var projectId = state.ProjectContext?.ProjectId;
                 var proactiveTopicSnapshot = state.ProactiveTopics
                     .Where(topic => topic.Enabled && TopicMatchesProject(topic.ProjectId, projectId))
                     .Select(topic => topic.Topic)
@@ -64,11 +69,33 @@ public sealed class FollowThroughScheduler : IFollowThroughScheduler
 
     private static bool TopicMatchesProject(string? topicProjectId, string? projectId)
     {
-        if (string.IsNullOrWhiteSpace(projectId))
+        if (string.IsNullOrWhiteSpace(NormalizeScope(projectId)))
         {
-            return string.IsNullOrWhiteSpace(topicProjectId);
+            return string.IsNullOrWhiteSpace(NormalizeScope(topicProjectId));
         }
 
-        return string.Equals(topicProjectId, projectId, StringComparison.OrdinalIgnoreCase);
+        return string.Equals(NormalizeScope(topicProjectId), NormalizeScope(projectId), StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool TaskMatchesQueuedScope(BackgroundConversationTask task, string? projectId, string? branchId)
+    {
+        if (!string.Equals(task.Status, "queued", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var normalizedProjectId = NormalizeScope(projectId);
+        var normalizedBranchId = NormalizeScope(branchId);
+        var taskProjectId = NormalizeScope(task.ProjectId) ?? normalizedProjectId;
+        var taskBranchId = NormalizeScope(task.BranchId) ?? normalizedBranchId;
+
+        return string.Equals(taskProjectId, normalizedProjectId, StringComparison.OrdinalIgnoreCase) &&
+               string.Equals(taskBranchId, normalizedBranchId, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string? NormalizeScope(string? value)
+    {
+        var normalized = value?.Trim();
+        return string.IsNullOrWhiteSpace(normalized) ? null : normalized;
     }
 }
