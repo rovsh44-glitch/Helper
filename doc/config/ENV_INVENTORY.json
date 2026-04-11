@@ -1,5 +1,5 @@
-{
-  "generatedAtUtc": "2026-03-16T17:20:58.1376067\u002B00:00",
+﻿{
+  "generatedAtUtc": "2026-04-10T20:04:35.9665195\u002B00:00",
   "source": "src/Helper.Api/Backend/Configuration/BackendEnvironmentInventory.cs",
   "definitions": [
     {
@@ -679,6 +679,72 @@
       "Notes": null
     },
     {
+      "Name": "HELPER_MODEL_LONG_CONTEXT",
+      "Category": "Model Gateway",
+      "Scope": "backend_runtime",
+      "ValueType": "string",
+      "Description": "Optional long-context reasoning model override.",
+      "DefaultValue": null,
+      "ExampleValue": null,
+      "Secret": false,
+      "IncludeInLocalExample": false,
+      "CommentOutInLocalExample": false,
+      "Deprecated": false,
+      "Replacement": null,
+      "AllowedValues": [],
+      "MinValue": null,
+      "MaxValue": null,
+      "Consumers": [
+        "src/Helper.Api/Backend/Configuration/BackendOptions.cs",
+        "src/Helper.Runtime/SupportingImplementations.cs"
+      ],
+      "Notes": null
+    },
+    {
+      "Name": "HELPER_MODEL_DEEP_REASONING",
+      "Category": "Model Gateway",
+      "Scope": "backend_runtime",
+      "ValueType": "string",
+      "Description": "Optional deep-reasoning model override.",
+      "DefaultValue": null,
+      "ExampleValue": null,
+      "Secret": false,
+      "IncludeInLocalExample": false,
+      "CommentOutInLocalExample": false,
+      "Deprecated": false,
+      "Replacement": null,
+      "AllowedValues": [],
+      "MinValue": null,
+      "MaxValue": null,
+      "Consumers": [
+        "src/Helper.Api/Backend/Configuration/BackendOptions.cs",
+        "src/Helper.Runtime/SupportingImplementations.cs"
+      ],
+      "Notes": null
+    },
+    {
+      "Name": "HELPER_MODEL_VERIFIER",
+      "Category": "Model Gateway",
+      "Scope": "backend_runtime",
+      "ValueType": "string",
+      "Description": "Optional verifier / critic model override for reasoning checks.",
+      "DefaultValue": null,
+      "ExampleValue": null,
+      "Secret": false,
+      "IncludeInLocalExample": false,
+      "CommentOutInLocalExample": false,
+      "Deprecated": false,
+      "Replacement": null,
+      "AllowedValues": [],
+      "MinValue": null,
+      "MaxValue": null,
+      "Consumers": [
+        "src/Helper.Api/Backend/Configuration/BackendOptions.cs",
+        "src/Helper.Runtime/SupportingImplementations.cs"
+      ],
+      "Notes": null
+    },
+    {
       "Name": "HELPER_MODEL_CRITIC",
       "Category": "Model Gateway",
       "Scope": "backend_runtime",
@@ -1053,6 +1119,503 @@
       "MaxValue": "16",
       "Consumers": [
         "src/Helper.Api/Backend/Configuration/BackendOptions.cs"
+      ],
+      "Notes": null
+    },
+    {
+      "Name": "HELPER_WEB_SEARCH_LOCAL_URL",
+      "Category": "Research",
+      "Scope": "backend_runtime",
+      "ValueType": "url",
+      "Description": "Primary local web-search endpoint used by the local provider adapter.",
+      "DefaultValue": "http://localhost:8080",
+      "ExampleValue": null,
+      "Secret": false,
+      "IncludeInLocalExample": false,
+      "CommentOutInLocalExample": false,
+      "Deprecated": false,
+      "Replacement": null,
+      "AllowedValues": [],
+      "MinValue": null,
+      "MaxValue": null,
+      "Consumers": [
+        "src/Helper.Runtime.WebResearch/Providers/WebSearchProviderSettings.cs"
+      ],
+      "Notes": null
+    },
+    {
+      "Name": "HELPER_WEB_SEARCH_SEARX_URL",
+      "Category": "Research",
+      "Scope": "backend_runtime",
+      "ValueType": "url",
+      "Description": "Optional secondary Searx-compatible endpoint used for graceful failover.",
+      "DefaultValue": null,
+      "ExampleValue": null,
+      "Secret": false,
+      "IncludeInLocalExample": false,
+      "CommentOutInLocalExample": false,
+      "Deprecated": false,
+      "Replacement": null,
+      "AllowedValues": [],
+      "MinValue": null,
+      "MaxValue": null,
+      "Consumers": [
+        "src/Helper.Runtime.WebResearch/Providers/WebSearchProviderSettings.cs"
+      ],
+      "Notes": null
+    },
+    {
+      "Name": "HELPER_WEB_SEARCH_PROVIDER_ORDER",
+      "Category": "Research",
+      "Scope": "backend_runtime",
+      "ValueType": "csv",
+      "Description": "Ordered provider IDs for web-search failover. Supported values currently include \u0060local,searx\u0060.",
+      "DefaultValue": "local,searx",
+      "ExampleValue": null,
+      "Secret": false,
+      "IncludeInLocalExample": false,
+      "CommentOutInLocalExample": false,
+      "Deprecated": false,
+      "Replacement": null,
+      "AllowedValues": [],
+      "MinValue": null,
+      "MaxValue": null,
+      "Consumers": [
+        "src/Helper.Runtime.WebResearch/Providers/WebSearchProviderSettings.cs",
+        "src/Helper.Runtime.WebResearch/Providers/WebSearchProviderMux.cs"
+      ],
+      "Notes": null
+    },
+    {
+      "Name": "HELPER_WEB_SEARCH_PROVIDER_TIMEOUT_SEC",
+      "Category": "Research",
+      "Scope": "backend_runtime",
+      "ValueType": "int",
+      "Description": "Per-provider web-search timeout before mux failover.",
+      "DefaultValue": "4",
+      "ExampleValue": null,
+      "Secret": false,
+      "IncludeInLocalExample": false,
+      "CommentOutInLocalExample": false,
+      "Deprecated": false,
+      "Replacement": null,
+      "AllowedValues": [],
+      "MinValue": "1",
+      "MaxValue": "30",
+      "Consumers": [
+        "src/Helper.Runtime.WebResearch/Providers/WebSearchProviderSettings.cs"
+      ],
+      "Notes": null
+    },
+    {
+      "Name": "HELPER_WEB_SEARCH_COST_BUDGET_UNITS",
+      "Category": "Research",
+      "Scope": "backend_runtime",
+      "ValueType": "int",
+      "Description": "Base cost budget units for provider selection per search turn before policy adjustments by search mode.",
+      "DefaultValue": "3",
+      "ExampleValue": null,
+      "Secret": false,
+      "IncludeInLocalExample": false,
+      "CommentOutInLocalExample": false,
+      "Deprecated": false,
+      "Replacement": null,
+      "AllowedValues": [],
+      "MinValue": "0",
+      "MaxValue": "8",
+      "Consumers": [
+        "src/Helper.Runtime.WebResearch/Providers/WebSearchProviderSettings.cs",
+        "src/Helper.Runtime.WebResearch/Providers/SearchCostBudgetPolicy.cs"
+      ],
+      "Notes": null
+    },
+    {
+      "Name": "HELPER_WEB_SEARCH_LATENCY_BUDGET_MS",
+      "Category": "Research",
+      "Scope": "backend_runtime",
+      "ValueType": "int",
+      "Description": "Base total latency budget for provider selection per search turn before policy adjustments by search mode.",
+      "DefaultValue": "3500",
+      "ExampleValue": null,
+      "Secret": false,
+      "IncludeInLocalExample": false,
+      "CommentOutInLocalExample": false,
+      "Deprecated": false,
+      "Replacement": null,
+      "AllowedValues": [],
+      "MinValue": "250",
+      "MaxValue": "30000",
+      "Consumers": [
+        "src/Helper.Runtime.WebResearch/Providers/WebSearchProviderSettings.cs",
+        "src/Helper.Runtime.WebResearch/Providers/TurnLatencyBudgetPolicy.cs"
+      ],
+      "Notes": null
+    },
+    {
+      "Name": "HELPER_WEB_SEARCH_PROVIDER_COOLDOWN_SEC",
+      "Category": "Research",
+      "Scope": "backend_runtime",
+      "ValueType": "int",
+      "Description": "Cooldown window applied after consecutive provider timeouts or errors trip health thresholds.",
+      "DefaultValue": "45",
+      "ExampleValue": null,
+      "Secret": false,
+      "IncludeInLocalExample": false,
+      "CommentOutInLocalExample": false,
+      "Deprecated": false,
+      "Replacement": null,
+      "AllowedValues": [],
+      "MinValue": "5",
+      "MaxValue": "600",
+      "Consumers": [
+        "src/Helper.Runtime.WebResearch/Providers/WebSearchProviderSettings.cs",
+        "src/Helper.Runtime.WebResearch/Providers/WebProviderHealthState.cs"
+      ],
+      "Notes": null
+    },
+    {
+      "Name": "HELPER_WEB_SEARCH_PROVIDER_MAX_CONSECUTIVE_TIMEOUTS",
+      "Category": "Research",
+      "Scope": "backend_runtime",
+      "ValueType": "int",
+      "Description": "Consecutive timeout threshold before a provider enters cooldown.",
+      "DefaultValue": "2",
+      "ExampleValue": null,
+      "Secret": false,
+      "IncludeInLocalExample": false,
+      "CommentOutInLocalExample": false,
+      "Deprecated": false,
+      "Replacement": null,
+      "AllowedValues": [],
+      "MinValue": "1",
+      "MaxValue": "10",
+      "Consumers": [
+        "src/Helper.Runtime.WebResearch/Providers/WebSearchProviderSettings.cs",
+        "src/Helper.Runtime.WebResearch/Providers/WebProviderHealthState.cs"
+      ],
+      "Notes": null
+    },
+    {
+      "Name": "HELPER_WEB_SEARCH_PROVIDER_MAX_CONSECUTIVE_ERRORS",
+      "Category": "Research",
+      "Scope": "backend_runtime",
+      "ValueType": "int",
+      "Description": "Consecutive error threshold before a provider enters cooldown.",
+      "DefaultValue": "2",
+      "ExampleValue": null,
+      "Secret": false,
+      "IncludeInLocalExample": false,
+      "CommentOutInLocalExample": false,
+      "Deprecated": false,
+      "Replacement": null,
+      "AllowedValues": [],
+      "MinValue": "1",
+      "MaxValue": "10",
+      "Consumers": [
+        "src/Helper.Runtime.WebResearch/Providers/WebSearchProviderSettings.cs",
+        "src/Helper.Runtime.WebResearch/Providers/WebProviderHealthState.cs"
+      ],
+      "Notes": null
+    },
+    {
+      "Name": "HELPER_WEB_SEARCH_PROVIDER_SLOW_LATENCY_MS",
+      "Category": "Research",
+      "Scope": "backend_runtime",
+      "ValueType": "int",
+      "Description": "Rolling latency threshold after which a provider is considered degraded for selection scoring.",
+      "DefaultValue": "1200",
+      "ExampleValue": null,
+      "Secret": false,
+      "IncludeInLocalExample": false,
+      "CommentOutInLocalExample": false,
+      "Deprecated": false,
+      "Replacement": null,
+      "AllowedValues": [],
+      "MinValue": "100",
+      "MaxValue": "30000",
+      "Consumers": [
+        "src/Helper.Runtime.WebResearch/Providers/WebSearchProviderSettings.cs",
+        "src/Helper.Runtime.WebResearch/Providers/WebProviderHealthState.cs"
+      ],
+      "Notes": null
+    },
+    {
+      "Name": "HELPER_WEB_SEARCH_MAX_ITERATIONS",
+      "Category": "Research",
+      "Scope": "backend_runtime",
+      "ValueType": "int",
+      "Description": "Maximum iterative web-search passes per request.",
+      "DefaultValue": "3",
+      "ExampleValue": null,
+      "Secret": false,
+      "IncludeInLocalExample": false,
+      "CommentOutInLocalExample": false,
+      "Deprecated": false,
+      "Replacement": null,
+      "AllowedValues": [],
+      "MinValue": "1",
+      "MaxValue": "3",
+      "Consumers": [
+        "src/Helper.Runtime.WebResearch/SearchIterationPolicy.cs"
+      ],
+      "Notes": null
+    },
+    {
+      "Name": "HELPER_WEB_FETCH_MAX_REDIRECTS",
+      "Category": "Research",
+      "Scope": "backend_runtime",
+      "ValueType": "int",
+      "Description": "Maximum redirect hops allowed during provider/page fetch before the request is blocked.",
+      "DefaultValue": "3",
+      "ExampleValue": null,
+      "Secret": false,
+      "IncludeInLocalExample": false,
+      "CommentOutInLocalExample": false,
+      "Deprecated": false,
+      "Replacement": null,
+      "AllowedValues": [],
+      "MinValue": "0",
+      "MaxValue": "5",
+      "Consumers": [
+        "src/Helper.Runtime.WebResearch/Providers/WebSearchProviderSettings.cs",
+        "src/Helper.Runtime.WebResearch/Fetching/RedirectGuard.cs"
+      ],
+      "Notes": null
+    },
+    {
+      "Name": "HELPER_WEB_FETCH_USE_PROXY",
+      "Category": "Research",
+      "Scope": "backend_runtime",
+      "ValueType": "bool",
+      "Description": "Whether outbound page/document fetches should honor the system proxy configuration. Defaults to false to avoid broken local proxy interception in offline/dev runtimes.",
+      "DefaultValue": "false",
+      "ExampleValue": null,
+      "Secret": false,
+      "IncludeInLocalExample": false,
+      "CommentOutInLocalExample": false,
+      "Deprecated": false,
+      "Replacement": null,
+      "AllowedValues": [],
+      "MinValue": null,
+      "MaxValue": null,
+      "Consumers": [
+        "src/Helper.Runtime.WebResearch/Fetching/HttpFetchSupport.cs"
+      ],
+      "Notes": null
+    },
+    {
+      "Name": "HELPER_WEB_PAGE_FETCH_TIMEOUT_SEC",
+      "Category": "Research",
+      "Scope": "backend_runtime",
+      "ValueType": "int",
+      "Description": "Per-page fetch timeout for full-page evidence retrieval.",
+      "DefaultValue": "6",
+      "ExampleValue": null,
+      "Secret": false,
+      "IncludeInLocalExample": false,
+      "CommentOutInLocalExample": false,
+      "Deprecated": false,
+      "Replacement": null,
+      "AllowedValues": [],
+      "MinValue": "1",
+      "MaxValue": "20",
+      "Consumers": [
+        "src/Helper.Runtime.WebResearch/Fetching/WebPageFetchSettings.cs",
+        "src/Helper.Runtime.WebResearch/Fetching/WebPageFetcher.cs"
+      ],
+      "Notes": null
+    },
+    {
+      "Name": "HELPER_WEB_PAGE_MAX_BYTES",
+      "Category": "Research",
+      "Scope": "backend_runtime",
+      "ValueType": "int",
+      "Description": "Maximum bytes admitted for a single fetched page before extraction is aborted.",
+      "DefaultValue": "400000",
+      "ExampleValue": null,
+      "Secret": false,
+      "IncludeInLocalExample": false,
+      "CommentOutInLocalExample": false,
+      "Deprecated": false,
+      "Replacement": null,
+      "AllowedValues": [],
+      "MinValue": "16384",
+      "MaxValue": "2000000",
+      "Consumers": [
+        "src/Helper.Runtime.WebResearch/Fetching/WebPageFetchSettings.cs",
+        "src/Helper.Runtime.WebResearch/Extraction/ContentTypeAdmissionPolicy.cs"
+      ],
+      "Notes": null
+    },
+    {
+      "Name": "HELPER_WEB_PAGE_MAX_FETCHES_PER_SEARCH",
+      "Category": "Research",
+      "Scope": "backend_runtime",
+      "ValueType": "int",
+      "Description": "Maximum fetched pages per search session after search hits are selected.",
+      "DefaultValue": "3",
+      "ExampleValue": null,
+      "Secret": false,
+      "IncludeInLocalExample": false,
+      "CommentOutInLocalExample": false,
+      "Deprecated": false,
+      "Replacement": null,
+      "AllowedValues": [],
+      "MinValue": "1",
+      "MaxValue": "6",
+      "Consumers": [
+        "src/Helper.Runtime.WebResearch/Fetching/WebPageFetchSettings.cs",
+        "src/Helper.Runtime.WebResearch/WebSearchSessionCoordinator.cs"
+      ],
+      "Notes": null
+    },
+    {
+      "Name": "HELPER_WEB_RENDER_ENABLED",
+      "Category": "Research",
+      "Scope": "backend_runtime",
+      "ValueType": "bool",
+      "Description": "Enables isolated browser-render fallback for JS-heavy pages after normal HTTP extraction is insufficient.",
+      "DefaultValue": "true",
+      "ExampleValue": null,
+      "Secret": false,
+      "IncludeInLocalExample": false,
+      "CommentOutInLocalExample": false,
+      "Deprecated": false,
+      "Replacement": null,
+      "AllowedValues": [],
+      "MinValue": null,
+      "MaxValue": null,
+      "Consumers": [
+        "src/Helper.Runtime.WebResearch/Rendering/RenderedPageBudgetPolicy.cs"
+      ],
+      "Notes": null
+    },
+    {
+      "Name": "HELPER_WEB_RENDER_MAX_PAGES_PER_SEARCH",
+      "Category": "Research",
+      "Scope": "backend_runtime",
+      "ValueType": "int",
+      "Description": "Maximum pages per search session that may use browser-render fallback.",
+      "DefaultValue": "1",
+      "ExampleValue": null,
+      "Secret": false,
+      "IncludeInLocalExample": false,
+      "CommentOutInLocalExample": false,
+      "Deprecated": false,
+      "Replacement": null,
+      "AllowedValues": [],
+      "MinValue": "0",
+      "MaxValue": "3",
+      "Consumers": [
+        "src/Helper.Runtime.WebResearch/Rendering/RenderedPageBudgetPolicy.cs",
+        "src/Helper.Runtime.WebResearch/WebSearchSessionCoordinator.cs"
+      ],
+      "Notes": null
+    },
+    {
+      "Name": "HELPER_WEB_RENDER_TIMEOUT_SEC",
+      "Category": "Research",
+      "Scope": "backend_runtime",
+      "ValueType": "int",
+      "Description": "Timeout for a single browser-render fallback page load.",
+      "DefaultValue": "8",
+      "ExampleValue": null,
+      "Secret": false,
+      "IncludeInLocalExample": false,
+      "CommentOutInLocalExample": false,
+      "Deprecated": false,
+      "Replacement": null,
+      "AllowedValues": [],
+      "MinValue": "2",
+      "MaxValue": "20",
+      "Consumers": [
+        "src/Helper.Runtime.WebResearch/Rendering/RenderedPageBudgetPolicy.cs",
+        "src/Helper.Runtime.WebResearch/Rendering/BrowserRenderFallbackService.cs"
+      ],
+      "Notes": null
+    },
+    {
+      "Name": "HELPER_WEB_RENDER_MAX_HTML_CHARS",
+      "Category": "Research",
+      "Scope": "backend_runtime",
+      "ValueType": "int",
+      "Description": "Maximum rendered HTML characters retained from browser-render fallback before extraction.",
+      "DefaultValue": "300000",
+      "ExampleValue": null,
+      "Secret": false,
+      "IncludeInLocalExample": false,
+      "CommentOutInLocalExample": false,
+      "Deprecated": false,
+      "Replacement": null,
+      "AllowedValues": [],
+      "MinValue": "16384",
+      "MaxValue": "1000000",
+      "Consumers": [
+        "src/Helper.Runtime.WebResearch/Rendering/RenderedPageBudgetPolicy.cs",
+        "src/Helper.Runtime.WebResearch/Rendering/BrowserRenderFallbackService.cs"
+      ],
+      "Notes": null
+    },
+    {
+      "Name": "HELPER_WEB_EVIDENCE_GENERAL_STALE_MINUTES",
+      "Category": "Research",
+      "Scope": "backend_runtime",
+      "ValueType": "int",
+      "Description": "Maximum age before general web evidence is treated as stale and refreshed or disclosed.",
+      "DefaultValue": "20",
+      "ExampleValue": null,
+      "Secret": false,
+      "IncludeInLocalExample": false,
+      "CommentOutInLocalExample": false,
+      "Deprecated": false,
+      "Replacement": null,
+      "AllowedValues": [],
+      "MinValue": "1",
+      "MaxValue": "1440",
+      "Consumers": [
+        "src/Helper.Api/Conversation/FreshnessWindowPolicy.cs"
+      ],
+      "Notes": null
+    },
+    {
+      "Name": "HELPER_WEB_EVIDENCE_VOLATILE_STALE_MINUTES",
+      "Category": "Research",
+      "Scope": "backend_runtime",
+      "ValueType": "int",
+      "Description": "Maximum age before volatile categories such as finance/news/weather are treated as stale.",
+      "DefaultValue": "30",
+      "ExampleValue": null,
+      "Secret": false,
+      "IncludeInLocalExample": false,
+      "CommentOutInLocalExample": false,
+      "Deprecated": false,
+      "Replacement": null,
+      "AllowedValues": [],
+      "MinValue": "1",
+      "MaxValue": "240",
+      "Consumers": [
+        "src/Helper.Api/Conversation/FreshnessWindowPolicy.cs"
+      ],
+      "Notes": null
+    },
+    {
+      "Name": "HELPER_WEB_EVIDENCE_SOFTWARE_STALE_MINUTES",
+      "Category": "Research",
+      "Scope": "backend_runtime",
+      "ValueType": "int",
+      "Description": "Maximum age before software-version or release evidence is treated as stale.",
+      "DefaultValue": "360",
+      "ExampleValue": null,
+      "Secret": false,
+      "IncludeInLocalExample": false,
+      "CommentOutInLocalExample": false,
+      "Deprecated": false,
+      "Replacement": null,
+      "AllowedValues": [],
+      "MinValue": "5",
+      "MaxValue": "10080",
+      "Consumers": [
+        "src/Helper.Api/Conversation/FreshnessWindowPolicy.cs"
       ],
       "Notes": null
     },
@@ -1914,6 +2477,30 @@
       "Notes": null
     },
     {
+      "Name": "HELPER_NUGET_SECURITY_GATE_MODE",
+      "Category": "Operator And CI Scripts",
+      "Scope": "script_runtime",
+      "ValueType": "string",
+      "Description": "Overrides the NuGet security gate execution mode used by ci_gate.",
+      "DefaultValue": "unset",
+      "ExampleValue": null,
+      "Secret": false,
+      "IncludeInLocalExample": false,
+      "CommentOutInLocalExample": false,
+      "Deprecated": false,
+      "Replacement": null,
+      "AllowedValues": [
+        "strict-online",
+        "best-effort-local"
+      ],
+      "MinValue": null,
+      "MaxValue": null,
+      "Consumers": [
+        "scripts/ci_gate.ps1"
+      ],
+      "Notes": "When unset, scripts/ci_gate.ps1 derives strict-online only when CI=true and otherwise uses best-effort-local."
+    },
+    {
       "Name": "HELPER_REMEDIATION_LOCK",
       "Category": "Operator And CI Scripts",
       "Scope": "script_runtime",
@@ -1936,5 +2523,4 @@
     }
   ]
 }
-
 

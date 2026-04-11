@@ -5,6 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,7 +22,11 @@
 
   <ItemGroup>
     <Compile Include="..\Helper.Runtime.Tests\TestCollectionConfig.cs" Link="TestCollectionConfig.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\EvalTestPackageFactory.cs" Link="EvalTestPackageFactory.cs" />
     <Compile Include="..\Helper.Runtime.Tests\EvalHarnessTests.cs" Link="EvalHarnessTests.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\EvalRunnerV2Tests.cs" Link="EvalRunnerV2Tests.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\HumanLikeCommunicationEvalTests.cs" Link="HumanLikeCommunicationEvalTests.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\WebResearchParityEvalTests.cs" Link="WebResearchParityEvalTests.cs" />
   </ItemGroup>
 
   <ItemGroup>

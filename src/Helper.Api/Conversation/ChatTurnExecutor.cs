@@ -34,7 +34,7 @@ public sealed class ChatTurnExecutor : IChatTurnExecutor
         IConversationVariationPolicy? variationPolicy = null,
         IProviderProfileResolver? providerProfileResolver = null)
     {
-        var resolvedModelGateway = modelGateway ?? new HelperModelGateway(ai, new BackendOptionsCatalog(config), new ModelGatewayTelemetry());
+        var resolvedModelGateway = modelGateway ?? new HelperModelGateway(ai, new BackendOptionsCatalog(config), new ModelGatewayTelemetry(), providerProfileResolver);
         var resolvedSourceNormalizer = sourceNormalizer ?? new SourceNormalizationService();
         var localBaselineAnswerService = new LocalBaselineAnswerService(ai);
         var deps = new ChatTurnExecutorDependencies(

@@ -17,11 +17,16 @@ This document is the operational source of truth for git-readiness hygiene. The 
 
 ## Authoritative Checks
 
-1. `powershell -ExecutionPolicy Bypass -File scripts\secret_scan.ps1`
+1. `powershell -ExecutionPolicy Bypass -File scripts\secret_scan.ps1 -ScanMode repo`
 2. `powershell -ExecutionPolicy Bypass -File scripts\check_root_layout.ps1`
 3. `powershell -ExecutionPolicy Bypass -File scripts\generate_repo_hygiene_report.ps1`
 
-The first two scripts are CI gates. The report script is the operator-friendly wrapper that emits:
+The first two scripts are CI gates. `secret_scan.ps1` supports two modes:
+
+- `repo`: tracked first-party surface only; this is the canonical CI/release mode
+- `workspace`: tracked surface plus local workspace files such as `.env.local`; use this for operator hygiene checks
+
+The report script is the operator-friendly wrapper that emits:
 
 - `temp\hygiene\secret_scan_report.json`
 - `temp\hygiene\root_layout_report.json`

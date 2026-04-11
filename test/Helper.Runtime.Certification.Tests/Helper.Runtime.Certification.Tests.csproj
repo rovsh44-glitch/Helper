@@ -30,14 +30,9 @@
   <ItemGroup>
     <Compile Include="..\Helper.Runtime.Tests\TestCollectionConfig.cs" Link="TestCollectionConfig.cs" />
     <Compile Include="..\Helper.Runtime.Tests\TestInfrastructure\ProcessEnvironmentCollection.cs" Link="TestInfrastructure\ProcessEnvironmentCollection.cs" />
-    <Compile Include="..\Helper.Runtime.Tests\TestInfrastructure\TempDirectoryScope.cs" Link="TestInfrastructure\TempDirectoryScope.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\TempDirectoryScope.cs" Link="TempDirectoryScope.cs" />
     <Compile Include="..\Helper.Runtime.Tests\TestWorkspaceRoot.cs" Link="TestWorkspaceRoot.cs" />
-    <Compile Include="..\Helper.Runtime.Tests\EvalTestPackageFactory.cs" Link="EvalTestPackageFactory.cs" />
-    <Compile Include="..\Helper.Runtime.Tests\ChatTurnPlannerTestFactory.cs" Link="ChatTurnPlannerTestFactory.cs" />
-    <Compile Include="..\Helper.Runtime.Tests\EvalHarnessTests.cs" Link="EvalHarnessTests.cs" />
-    <Compile Include="..\Helper.Runtime.Tests\EvalRunnerV2Tests.cs" Link="EvalRunnerV2Tests.cs" />
     <Compile Include="..\Helper.Runtime.Tests\HelperOrchestratorGoldenRouteReportingTests.cs" Link="HelperOrchestratorGoldenRouteReportingTests.cs" />
-    <Compile Include="..\Helper.Runtime.Tests\HumanLikeCommunicationEvalTests.cs" Link="HumanLikeCommunicationEvalTests.cs" />
     <Compile Include="..\Helper.Runtime.Tests\InputRiskScannerV2BenchmarkTests.cs" Link="InputRiskScannerV2BenchmarkTests.cs" />
     <Compile Include="..\Helper.Runtime.Tests\LoadChaosSmokeTests.cs" Link="LoadChaosSmokeTests.cs" />
     <Compile Include="..\Helper.Runtime.Tests\ParityDailyBackfillServiceTests.cs" Link="ParityDailyBackfillServiceTests.cs" />
@@ -48,7 +43,6 @@
     <Compile Include="..\Helper.Runtime.Tests\TemplatePromotionPipelineTests.cs" Link="TemplatePromotionPipelineTests.cs" />
     <Compile Include="..\Helper.Runtime.Tests\TemplateRoutingAndDiagnosticsTests.cs" Link="TemplateRoutingAndDiagnosticsTests.cs" />
     <Compile Include="..\Helper.Runtime.Tests\ToolCallBenchmarkTests.cs" Link="ToolCallBenchmarkTests.cs" />
-    <Compile Include="..\Helper.Runtime.Tests\WebResearchParityEvalTests.cs" Link="WebResearchParityEvalTests.cs" />
   </ItemGroup>
 
   <ItemGroup>

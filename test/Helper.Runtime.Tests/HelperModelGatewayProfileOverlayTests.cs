@@ -1,5 +1,6 @@
 using Helper.Api.Backend.Configuration;
 using Helper.Api.Backend.ModelGateway;
+using Helper.Api.Backend.Providers;
 using Helper.Api.Hosting;
 using Helper.Runtime.Infrastructure;
 
@@ -40,5 +41,46 @@ public sealed class HelperModelGatewayProfileOverlayTests
         Assert.Contains(snapshot.Pools, pool => string.Equals(pool.Pool, "interactive", StringComparison.Ordinal));
         Assert.Contains(snapshot.Pools, pool => string.Equals(pool.Pool, "background", StringComparison.Ordinal));
         Assert.Contains(snapshot.Pools, pool => string.Equals(pool.Pool, "maintenance", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void ResolveModel_UsesProviderProfileBinding_WhenResolverIsPresent()
+    {
+        var gateway = new HelperModelGateway(
+            new AILink(),
+            new BackendOptionsCatalog(new ApiRuntimeConfig("root", "projects", "library", "logs", "templates", "key")),
+            new ModelGatewayTelemetry(),
+            new StubResolver("profile-coder"));
+
+        var model = gateway.ResolveModel(HelperModelClass.Coder);
+
+        Assert.Equal("profile-coder", model);
+    }
+
+    private sealed class StubResolver : IProviderProfileResolver
+    {
+        private readonly string _model;
+
+        public StubResolver(string model)
+        {
+            _model = model;
+        }
+
+        public ProviderProfileSummary? GetActiveProfile() => null;
+
+        public ProviderRuntimeConfiguration? GetRuntimeConfiguration() => null;
+
+        public string? ResolveModelBinding(HelperModelClass modelClass)
+            => modelClass == HelperModelClass.Coder ? _model : null;
+
+        public string? ResolvePreferredReasoningEffort() => null;
+
+        public bool SupportsVision() => true;
+
+        public bool PrefersResearchVerification() => false;
+
+        public bool IsLocalOnly() => false;
+
+        public string? ApplyToRuntime() => null;
     }
 }

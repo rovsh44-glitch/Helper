@@ -504,6 +504,7 @@ public static class BackendEnvironmentInventory
     {
         definitions.Add(Def("HELPER_RUNTIME_SMOKE_API_BASE", "Operator And CI Scripts", "script_runtime", "url", "API base URL used by runtime smoke and CI gates.", consumers: Values("scripts/ci_gate.ps1", "scripts/check_backend_control_plane.ps1", "scripts/check_latency_budget.ps1", "scripts/ui_perf_regression.ps1", "scripts/reset_library_index_safe.ps1")));
         definitions.Add(Def("HELPER_RUNTIME_SMOKE_UI_URL", "Operator And CI Scripts", "script_runtime", "url", "UI URL used by runtime UI perf smoke.", consumers: Values("scripts/ci_gate.ps1", "scripts/ui_perf_regression.ps1")));
+        definitions.Add(Def("HELPER_NUGET_SECURITY_GATE_MODE", "Operator And CI Scripts", "script_runtime", "string", "Overrides the NuGet security gate execution mode used by ci_gate.", defaultValue: "unset", allowedValues: Values("strict-online", "best-effort-local"), consumers: Values("scripts/ci_gate.ps1"), notes: "When unset, scripts/ci_gate.ps1 derives strict-online only when CI=true and otherwise uses best-effort-local."));
         definitions.Add(Def("HELPER_REMEDIATION_LOCK", "Operator And CI Scripts", "script_runtime", "bool", "Explicit remediation freeze guard. CI expects `1` when freeze is active.", defaultValue: "unset", consumers: Values("scripts/check_remediation_freeze.ps1")));
     }
 }

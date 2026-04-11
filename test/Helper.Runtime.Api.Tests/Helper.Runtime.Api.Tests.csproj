@@ -30,7 +30,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\Helper.Runtime.Tests\EvalTestPackageFactory.cs" Link="EvalTestPackageFactory.cs" />
     <Compile Include="..\Helper.Runtime.Tests\TestCollectionConfig.cs" Link="TestCollectionConfig.cs" />
     <Compile Include="..\Helper.Runtime.Tests\TestInfrastructure\EnvironmentVariableScope.cs" Link="TestInfrastructure\EnvironmentVariableScope.cs" />
     <Compile Include="..\Helper.Runtime.Tests\TestInfrastructure\TempDirectoryScope.cs" Link="TestInfrastructure\TempDirectoryScope.cs" />

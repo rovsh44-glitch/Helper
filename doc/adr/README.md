@@ -1,7 +1,7 @@
 # ADR Index
 
 Status: `active`
-Updated: `2026-03-29`
+Updated: `2026-04-11`
 
 ## Purpose
 
@@ -16,6 +16,7 @@ Architectural decision records capture stable policy and boundary choices. Use t
 5. [ADR_CONVERSATION_PERSISTENCE_JOURNAL.md](ADR_CONVERSATION_PERSISTENCE_JOURNAL.md)
 6. [ADR_ASYNC_AUDIT_ISOLATION.md](ADR_ASYNC_AUDIT_ISOLATION.md)
 7. [ADR_TARGET_FRAMEWORK_SPLIT.md](ADR_TARGET_FRAMEWORK_SPLIT.md)
+8. [ADR_PROVIDER_RUNTIME_SWITCHING.md](ADR_PROVIDER_RUNTIME_SWITCHING.md)
 
 ## Supporting ADRs
 

@@ -26,7 +26,17 @@ if ($incidentCount -lt 80) {
 }
 
 if ([string]::IsNullOrWhiteSpace($ReportPath)) {
-    $ReportPath = "doc/HELPER_GENERATION_PARITY_BENCHMARK_" + (Get-Date -Format "yyyy-MM-dd_HH-mm-ss") + ".md"
+    $ReportPath = "temp/verification/heavy/HELPER_GENERATION_PARITY_BENCHMARK_" + (Get-Date -Format "yyyy-MM-dd_HH-mm-ss") + ".md"
+}
+
+$repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+if (-not [System.IO.Path]::IsPathRooted($ReportPath)) {
+    $ReportPath = [System.IO.Path]::GetFullPath((Join-Path $repoRoot $ReportPath))
+}
+
+$reportDirectory = Split-Path -Parent $ReportPath
+if (-not [string]::IsNullOrWhiteSpace($reportDirectory)) {
+    New-Item -ItemType Directory -Path $reportDirectory -Force | Out-Null
 }
 
 Write-Host "[ParityBenchmark] Running benchmark. golden=$goldenCount incident=$incidentCount"

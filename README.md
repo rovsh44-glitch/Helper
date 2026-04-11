@@ -51,7 +51,7 @@ Prepared showcase surfaces:
 - [Contributing](CONTRIBUTING.md)
 - [FAQ](FAQ.md)
 
-These files are the curated public-safe surface for this repository. Broader private working material may exist outside the public repository and should not be published as-is.
+These files are the curated public-safe surface for a future showcase export. The current repository still contains private-core source, tooling, and evidence surfaces and should not be published as-is.
 
 Supporting technical truth:
 
@@ -88,17 +88,27 @@ Runtime-only paths:
 - `HELPER_LOGS_ROOT`
 - `HELPER_TEMPLATES_ROOT`
 
+Provider runtime:
+
+- Built-in provider profiles can switch the active runtime without restarting the process.
+- `Ollama` profiles use `/api/tags`, `/api/generate`, and `/api/embeddings`.
+- `OpenAI-Compatible` profiles use `/models`, `/chat/completions`, and `/embeddings`.
+- Activation updates the in-memory runtime contract first; `HELPER_ACTIVE_PROVIDER_PROFILE_ID` remains a marker, not the transport-routing mechanism.
+- Architecture rationale lives in `doc/adr/ADR_PROVIDER_RUNTIME_SWITCHING.md`.
+
 ## Operator Notes
 
 - The backend writes its selected port to `HELPER_LOGS_ROOT\\API_PORT.txt`.
-- Repo hygiene gates live in `scripts\secret_scan.ps1` and `scripts\check_root_layout.ps1`.
+- Repo hygiene gates live in `scripts\secret_scan.ps1 -ScanMode repo` and `scripts\check_root_layout.ps1`.
+- Local workspace hygiene can be checked with `npm run security:scan`; CI/release wrappers use `npm run security:scan:repo`.
 - Refresh governed env docs with `powershell -ExecutionPolicy Bypass -File scripts\generate_env_reference.ps1`.
 - Validate env governance with `powershell -ExecutionPolicy Bypass -File scripts\check_env_governance.ps1`.
 - Browser transport is allowed only in `services/httpClient.ts`, `services/generatedApiClient.ts`, and the `/api/auth/session` bootstrap path in `services/apiConfig.ts`.
 - Refresh the committed OpenAPI snapshot with `npm run api:refresh-openapi-snapshot`.
 - Refresh active release truth with `powershell -ExecutionPolicy Bypass -File scripts\refresh_active_gate_snapshot.ps1`.
 - Refresh the release baseline with `npm run baseline:capture`.
-- Run the full repo sweep with `npm run ci:gate`.
+- Run the deterministic repo gate with `npm run ci:gate`.
+- Run heavy or operator-bound verification with `npm run ci:gate:heavy`.
 - `tools\ghostscript\` is a bootstrap-managed local cache and is intentionally excluded from normal git tracking.
 - `searxng\settings.yml.new` is the tracked template; keep `searxng\settings.yml` as an operator-local copy with local secret and host overrides.
 
@@ -106,9 +116,13 @@ Runtime-only paths:
 
 The current recommended model is:
 
-1. keep this repository as the curated public-safe baseline;
-2. keep broader private-core work outside the public repo and export only reviewed public-safe slices;
-3. use the included `.github/ISSUE_TEMPLATE/` forms as part of the public showcase and disclosure workflow.
+1. keep this repository as the private-core workspace;
+2. publish only a curated showcase repo or sanitized mirror after disclosure review;
+3. export only reviewed public-safe slices and keep the included `.github/ISSUE_TEMPLATE/` forms as intake for the public showcase path.
+
+## License
+
+This repository is governed by [LICENSE](LICENSE). Public visibility, if enabled later, does not override the private-core disclosure policy described in `doc/security/PUBLIC_SHOWCASE_BOUNDARY_POLICY_2026-03-24.md`.
 
 ## Contact And Next Step
 

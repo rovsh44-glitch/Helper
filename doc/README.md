@@ -7,6 +7,8 @@ Updated: `2026-03-28`
 
 This file is the canonical entry point for human-facing documentation in this repository.
 
+Canonical research governance entry point: `doc/research/README.md`.
+
 If a document is not linked from this index or from one of the canonical entry-point READMEs below, treat it as one of:
 
 1. historical evidence

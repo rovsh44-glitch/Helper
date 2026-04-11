@@ -1,7 +1,8 @@
 param(
     [string]$EnvReferencePath = "doc/config/ENV_REFERENCE.md",
     [string]$EnvInventoryJsonPath = "doc/config/ENV_INVENTORY.json",
-    [string]$EnvExamplePath = ".env.local.example"
+    [string]$EnvExamplePath = ".env.local.example",
+    [string]$LocalEnvPath = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -67,8 +68,14 @@ foreach ($unknown in @($envExampleSnapshot.UnknownVariables)) {
     $failures.Add(".env.local.example contains unknown variable $unknown.")
 }
 
-$localEnvPath = Join-Path $repoRoot ".env.local"
-$localEnvNames = Get-EnvVariableNamesFromEnvFile -Path $localEnvPath
+$localEnvPath = if ([string]::IsNullOrWhiteSpace($LocalEnvPath)) {
+    Join-Path $repoRoot ".env.local"
+}
+else {
+    $LocalEnvPath
+}
+
+$localEnvNames = @(Get-EnvVariableNamesFromEnvFile -Path $localEnvPath)
 if ($localEnvNames.Count -gt 0) {
     $localSnapshot = Get-BackendEnvGovernanceSnapshot -Names $localEnvNames
     foreach ($deprecated in @($localSnapshot.DeprecatedVariables)) {

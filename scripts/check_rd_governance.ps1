@@ -1,13 +1,96 @@
-param()
+param(
+    [string]$RepoRoot = ""
+)
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
-$repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+$repoRoot = if ([string]::IsNullOrWhiteSpace($RepoRoot)) {
+    (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+}
+else {
+    (Resolve-Path $RepoRoot).Path
+}
 
 function Join-RepoPath {
     param([string]$RelativePath)
     return Join-Path $repoRoot $RelativePath
+}
+
+function Normalize-DocLinkTarget {
+    param(
+        [Parameter(Mandatory = $true)][string]$DocumentRelativePath,
+        [Parameter(Mandatory = $true)][string]$Target
+    )
+
+    $trimmed = $Target.Trim()
+    if ([string]::IsNullOrWhiteSpace($trimmed)) {
+        return $null
+    }
+
+    if ($trimmed -match '^(#|mailto:|https?:)') {
+        return $null
+    }
+
+    $trimmed = $trimmed.Split('#')[0].Split('?')[0]
+    $trimmed = $trimmed.Replace('\', '/')
+
+    $repoRootNormalized = $repoRoot.Replace('\', '/').TrimEnd('/')
+    if ($trimmed.StartsWith($repoRootNormalized + '/', [System.StringComparison]::OrdinalIgnoreCase)) {
+        $trimmed = $trimmed.Substring($repoRootNormalized.Length + 1)
+    }
+
+    if ([System.IO.Path]::IsPathRooted($trimmed)) {
+        return $trimmed.Replace('\', '/')
+    }
+
+    $documentDirectory = Split-Path $DocumentRelativePath -Parent
+    if ([string]::IsNullOrWhiteSpace($documentDirectory)) {
+        $documentDirectory = "."
+    }
+
+    $candidate = [System.IO.Path]::GetFullPath((Join-Path (Join-Path $repoRoot $documentDirectory) $trimmed))
+    $normalizedCandidate = $candidate.Replace('\', '/')
+    if ($normalizedCandidate.StartsWith($repoRootNormalized + '/', [System.StringComparison]::OrdinalIgnoreCase)) {
+        return $normalizedCandidate.Substring($repoRootNormalized.Length + 1)
+    }
+
+    return $normalizedCandidate
+}
+
+function Get-NormalizedDocumentReferences {
+    param([Parameter(Mandatory = $true)][string]$RelativePath)
+
+    $fullPath = Join-RepoPath $RelativePath
+    if (-not (Test-Path -LiteralPath $fullPath)) {
+        return [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    }
+
+    $content = Get-Content -Path $fullPath -Raw
+    $targets = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+
+    $markdownLinks = [System.Text.RegularExpressions.Regex]::Matches($content, '\[[^\]]+\]\(([^)]+)\)')
+    foreach ($match in $markdownLinks) {
+        $normalized = Normalize-DocLinkTarget -DocumentRelativePath $RelativePath -Target $match.Groups[1].Value
+        if (-not [string]::IsNullOrWhiteSpace($normalized)) {
+            [void]$targets.Add($normalized)
+        }
+    }
+
+    $inlineCodeSpans = [System.Text.RegularExpressions.Regex]::Matches($content, '`([^`]+)`')
+    foreach ($match in $inlineCodeSpans) {
+        $candidate = $match.Groups[1].Value
+        if ($candidate -notmatch '[/\\]' -and $candidate -notmatch '\.md$') {
+            continue
+        }
+
+        $normalized = Normalize-DocLinkTarget -DocumentRelativePath $RelativePath -Target $candidate
+        if (-not [string]::IsNullOrWhiteSpace($normalized)) {
+            [void]$targets.Add($normalized)
+        }
+    }
+
+    return $targets
 }
 
 function Read-JsonFile {
@@ -106,16 +189,16 @@ if ($null -ne $activeState) {
 
 $docIndexPath = Join-RepoPath "doc/README.md"
 if (Test-Path -LiteralPath $docIndexPath) {
-    $docIndex = Get-Content -Path $docIndexPath -Raw
-    if (-not $docIndex.Contains("doc/research/README.md")) {
+    $docIndexLinks = Get-NormalizedDocumentReferences -RelativePath "doc/README.md"
+    if (-not $docIndexLinks.Contains("doc/research/README.md")) {
         $failures.Add("doc/README.md must reference doc/research/README.md")
     }
 }
 
 $rootReadmePath = Join-RepoPath "README.md"
 if (Test-Path -LiteralPath $rootReadmePath) {
-    $rootReadme = Get-Content -Path $rootReadmePath -Raw
-    if (-not $rootReadme.Contains("doc/research/README.md")) {
+    $rootReadmeLinks = Get-NormalizedDocumentReferences -RelativePath "README.md"
+    if (-not $rootReadmeLinks.Contains("doc/research/README.md")) {
         $failures.Add("README.md must reference doc/research/README.md")
     }
 }

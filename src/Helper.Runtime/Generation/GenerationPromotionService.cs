@@ -62,10 +62,10 @@ public sealed class GenerationPromotionService : IGenerationPromotionService
         {
             var scanOk = await RunCommandAsync(
                 HostCommandResolver.GetPowerShellExecutable(),
-                new[] { "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", Path.Combine(_workspaceRoot, "scripts", "secret_scan.ps1") },
+                new[] { "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", Path.Combine(_workspaceRoot, "scripts", "secret_scan.ps1"), "-ScanMode", "repo" },
                 _workspaceRoot,
                 ct);
-            steps.Add("scripts/secret_scan.ps1");
+            steps.Add("scripts/secret_scan.ps1 -ScanMode repo");
             if (!scanOk)
             {
                 errors.Add("Security scan failed.");

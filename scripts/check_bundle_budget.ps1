@@ -18,6 +18,18 @@ $assetsPath = Join-Path $DistPath "assets"
 $mainJs = Get-ChildItem $assetsPath -Filter "index-*.js" -File | Sort-Object Length -Descending | Select-Object -First 1
 $mainCss = Get-ChildItem $assetsPath -Filter "index-*.css" -File | Sort-Object Length -Descending | Select-Object -First 1
 $lazyChunks = Get-ChildItem $assetsPath -Filter "*.js" -File | Where-Object { $_.Name -notlike "index-*.js" }
+$appLazyChunkBudget = if ($budgets.bundle.PSObject.Properties.Name -contains "appLazyChunkBytes") {
+    [int]$budgets.bundle.appLazyChunkBytes
+}
+else {
+    [int]$budgets.bundle.lazyChunkBytes
+}
+$vendorChunkBudget = if ($budgets.bundle.PSObject.Properties.Name -contains "vendorChunkBytes") {
+    [int]$budgets.bundle.vendorChunkBytes
+}
+else {
+    $appLazyChunkBudget
+}
 
 if ($null -eq $mainJs) {
     throw "Bundle gate could not find main JS chunk."
@@ -31,9 +43,20 @@ if ($null -ne $mainCss -and $mainCss.Length -gt [int]$budgets.bundle.mainCssByte
     throw "Main CSS chunk exceeds budget: $($mainCss.Length) bytes > $($budgets.bundle.mainCssBytes)."
 }
 
-$oversizedLazy = @($lazyChunks | Where-Object { $_.Length -gt [int]$budgets.bundle.lazyChunkBytes })
-if ($oversizedLazy.Count -gt 0) {
-    $details = $oversizedLazy | ForEach-Object { "$($_.Name)=$($_.Length)" }
+$vendorLazyChunks = @($lazyChunks | Where-Object { $_.Name -match 'vendor' })
+$appLazyChunks = @($lazyChunks | Where-Object { $_.Name -notmatch 'vendor' })
+$oversizedAppLazy = @($appLazyChunks | Where-Object { $_.Length -gt $appLazyChunkBudget })
+$oversizedVendorLazy = @($vendorLazyChunks | Where-Object { $_.Length -gt $vendorChunkBudget })
+if ($oversizedAppLazy.Count -gt 0 -or $oversizedVendorLazy.Count -gt 0) {
+    $details = New-Object System.Collections.Generic.List[string]
+    foreach ($chunk in $oversizedAppLazy) {
+        $details.Add("app:$($chunk.Name)=$($chunk.Length)")
+    }
+
+    foreach ($chunk in $oversizedVendorLazy) {
+        $details.Add("vendor:$($chunk.Name)=$($chunk.Length)")
+    }
+
     throw "Lazy chunk budget exceeded: $($details -join ', ')."
 }
 

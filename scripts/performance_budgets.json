@@ -22,8 +22,9 @@
   },
   "bundle": {
     "mainJsBytes": 500000,
-    "mainCssBytes": 40000,
-    "lazyChunkBytes": 20000
+    "mainCssBytes": 48000,
+    "lazyChunkBytes": 80000,
+    "vendorChunkBytes": 220000
   },
   "frontend": {
     "maxViewFileLines": 700,

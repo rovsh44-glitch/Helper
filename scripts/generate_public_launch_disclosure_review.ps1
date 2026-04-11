@@ -14,8 +14,11 @@ if ([string]::IsNullOrWhiteSpace($OutputDirectory)) {
 
 New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
 
-$secretReportPath = Join-Path $OutputDirectory "secret_scan_report.json"
-$rootLayoutReportPath = Join-Path $OutputDirectory "root_layout_report.json"
+$internalReportDirectory = Join-Path $repoRoot "temp\public_launch_review_internal"
+New-Item -ItemType Directory -Path $internalReportDirectory -Force | Out-Null
+
+$secretReportPath = Join-Path $internalReportDirectory "secret_scan_report.json"
+$rootLayoutReportPath = Join-Path $internalReportDirectory "root_layout_report.json"
 $jsonReportPath = Join-Path $OutputDirectory "public_launch_disclosure_review.json"
 $markdownReportPath = Join-Path $OutputDirectory "PUBLIC_LAUNCH_DISCLOSURE_REVIEW.md"
 
@@ -43,7 +46,7 @@ $reviewRequired = @($classified | Where-Object { $_.category -eq "review_require
 $secretExitCode = 0
 $rootLayoutExitCode = 0
 
-& powershell -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "secret_scan.ps1") -ReportPath $secretReportPath
+& powershell -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "secret_scan.ps1") -ScanMode repo -ReportPath $secretReportPath
 $secretExitCode = $LASTEXITCODE
 
 & powershell -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "check_root_layout.ps1") -ReportPath $rootLayoutReportPath
@@ -51,6 +54,25 @@ $rootLayoutExitCode = $LASTEXITCODE
 
 $secretReport = Get-Content -Path $secretReportPath -Raw | ConvertFrom-Json
 $rootLayoutReport = Get-Content -Path $rootLayoutReportPath -Raw | ConvertFrom-Json
+
+function Get-RepoRelativePath {
+    param([string]$Path)
+
+    $resolvedPath = [System.IO.Path]::GetFullPath($Path)
+    $normalizedRepoRoot = $repoRoot.TrimEnd('\', '/')
+    if ($resolvedPath.StartsWith($normalizedRepoRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+        $repoRootWithSeparator = $normalizedRepoRoot
+        if (-not $repoRootWithSeparator.EndsWith('\')) {
+            $repoRootWithSeparator += '\'
+        }
+
+        $repoUri = [System.Uri]$repoRootWithSeparator
+        $pathUri = [System.Uri]$resolvedPath
+        return [System.Uri]::UnescapeDataString($repoUri.MakeRelativeUri($pathUri).ToString()).Replace('\', '/')
+    }
+
+    return $resolvedPath.Replace('\', '/')
+}
 
 $groupSummary = foreach ($group in ($classified | Group-Object topLevel | Sort-Object Count -Descending)) {
     [PSCustomObject]@{
@@ -95,14 +117,14 @@ $report = [PSCustomObject]@{
     secretScan = [PSCustomObject]@{
         exitCode = $secretExitCode
         hitCount = @($secretReport.hits).Count
-        reportPath = $secretReportPath
+        reportPath = Get-RepoRelativePath -Path $secretReportPath
     }
     rootLayout = [PSCustomObject]@{
         exitCode = $rootLayoutExitCode
         rootViolationCount = @($rootLayoutReport.rootViolations).Count
         sourceFatalViolationCount = @($rootLayoutReport.sourceFatalViolations).Count
         sourceWarningCount = @($rootLayoutReport.sourceWarnings).Count
-        reportPath = $rootLayoutReportPath
+        reportPath = Get-RepoRelativePath -Path $rootLayoutReportPath
     }
     notes = @($notes)
     samplePublicSafePaths = @($publicSafe | Select-Object -First 20 -ExpandProperty path)
