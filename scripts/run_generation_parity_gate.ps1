@@ -8,7 +8,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 if ([string]::IsNullOrWhiteSpace($ReportPath)) {
-    $ReportPath = "doc/HELPER_PARITY_GATE_" + (Get-Date -Format "yyyy-MM-dd_HH-mm-ss") + ".md"
+    $ReportPath = "temp/verification/heavy/HELPER_PARITY_GATE_" + (Get-Date -Format "yyyy-MM-dd_HH-mm-ss") + ".md"
 }
 
 if ($LookbackHours -lt 1) {
@@ -20,6 +20,16 @@ $prevLookback = $env:HELPER_PARITY_LOOKBACK_HOURS
 $prevSnapshotRoot = $env:HELPER_PARITY_SNAPSHOT_ROOT
 
 try {
+    $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+    if (-not [System.IO.Path]::IsPathRooted($ReportPath)) {
+        $ReportPath = [System.IO.Path]::GetFullPath((Join-Path $repoRoot $ReportPath))
+    }
+
+    $reportDirectory = Split-Path -Parent $ReportPath
+    if (-not [string]::IsNullOrWhiteSpace($reportDirectory)) {
+        New-Item -ItemType Directory -Path $reportDirectory -Force | Out-Null
+    }
+
     $env:HELPER_PARITY_WORKLOAD_CLASSES = $WorkloadClasses
     $env:HELPER_PARITY_LOOKBACK_HOURS = $LookbackHours.ToString()
     if ([string]::IsNullOrWhiteSpace($SnapshotRoot)) {

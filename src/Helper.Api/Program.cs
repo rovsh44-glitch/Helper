@@ -105,7 +105,11 @@ builder.Services.AddSingleton<IBackendOptionsCatalog, BackendOptionsCatalog>();
 builder.Services.AddSingleton<IBackendRuntimePolicyProvider>(sp => (IBackendRuntimePolicyProvider)sp.GetRequiredService<IBackendOptionsCatalog>());
 builder.Services.AddSingleton<IBackendConfigValidator, BackendConfigValidator>();
 builder.Services.AddSingleton<IModelGatewayTelemetry, ModelGatewayTelemetry>();
-builder.Services.AddSingleton<IModelGateway, HelperModelGateway>();
+builder.Services.AddSingleton<IModelGateway>(sp => new HelperModelGateway(
+    sp.GetRequiredService<Helper.Runtime.Infrastructure.AILink>(),
+    sp.GetRequiredService<IBackendOptionsCatalog>(),
+    sp.GetRequiredService<IModelGatewayTelemetry>(),
+    sp.GetService<IProviderProfileResolver>()));
 builder.Services.AddSingleton<ICapabilityCatalogService, RuntimeCapabilityCatalogService>();
 builder.Services.AddSingleton<IConversationWriteBehindQueue, ConversationWriteBehindQueue>();
 builder.Services.AddSingleton<IBackendControlPlane, BackendControlPlane>();

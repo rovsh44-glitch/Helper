@@ -26,6 +26,7 @@ namespace Helper.Runtime.Infrastructure
 
         private async Task<float[]> EmbedInternalAsync(string text, CancellationToken ct)
         {
+            var settings = GetRuntimeSettingsSnapshot();
             var candidates = BuildEmbeddingCandidates(text).ToList();
             string? lastFailure = null;
             Exception? lastException = null;
@@ -40,16 +41,20 @@ namespace Helper.Runtime.Infrastructure
 
                     try
                     {
-                        using var response = await _httpClient.PostAsync(
-                            "/api/embeddings",
-                            new StringContent(JsonSerializer.Serialize(new { model = "nomic-embed-text:latest", prompt = candidate }), Encoding.UTF8, "application/json"),
-                            requestCts.Token);
+                        var payload = settings.TransportKind == AiTransportKind.OpenAiCompatible
+                            ? JsonSerializer.Serialize(new { model = ResolveEmbeddingModel(settings), input = candidate })
+                            : JsonSerializer.Serialize(new { model = ResolveEmbeddingModel(settings), prompt = candidate });
+                        using var request = CreateRequest(
+                            HttpMethod.Post,
+                            settings,
+                            settings.TransportKind == AiTransportKind.OpenAiCompatible ? "/embeddings" : "/api/embeddings",
+                            payload);
+                        using var response = await _httpClient.SendAsync(request, requestCts.Token);
 
                         if (response.IsSuccessStatusCode)
                         {
                             var json = await response.Content.ReadAsStringAsync(requestCts.Token);
-                            using var doc = JsonDocument.Parse(json);
-                            var embedding = doc.RootElement.GetProperty("embedding").EnumerateArray().Select(x => (float)x.GetDouble()).ToArray();
+                            var embedding = ParseEmbeddingPayload(json, settings.TransportKind);
                             if (embedWatch.ElapsedMilliseconds >= 5_000)
                             {
                                 Console.WriteLine($"[AILink] Slow embedding completed. Attempt={attempt};chars={candidate.Length};elapsedMs={embedWatch.ElapsedMilliseconds}");
@@ -89,6 +94,22 @@ namespace Helper.Runtime.Infrastructure
             }
 
             throw lastException ?? new HttpRequestException("Embedding endpoint failed for all candidate payloads.");
+        }
+
+        private static float[] ParseEmbeddingPayload(string json, AiTransportKind transportKind)
+        {
+            using var doc = JsonDocument.Parse(json);
+            if (transportKind == AiTransportKind.OpenAiCompatible)
+            {
+                if (!doc.RootElement.TryGetProperty("data", out var dataNode) || dataNode.ValueKind != JsonValueKind.Array || dataNode.GetArrayLength() == 0)
+                {
+                    return Array.Empty<float>();
+                }
+
+                return dataNode[0].GetProperty("embedding").EnumerateArray().Select(x => (float)x.GetDouble()).ToArray();
+            }
+
+            return doc.RootElement.GetProperty("embedding").EnumerateArray().Select(x => (float)x.GetDouble()).ToArray();
         }
 
         private static IEnumerable<string> BuildEmbeddingCandidates(string text)

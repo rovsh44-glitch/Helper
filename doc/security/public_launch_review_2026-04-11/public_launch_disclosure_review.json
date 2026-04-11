@@ -1,0 +1,520 @@
+﻿{
+    "generatedAtUtc":  "2026-04-11T05:50:55.6392730+00:00",
+    "policyVersion":  "2026-03-24",
+    "publicationModel":  "private_core_plus_public_showcase",
+    "verdict":  "BLOCK_DIRECT_PUBLISH",
+    "directPublishAllowed":  false,
+    "candidateFileCount":  1419,
+    "publicSafeCount":  14,
+    "privateOnlyCount":  1387,
+    "reviewRequiredCount":  18,
+    "secretScan":  {
+                       "exitCode":  0,
+                       "hitCount":  0,
+                       "reportPath":  "temp/public_launch_review_internal/secret_scan_report.json"
+                   },
+    "rootLayout":  {
+                       "exitCode":  0,
+                       "rootViolationCount":  0,
+                       "sourceFatalViolationCount":  0,
+                       "sourceWarningCount":  0,
+                       "reportPath":  "temp/public_launch_review_internal/root_layout_report.json"
+                   },
+    "notes":  [
+                  "Candidate files contain private-core or operator-only surfaces that are outside the public showcase allowlist.",
+                  "Candidate files remain under default-deny review and are not approved for public publication."
+              ],
+    "samplePublicSafePaths":  [
+                                  ".github/ISSUE_TEMPLATE/apply-as-blind-reviewer.yml",
+                                  ".github/ISSUE_TEMPLATE/config.yml",
+                                  ".github/ISSUE_TEMPLATE/request-demo-or-contact.yml",
+                                  ".github/ISSUE_TEMPLATE/submit-web-research-prompt.yml",
+                                  "CONTACT.md",
+                                  "CONTRIBUTING.md",
+                                  "docs/architecture-overview.md",
+                                  "docs/one-pager.md",
+                                  "docs/product-roadmap.md",
+                                  "docs/use-cases.md",
+                                  "FAQ.md",
+                                  "media/README.md",
+                                  "README.md",
+                                  "SECURITY.md"
+                              ],
+    "samplePrivateOnlyPaths":  [
+                                   ".env.local.example",
+                                   ".gitignore",
+                                   ".ignore",
+                                   "App.tsx",
+                                   "components/capabilityCoveragePanel.module.css",
+                                   "components/CapabilityCoveragePanel.tsx",
+                                   "components/DiffViewer.tsx",
+                                   "components/FileTree.tsx",
+                                   "components/GoalPanel.tsx",
+                                   "components/HumanLikeConversationDashboardPanel.tsx",
+                                   "components/IndexingPanel.tsx",
+                                   "components/layout/PanelResizeHandle.tsx",
+                                   "components/ResearchCard.tsx",
+                                   "components/runtime-console/runtimeConsole.module.css",
+                                   "components/runtime-console/RuntimeConsoleLogsPanel.tsx",
+                                   "components/runtime-console/RuntimeConsolePresentation.tsx",
+                                   "components/runtime-console/RuntimeConsoleSidebar.tsx",
+                                   "components/runtime-console/RuntimeConsoleTelemetryDeck.tsx",
+                                   "components/settings/SettingsAlertsPanel.tsx",
+                                   "components/settings/SettingsConversationStylePanel.tsx",
+                                   "components/settings/SettingsInfrastructurePanel.tsx",
+                                   "components/settings/SettingsMemoryItemsPanel.tsx",
+                                   "components/settings/SettingsMemoryPolicyPanel.tsx",
+                                   "components/settings/SettingsPersonalizationPanel.tsx",
+                                   "components/settings/SettingsProjectContextPanel.tsx",
+                                   "components/settings/SettingsProviderProfilesPanel.tsx",
+                                   "components/settings/SettingsRuntimeDoctorPanel.tsx",
+                                   "components/settings/SettingsSecurityPanel.tsx",
+                                   "components/settings/SettingsViewHeader.tsx",
+                                   "components/Sidebar.tsx",
+                                   "components/StrategicMindMap.tsx",
+                                   "components/ThoughtStream.tsx",
+                                   "components/ThoughtTree.tsx",
+                                   "components/views/ActiveStreamingMessage.tsx",
+                                   "components/views/AssistantDiagnosticsDeck.tsx",
+                                   "components/views/BuilderNodeSheet.tsx",
+                                   "components/views/BuilderProjectLauncher.tsx",
+                                   "components/views/BuilderView.tsx",
+                                   "components/views/BuilderWorkspaceContent.tsx",
+                                   "components/views/BuilderWorkspaceSidebar.tsx"
+                               ],
+    "sampleReviewRequiredPaths":  [
+                                      ".github/workflows/repo-gate.yml",
+                                      ".github/workflows/runtime-test-lanes.yml",
+                                      "LICENSE",
+                                      "slice/runtime-review/openapi/.gitkeep",
+                                      "slice/runtime-review/openapi/runtime-review-openapi.json",
+                                      "slice/runtime-review/README.md",
+                                      "slice/runtime-review/sample_data/evolution_status.json",
+                                      "slice/runtime-review/sample_data/indexing_queue.json",
+                                      "slice/runtime-review/sample_data/logs/indexing-worker.log",
+                                      "slice/runtime-review/sample_data/logs/runtime-main.log",
+                                      "slice/runtime-review/sample_data/readiness.json",
+                                      "slice/runtime-review/sample_data/README.md",
+                                      "slice/runtime-review/sample_data/route_telemetry.jsonl",
+                                      "slice/runtime-review/web/index.html",
+                                      "slice/runtime-review/web/src/App.tsx",
+                                      "slice/runtime-review/web/src/main.tsx",
+                                      "slice/runtime-review/web/src/styles.css",
+                                      "vite.runtime-slice.config.ts"
+                                  ],
+    "groupedByTopLevel":  [
+                              {
+                                  "topLevel":  "src",
+                                  "total":  721,
+                                  "publicSafe":  0,
+                                  "privateOnly":  721,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "test",
+                                  "total":  202,
+                                  "publicSafe":  0,
+                                  "privateOnly":  202,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "scripts",
+                                  "total":  180,
+                                  "publicSafe":  0,
+                                  "privateOnly":  180,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "doc",
+                                  "total":  124,
+                                  "publicSafe":  0,
+                                  "privateOnly":  124,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "components",
+                                  "total":  51,
+                                  "publicSafe":  0,
+                                  "privateOnly":  51,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "hooks",
+                                  "total":  28,
+                                  "publicSafe":  0,
+                                  "privateOnly":  28,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "services",
+                                  "total":  23,
+                                  "publicSafe":  0,
+                                  "privateOnly":  23,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "slice",
+                                  "total":  17,
+                                  "publicSafe":  0,
+                                  "privateOnly":  3,
+                                  "reviewRequired":  14
+                              },
+                              {
+                                  "topLevel":  "mcp_config",
+                                  "total":  6,
+                                  "publicSafe":  0,
+                                  "privateOnly":  6,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  ".github",
+                                  "total":  6,
+                                  "publicSafe":  4,
+                                  "privateOnly":  0,
+                                  "reviewRequired":  2
+                              },
+                              {
+                                  "topLevel":  "contexts",
+                                  "total":  5,
+                                  "publicSafe":  0,
+                                  "privateOnly":  5,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "docs",
+                                  "total":  4,
+                                  "publicSafe":  4,
+                                  "privateOnly":  0,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "utils",
+                                  "total":  4,
+                                  "publicSafe":  0,
+                                  "privateOnly":  4,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "modules",
+                                  "total":  3,
+                                  "publicSafe":  0,
+                                  "privateOnly":  3,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "postcss.config.cjs",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  1,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "metadata.json",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  1,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "README.md",
+                                  "total":  1,
+                                  "publicSafe":  1,
+                                  "privateOnly":  0,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "prune_queue.ps1",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  1,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "monitor_indexing.ps1",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  1,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "package.json",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  1,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "personality.json",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  1,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "package-lock.json",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  1,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "types.ts",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  1,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "tsconfig.json",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  1,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "vite.config.ts",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  1,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "vite.shared.config.mjs",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  1,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "vite.runtime-slice.config.ts",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  0,
+                                  "reviewRequired":  1
+                              },
+                              {
+                                  "topLevel":  "tailwind.config.cjs",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  1,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "Run_Helper_Integrated.bat",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  1,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "Run_Helper.bat",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  1,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "searxng",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  1,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "vite-env.d.ts",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  1,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "SECURITY.md",
+                                  "total":  1,
+                                  "publicSafe":  1,
+                                  "privateOnly":  0,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "Directory.Build.rsp",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  1,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "Directory.Build.props",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  1,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "delete_format_duplicates.ps1",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  1,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "eval_live_monitor.json",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  1,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "docker-compose.yml",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  1,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "Directory.Build.targets",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  1,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "delete_duplicates.ps1",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  1,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  ".ignore",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  1,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  ".gitignore",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  1,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  ".env.local.example",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  1,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "CONTRIBUTING.md",
+                                  "total":  1,
+                                  "publicSafe":  1,
+                                  "privateOnly":  0,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "CONTACT.md",
+                                  "total":  1,
+                                  "publicSafe":  1,
+                                  "privateOnly":  0,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "App.tsx",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  1,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "index.html",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  1,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "index.css",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  1,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "Helper.sln",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  1,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "media",
+                                  "total":  1,
+                                  "publicSafe":  1,
+                                  "privateOnly":  0,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "LICENSE",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  0,
+                                  "reviewRequired":  1
+                              },
+                              {
+                                  "topLevel":  "index.tsx",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  1,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "find_redundant_folders.ps1",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  1,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "find_duplicates_all.ps1",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  1,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "find_duplicates.ps1",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  1,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "FAQ.md",
+                                  "total":  1,
+                                  "publicSafe":  1,
+                                  "privateOnly":  0,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "find_duplicates_by_size.ps1",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  1,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "find_duplicates_by_name.ps1",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  1,
+                                  "reviewRequired":  0
+                              },
+                              {
+                                  "topLevel":  "find_duplicates_by_basename.ps1",
+                                  "total":  1,
+                                  "publicSafe":  0,
+                                  "privateOnly":  1,
+                                  "reviewRequired":  0
+                              }
+                          ]
+}

@@ -528,8 +528,13 @@ public partial class MainWindow : global::System.Windows.Window
     private sealed class TempDirectoryScope : IDisposable
     {
         public TempDirectoryScope()
+            : this("helper_template_e2e_")
         {
-            Path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "helper_template_e2e_" + Guid.NewGuid().ToString("N"));
+        }
+
+        public TempDirectoryScope(string prefix)
+        {
+            Path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), prefix + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(Path);
         }
 

@@ -18,7 +18,7 @@ $markdownReportPath = Join-Path $OutputDirectory "REPO_HYGIENE_REPORT.md"
 $secretExitCode = 0
 $layoutExitCode = 0
 
-& powershell -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "secret_scan.ps1") -ReportPath $secretReportPath
+& powershell -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "secret_scan.ps1") -ScanMode repo -ReportPath $secretReportPath
 $secretExitCode = $LASTEXITCODE
 
 & powershell -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "check_root_layout.ps1") -ReportPath $layoutReportPath

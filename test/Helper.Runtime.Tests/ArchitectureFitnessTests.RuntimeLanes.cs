@@ -9,6 +9,7 @@ public partial class ArchitectureFitnessTests
         var workflow = File.ReadAllText(ResolveWorkspaceFile(".github", "workflows", "runtime-test-lanes.yml"));
         var fastScript = File.ReadAllText(ResolveWorkspaceFile("scripts", "run_fast_tests.ps1"));
         var integrationScript = File.ReadAllText(ResolveWorkspaceFile("scripts", "run_integration_tests.ps1"));
+        var evalScript = File.ReadAllText(ResolveWorkspaceFile("scripts", "run_eval_harness_tests.ps1"));
         var certificationScript = File.ReadAllText(ResolveWorkspaceFile("scripts", "run_certification_tests.ps1"));
         var certificationCompileScript = File.ReadAllText(ResolveWorkspaceFile("scripts", "run_certification_compile_tests.ps1"));
         var certificationCompileLockCheckScript = File.ReadAllText(ResolveWorkspaceFile("scripts", "check_certification_compile_lock_wait.ps1"));
@@ -16,12 +17,14 @@ public partial class ArchitectureFitnessTests
         Assert.Contains("Helper.Runtime.Api.Tests", solution, StringComparison.Ordinal);
         Assert.Contains("Helper.Runtime.Browser.Tests", solution, StringComparison.Ordinal);
         Assert.Contains("Helper.Runtime.Integration.Tests", solution, StringComparison.Ordinal);
+        Assert.Contains("Helper.Runtime.Eval.Tests", solution, StringComparison.Ordinal);
         Assert.Contains("Helper.Runtime.Certification.Tests", solution, StringComparison.Ordinal);
         Assert.Contains("Helper.Runtime.Certification.Compile.Tests", solution, StringComparison.Ordinal);
 
         Assert.Contains("dotnet restore Helper.sln", workflow, StringComparison.Ordinal);
         Assert.Contains("./scripts/run_fast_tests.ps1 -Configuration Debug -NoRestore", workflow, StringComparison.Ordinal);
         Assert.Contains("./scripts/run_integration_tests.ps1 -Configuration Debug -NoRestore", workflow, StringComparison.Ordinal);
+        Assert.Contains("./scripts/run_eval_harness_tests.ps1 -Configuration Debug -NoRestore", workflow, StringComparison.Ordinal);
         Assert.Contains("./scripts/run_certification_tests.ps1 -Configuration Debug -NoRestore", workflow, StringComparison.Ordinal);
         Assert.Contains("./scripts/run_certification_compile_tests.ps1 -Configuration Debug -NoRestore", workflow, StringComparison.Ordinal);
 
@@ -29,6 +32,7 @@ public partial class ArchitectureFitnessTests
         Assert.Contains("test\\Helper.Runtime.Api.Tests\\Helper.Runtime.Api.Tests.csproj", fastScript, StringComparison.Ordinal);
         Assert.Contains("test\\Helper.Runtime.Browser.Tests\\Helper.Runtime.Browser.Tests.csproj", fastScript, StringComparison.Ordinal);
         Assert.Contains("test\\Helper.Runtime.Integration.Tests\\Helper.Runtime.Integration.Tests.csproj", integrationScript, StringComparison.Ordinal);
+        Assert.Contains("test\\Helper.Runtime.Eval.Tests\\Helper.Runtime.Eval.Tests.csproj", evalScript, StringComparison.Ordinal);
         Assert.Contains("test\\Helper.Runtime.Certification.Tests\\Helper.Runtime.Certification.Tests.csproj", certificationScript, StringComparison.Ordinal);
         Assert.Contains("test\\Helper.Runtime.Certification.Compile.Tests\\Helper.Runtime.Certification.Compile.Tests.csproj", certificationCompileScript, StringComparison.Ordinal);
         Assert.Contains("HELPER_CERTIFICATION_PROCESS_TRACE_PATH", certificationCompileScript, StringComparison.Ordinal);
@@ -119,6 +123,103 @@ public partial class ArchitectureFitnessTests
 
         Assert.Contains("must not own tests that construct `GenerationCompileGate(new DotnetService())`", operatorRunbook, StringComparison.Ordinal);
         Assert.Contains("LocalBuildExecutor(new DotnetService())", operatorRunbook, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Eval_Lane_Has_Explicit_Ownership_And_Does_Not_Leak_Into_Other_Lanes()
+    {
+        var evalProject = File.ReadAllText(ResolveWorkspaceFile("test", "Helper.Runtime.Eval.Tests", "Helper.Runtime.Eval.Tests.csproj"));
+        var certificationProject = File.ReadAllText(ResolveWorkspaceFile("test", "Helper.Runtime.Certification.Tests", "Helper.Runtime.Certification.Tests.csproj"));
+        var apiProject = File.ReadAllText(ResolveWorkspaceFile("test", "Helper.Runtime.Api.Tests", "Helper.Runtime.Api.Tests.csproj"));
+        var apiManifest = File.ReadAllText(ResolveWorkspaceFile("test", "Helper.Runtime.Tests", "Helper.Runtime.Tests.ApiLane.props"));
+        var operatorRunbook = File.ReadAllText(ResolveWorkspaceFile("doc", "operator", "HELPER_RUNTIME_TEST_LANES_2026-04-01.md"));
+
+        Assert.Contains("EvalTestPackageFactory.cs", evalProject, StringComparison.Ordinal);
+        Assert.Contains("EvalHarnessTests.cs", evalProject, StringComparison.Ordinal);
+        Assert.Contains("EvalRunnerV2Tests.cs", evalProject, StringComparison.Ordinal);
+        Assert.Contains("HumanLikeCommunicationEvalTests.cs", evalProject, StringComparison.Ordinal);
+        Assert.Contains("WebResearchParityEvalTests.cs", evalProject, StringComparison.Ordinal);
+
+        Assert.DoesNotContain("EvalTestPackageFactory.cs", certificationProject, StringComparison.Ordinal);
+        Assert.DoesNotContain("EvalHarnessTests.cs", certificationProject, StringComparison.Ordinal);
+        Assert.DoesNotContain("EvalRunnerV2Tests.cs", certificationProject, StringComparison.Ordinal);
+        Assert.DoesNotContain("HumanLikeCommunicationEvalTests.cs", certificationProject, StringComparison.Ordinal);
+        Assert.DoesNotContain("WebResearchParityEvalTests.cs", certificationProject, StringComparison.Ordinal);
+
+        Assert.DoesNotContain("EvalTestPackageFactory.cs", apiProject, StringComparison.Ordinal);
+        Assert.DoesNotContain("HumanLikeCommunicationEvalTests.cs", apiManifest, StringComparison.Ordinal);
+
+        Assert.Contains("Entry point: `scripts/run_eval_harness_tests.ps1`", operatorRunbook, StringComparison.Ordinal);
+        Assert.Contains("EvalOffline", operatorRunbook, StringComparison.Ordinal);
+        Assert.Contains("EvalV2", operatorRunbook, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Ci_Gate_Is_Deterministic_And_Heavy_Steps_Are_Split()
+    {
+        var packageJson = File.ReadAllText(ResolveWorkspaceFile("package.json"));
+        var ciGate = File.ReadAllText(ResolveWorkspaceFile("scripts", "ci_gate.ps1"));
+        var ciGateHeavy = File.ReadAllText(ResolveWorkspaceFile("scripts", "ci_gate_heavy.ps1"));
+        var repoGateWorkflow = File.ReadAllText(ResolveWorkspaceFile(".github", "workflows", "repo-gate.yml"));
+
+        Assert.Contains("\"ci:gate\":", packageJson, StringComparison.Ordinal);
+        Assert.Contains("\"ci:gate:heavy\":", packageJson, StringComparison.Ordinal);
+
+        Assert.Contains("run_fast_tests.ps1", ciGate, StringComparison.Ordinal);
+        Assert.Contains("run_eval_gate.ps1 -NoBuild -NoRestore", ciGate, StringComparison.Ordinal);
+        Assert.Contains("run_tool_benchmark.ps1 -Configuration Debug -NoBuild -NoRestore", ciGate, StringComparison.Ordinal);
+        Assert.Contains("monitoring_gate.ps1", ciGate, StringComparison.Ordinal);
+        Assert.DoesNotContain("run_load_chaos_smoke.ps1", ciGate, StringComparison.Ordinal);
+        Assert.DoesNotContain("run_generation_parity_gate.ps1", ciGate, StringComparison.Ordinal);
+        Assert.DoesNotContain("run_generation_parity_benchmark.ps1", ciGate, StringComparison.Ordinal);
+        Assert.DoesNotContain("run_generation_parity_window_gate.ps1", ciGate, StringComparison.Ordinal);
+        Assert.DoesNotContain("check_backend_control_plane.ps1", ciGate, StringComparison.Ordinal);
+        Assert.DoesNotContain("check_latency_budget.ps1", ciGate, StringComparison.Ordinal);
+        Assert.DoesNotContain("run_ui_workflow_smoke.ps1", ciGate, StringComparison.Ordinal);
+        Assert.DoesNotContain("ui_perf_regression.ps1", ciGate, StringComparison.Ordinal);
+        Assert.DoesNotContain("baseline_capture.ps1", ciGate, StringComparison.Ordinal);
+
+        Assert.Contains("run_load_chaos_smoke.ps1", ciGateHeavy, StringComparison.Ordinal);
+        Assert.Contains("run_generation_parity_gate.ps1", ciGateHeavy, StringComparison.Ordinal);
+        Assert.Contains("run_generation_parity_benchmark.ps1", ciGateHeavy, StringComparison.Ordinal);
+        Assert.Contains("run_generation_parity_window_gate.ps1", ciGateHeavy, StringComparison.Ordinal);
+        Assert.Contains("check_backend_control_plane.ps1", ciGateHeavy, StringComparison.Ordinal);
+        Assert.Contains("check_latency_budget.ps1", ciGateHeavy, StringComparison.Ordinal);
+        Assert.Contains("run_ui_workflow_smoke.ps1", ciGateHeavy, StringComparison.Ordinal);
+        Assert.Contains("ui_perf_regression.ps1", ciGateHeavy, StringComparison.Ordinal);
+        Assert.Contains("baseline_capture.ps1", ciGateHeavy, StringComparison.Ordinal);
+
+        Assert.Contains("Monitoring config", repoGateWorkflow, StringComparison.Ordinal);
+        Assert.Contains("Eval gate", repoGateWorkflow, StringComparison.Ordinal);
+        Assert.Contains("Tool benchmark", repoGateWorkflow, StringComparison.Ordinal);
+        Assert.DoesNotContain("Load/Chaos smoke", repoGateWorkflow, StringComparison.Ordinal);
+        Assert.DoesNotContain("Generation parity gate", repoGateWorkflow, StringComparison.Ordinal);
+        Assert.DoesNotContain("UI workflow smoke", repoGateWorkflow, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Heavy_Report_Scripts_Do_Not_Default_To_Doc_Root_Residue()
+    {
+        var loadChaosScript = File.ReadAllText(ResolveWorkspaceFile("scripts", "load_streaming_chaos.ps1"));
+        var parityGateScript = File.ReadAllText(ResolveWorkspaceFile("scripts", "run_generation_parity_gate.ps1"));
+        var parityBenchmarkScript = File.ReadAllText(ResolveWorkspaceFile("scripts", "run_generation_parity_benchmark.ps1"));
+        var parityWindowScript = File.ReadAllText(ResolveWorkspaceFile("scripts", "run_generation_parity_window_gate.ps1"));
+        var parityNightlyScript = File.ReadAllText(ResolveWorkspaceFile("scripts", "run_generation_parity_nightly.ps1"));
+
+        Assert.Contains("temp/verification/heavy/load_streaming_chaos_report.md", loadChaosScript, StringComparison.Ordinal);
+        Assert.DoesNotContain("doc/load_streaming_chaos_report.md", loadChaosScript, StringComparison.Ordinal);
+
+        Assert.Contains("temp/verification/heavy/HELPER_PARITY_GATE_", parityGateScript, StringComparison.Ordinal);
+        Assert.DoesNotContain("doc/HELPER_PARITY_GATE_", parityGateScript, StringComparison.Ordinal);
+
+        Assert.Contains("temp/verification/heavy/HELPER_GENERATION_PARITY_BENCHMARK_", parityBenchmarkScript, StringComparison.Ordinal);
+        Assert.DoesNotContain("doc/HELPER_GENERATION_PARITY_BENCHMARK_", parityBenchmarkScript, StringComparison.Ordinal);
+
+        Assert.Contains("temp/verification/heavy/HELPER_PARITY_WINDOW_GATE_", parityWindowScript, StringComparison.Ordinal);
+        Assert.DoesNotContain("doc/HELPER_PARITY_WINDOW_GATE_", parityWindowScript, StringComparison.Ordinal);
+
+        Assert.Contains("temp/verification/parity_nightly", parityNightlyScript, StringComparison.Ordinal);
+        Assert.DoesNotContain("doc/parity_nightly", parityNightlyScript, StringComparison.Ordinal);
     }
 
     [Fact]

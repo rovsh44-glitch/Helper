@@ -1,5 +1,5 @@
 param(
-    [string]$OutDir = "doc/parity_nightly",
+    [string]$OutDir = "temp/verification/parity_nightly",
     [switch]$SkipBuild,
     [switch]$SkipTests,
     [switch]$AllowIncompleteWindow,
@@ -20,7 +20,7 @@ $certificationGatePath = Join-Path $nightlyDir ("HELPER_TEMPLATE_CERTIFICATION_G
 
 if (-not $SkipBuild.IsPresent) {
     Write-Host "[ParityNightly] Build..."
-    dotnet build Helper.sln -c Debug
+dotnet build Helper.sln -c Debug -m:1
     if ($LASTEXITCODE -ne 0) {
         throw "[ParityNightly] Build failed."
     }

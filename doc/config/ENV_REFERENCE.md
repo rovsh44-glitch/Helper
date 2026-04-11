@@ -1,6 +1,6 @@
-# HELPER Environment Reference
+﻿# HELPER Environment Reference
 
-Generated: `2026-03-16 17:20:58 UTC`
+Generated: `2026-04-10 20:04:35 UTC`
 Source of truth: `src/Helper.Api/Backend/Configuration/BackendEnvironmentInventory.cs`
 
 This reference covers the governed configuration surface for:
@@ -62,6 +62,9 @@ Unknown names in `.env.local.example` are treated as repo drift. Deprecated name
 | `HELPER_MODEL_TIMEOUT_MAINTENANCE_SEC` | `int` | `60` | `backend_runtime` | Maintenance call timeout.; range: `3`..`600` |
 | `HELPER_MODEL_FAST` | `string` | none | `backend_runtime` | Optional fast-model override / fallback route. |
 | `HELPER_MODEL_REASONING` | `string` | none | `backend_runtime` | Optional reasoning-model override / fallback route. |
+| `HELPER_MODEL_LONG_CONTEXT` | `string` | none | `backend_runtime` | Optional long-context reasoning model override. |
+| `HELPER_MODEL_DEEP_REASONING` | `string` | none | `backend_runtime` | Optional deep-reasoning model override. |
+| `HELPER_MODEL_VERIFIER` | `string` | none | `backend_runtime` | Optional verifier / critic model override for reasoning checks. |
 | `HELPER_MODEL_CRITIC` | `string` | none | `backend_runtime` | Optional critic-model override / fallback route. |
 | `HELPER_MODEL_SAFE_FALLBACK` | `string` | none | `backend_runtime` | Optional safe fallback model name. |
 
@@ -95,6 +98,29 @@ Unknown names in `.env.local.example` are treated as repo drift. Deprecated name
 | `HELPER_GROUNDING_CASUAL_CHAT_ENABLED` | `bool` | `false` | `backend_runtime` | Allow grounding for casual chat. |
 | `HELPER_RESEARCH_MAX_SOURCES` | `int` | `8` | `backend_runtime` | Maximum grounded sources per response.; range: `1`..`64` |
 | `HELPER_RESEARCH_BACKGROUND_BUDGET` | `int` | `1` | `backend_runtime` | Background research parallelism budget.; range: `0`..`16` |
+| `HELPER_WEB_SEARCH_LOCAL_URL` | `url` | `http://localhost:8080` | `backend_runtime` | Primary local web-search endpoint used by the local provider adapter. |
+| `HELPER_WEB_SEARCH_SEARX_URL` | `url` | none | `backend_runtime` | Optional secondary Searx-compatible endpoint used for graceful failover. |
+| `HELPER_WEB_SEARCH_PROVIDER_ORDER` | `csv` | `local,searx` | `backend_runtime` | Ordered provider IDs for web-search failover. Supported values currently include `local,searx`. |
+| `HELPER_WEB_SEARCH_PROVIDER_TIMEOUT_SEC` | `int` | `4` | `backend_runtime` | Per-provider web-search timeout before mux failover.; range: `1`..`30` |
+| `HELPER_WEB_SEARCH_COST_BUDGET_UNITS` | `int` | `3` | `backend_runtime` | Base cost budget units for provider selection per search turn before policy adjustments by search mode.; range: `0`..`8` |
+| `HELPER_WEB_SEARCH_LATENCY_BUDGET_MS` | `int` | `3500` | `backend_runtime` | Base total latency budget for provider selection per search turn before policy adjustments by search mode.; range: `250`..`30000` |
+| `HELPER_WEB_SEARCH_PROVIDER_COOLDOWN_SEC` | `int` | `45` | `backend_runtime` | Cooldown window applied after consecutive provider timeouts or errors trip health thresholds.; range: `5`..`600` |
+| `HELPER_WEB_SEARCH_PROVIDER_MAX_CONSECUTIVE_TIMEOUTS` | `int` | `2` | `backend_runtime` | Consecutive timeout threshold before a provider enters cooldown.; range: `1`..`10` |
+| `HELPER_WEB_SEARCH_PROVIDER_MAX_CONSECUTIVE_ERRORS` | `int` | `2` | `backend_runtime` | Consecutive error threshold before a provider enters cooldown.; range: `1`..`10` |
+| `HELPER_WEB_SEARCH_PROVIDER_SLOW_LATENCY_MS` | `int` | `1200` | `backend_runtime` | Rolling latency threshold after which a provider is considered degraded for selection scoring.; range: `100`..`30000` |
+| `HELPER_WEB_SEARCH_MAX_ITERATIONS` | `int` | `3` | `backend_runtime` | Maximum iterative web-search passes per request.; range: `1`..`3` |
+| `HELPER_WEB_FETCH_MAX_REDIRECTS` | `int` | `3` | `backend_runtime` | Maximum redirect hops allowed during provider/page fetch before the request is blocked.; range: `0`..`5` |
+| `HELPER_WEB_FETCH_USE_PROXY` | `bool` | `false` | `backend_runtime` | Whether outbound page/document fetches should honor the system proxy configuration. Defaults to false to avoid broken local proxy interception in offline/dev runtimes. |
+| `HELPER_WEB_PAGE_FETCH_TIMEOUT_SEC` | `int` | `6` | `backend_runtime` | Per-page fetch timeout for full-page evidence retrieval.; range: `1`..`20` |
+| `HELPER_WEB_PAGE_MAX_BYTES` | `int` | `400000` | `backend_runtime` | Maximum bytes admitted for a single fetched page before extraction is aborted.; range: `16384`..`2000000` |
+| `HELPER_WEB_PAGE_MAX_FETCHES_PER_SEARCH` | `int` | `3` | `backend_runtime` | Maximum fetched pages per search session after search hits are selected.; range: `1`..`6` |
+| `HELPER_WEB_RENDER_ENABLED` | `bool` | `true` | `backend_runtime` | Enables isolated browser-render fallback for JS-heavy pages after normal HTTP extraction is insufficient. |
+| `HELPER_WEB_RENDER_MAX_PAGES_PER_SEARCH` | `int` | `1` | `backend_runtime` | Maximum pages per search session that may use browser-render fallback.; range: `0`..`3` |
+| `HELPER_WEB_RENDER_TIMEOUT_SEC` | `int` | `8` | `backend_runtime` | Timeout for a single browser-render fallback page load.; range: `2`..`20` |
+| `HELPER_WEB_RENDER_MAX_HTML_CHARS` | `int` | `300000` | `backend_runtime` | Maximum rendered HTML characters retained from browser-render fallback before extraction.; range: `16384`..`1000000` |
+| `HELPER_WEB_EVIDENCE_GENERAL_STALE_MINUTES` | `int` | `20` | `backend_runtime` | Maximum age before general web evidence is treated as stale and refreshed or disclosed.; range: `1`..`1440` |
+| `HELPER_WEB_EVIDENCE_VOLATILE_STALE_MINUTES` | `int` | `30` | `backend_runtime` | Maximum age before volatile categories such as finance/news/weather are treated as stale.; range: `1`..`240` |
+| `HELPER_WEB_EVIDENCE_SOFTWARE_STALE_MINUTES` | `int` | `360` | `backend_runtime` | Maximum age before software-version or release evidence is treated as stale.; range: `5`..`10080` |
 
 ## Transport
 
@@ -165,6 +191,7 @@ Unknown names in `.env.local.example` are treated as repo drift. Deprecated name
 | --- | --- | --- | --- | --- |
 | `HELPER_RUNTIME_SMOKE_API_BASE` | `url` | none | `script_runtime` | API base URL used by runtime smoke and CI gates. |
 | `HELPER_RUNTIME_SMOKE_UI_URL` | `url` | none | `script_runtime` | UI URL used by runtime UI perf smoke. |
+| `HELPER_NUGET_SECURITY_GATE_MODE` | `string` | `unset` | `script_runtime` | Overrides the NuGet security gate execution mode used by ci_gate.; allowed: `strict-online`, `best-effort-local`; When unset, scripts/ci_gate.ps1 derives strict-online only when CI=true and otherwise uses best-effort-local. |
 | `HELPER_REMEDIATION_LOCK` | `bool` | `unset` | `script_runtime` | Explicit remediation freeze guard. CI expects `1` when freeze is active. |
 
 ## Local Template Rules
@@ -187,5 +214,4 @@ Unknown names in `.env.local.example` are treated as repo drift. Deprecated name
 - `scripts/write_chunking_post_cutover_validation.ps1`
 - `scripts/run_ordered_library_indexing.ps1`
 - `scripts/run_v2_pilot_reindex.ps1`
-
 

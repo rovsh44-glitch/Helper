@@ -1,0 +1,125 @@
+name: repo-gate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+concurrency:
+  group: repo-gate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  repo_gate:
+    runs-on: windows-latest
+    env:
+      CI: "true"
+      HELPER_NUGET_SECURITY_GATE_MODE: strict-online
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install frontend dependencies
+        shell: pwsh
+        run: npm ci
+
+      - name: Restore solution
+        shell: pwsh
+        run: dotnet restore Helper.sln
+
+      - name: Secret scan
+        shell: pwsh
+        run: ./scripts/secret_scan.ps1 -ScanMode repo
+
+      - name: Root layout
+        shell: pwsh
+        run: ./scripts/check_root_layout.ps1
+
+      - name: Config governance
+        shell: pwsh
+        run: ./scripts/check_env_governance.ps1
+
+      - name: R&D governance
+        shell: pwsh
+        run: ./scripts/check_rd_governance.ps1
+
+      - name: Execution step closure
+        shell: pwsh
+        run: ./scripts/check_execution_step_closure.ps1
+
+      - name: Docs entrypoints
+        shell: pwsh
+        run: ./scripts/check_docs_entrypoints.ps1
+
+      - name: Trailing-space directories
+        shell: pwsh
+        run: ./scripts/check_trailing_space_dirs.ps1
+
+      - name: UI API consistency
+        shell: pwsh
+        run: ./scripts/check_ui_api_usage.ps1
+
+      - name: Frontend architecture
+        shell: pwsh
+        run: ./scripts/check_frontend_architecture.ps1 -SkipApiBoundary
+
+      - name: NuGet security gate
+        shell: pwsh
+        run: ./scripts/nuget_security_gate.ps1 -ExecutionMode strict-online
+
+      - name: Solution build coverage
+        shell: pwsh
+        run: ./scripts/check_solution_build_coverage.ps1
+
+      - name: Build solution
+        shell: pwsh
+        run: dotnet build Helper.sln -m:1 --no-restore
+
+      - name: Fast runtime lane
+        shell: pwsh
+        run: ./scripts/run_fast_tests.ps1 -Configuration Debug -NoBuild -NoRestore
+
+      - name: Eval gate
+        shell: pwsh
+        run: ./scripts/run_eval_gate.ps1 -NoBuild -NoRestore
+
+      - name: Tool benchmark
+        shell: pwsh
+        run: ./scripts/run_tool_benchmark.ps1 -Configuration Debug -NoBuild -NoRestore
+
+      - name: OpenAPI gate
+        shell: pwsh
+        run: ./scripts/openapi_gate.ps1
+
+      - name: Generated client diff
+        shell: pwsh
+        run: ./scripts/generated_client_diff_gate.ps1
+
+      - name: Monitoring config
+        shell: pwsh
+        run: ./scripts/monitoring_gate.ps1
+
+      - name: Frontend build verification
+        shell: pwsh
+        run: ./scripts/build_frontend_verification.ps1 -RequireRebuild
+
+      - name: Bundle budget
+        shell: pwsh
+        run: ./scripts/check_bundle_budget.ps1

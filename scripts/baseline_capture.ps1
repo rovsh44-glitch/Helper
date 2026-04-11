@@ -619,7 +619,7 @@ $localVerification = @(
 
         & (Join-Path $PSScriptRoot "run_dotnet_test_batched.ps1") @wrapperArgs
     }),
-    (Invoke-CheckedStep -Id "securityScan" -Title "Secret scan" -Evidence "local:scripts/secret_scan.ps1" -Action { powershell -ExecutionPolicy Bypass -File scripts\secret_scan.ps1 }),
+    (Invoke-CheckedStep -Id "securityScan" -Title "Secret scan" -Evidence "local:scripts/secret_scan.ps1 -ScanMode repo" -Action { powershell -ExecutionPolicy Bypass -File scripts\secret_scan.ps1 -ScanMode repo }),
     (Invoke-CheckedStep -Id "configGovernance" -Title "Config governance" -Evidence "local:scripts/check_env_governance.ps1" -Action { powershell -ExecutionPolicy Bypass -File scripts\check_env_governance.ps1 }),
     (Invoke-CheckedStep -Id "docsGate" -Title "Docs entrypoints" -Evidence "local:scripts/check_docs_entrypoints.ps1" -Action { powershell -ExecutionPolicy Bypass -File scripts\check_docs_entrypoints.ps1 }),
     (Invoke-CheckedStep -Id "apiUiBoundary" -Title "UI/API boundary" -Evidence "local:scripts/check_ui_api_usage.ps1" -Action { powershell -ExecutionPolicy Bypass -File scripts\check_ui_api_usage.ps1 }),

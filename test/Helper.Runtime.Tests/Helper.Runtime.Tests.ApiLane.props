@@ -93,9 +93,6 @@
     <RuntimeApiLaneCompile Include="$(MSBuildThisFileDirectory)HumanLikeConversationDashboardServiceTests.cs">
       <Link>HumanLikeConversationDashboardServiceTests.cs</Link>
     </RuntimeApiLaneCompile>
-    <RuntimeApiLaneCompile Include="$(MSBuildThisFileDirectory)HumanLikeCommunicationEvalTests.cs">
-      <Link>HumanLikeCommunicationEvalTests.cs</Link>
-    </RuntimeApiLaneCompile>
     <RuntimeApiLaneCompile Include="$(MSBuildThisFileDirectory)InteractionPolicyProjectorTests.cs">
       <Link>InteractionPolicyProjectorTests.cs</Link>
     </RuntimeApiLaneCompile>
@@ -131,6 +128,9 @@
     </RuntimeApiLaneCompile>
     <RuntimeApiLaneCompile Include="$(MSBuildThisFileDirectory)ProviderProfileStoreTests.cs">
       <Link>ProviderProfileStoreTests.cs</Link>
+    </RuntimeApiLaneCompile>
+    <RuntimeApiLaneCompile Include="$(MSBuildThisFileDirectory)ProviderProfileEndpointRuntimeIntegrationTests.cs">
+      <Link>ProviderProfileEndpointRuntimeIntegrationTests.cs</Link>
     </RuntimeApiLaneCompile>
     <RuntimeApiLaneCompile Include="$(MSBuildThisFileDirectory)ProviderProfileValidatorTests.cs">
       <Link>ProviderProfileValidatorTests.cs</Link>

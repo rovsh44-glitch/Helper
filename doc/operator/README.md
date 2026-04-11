@@ -43,17 +43,22 @@ This is the operator-facing entry point for running, checking, and certifying HE
 2. run `powershell -ExecutionPolicy Bypass -File scripts\run_ui_workflow_smoke.ps1`
 3. inspect `temp\verification\ui_workflow_smoke.md`
 
-### Run Public Test Lanes
+### Run Runtime Test Lanes
 
-1. default public lane:
-   - `dotnet test Helper.sln -c Debug --no-build -m:1`
-2. explicit compile-path lane:
-   - `powershell -ExecutionPolicy Bypass -File scripts\run_compile_path_tests.ps1 -Configuration Debug -NoBuild`
+1. fast lane:
+   - `powershell -ExecutionPolicy Bypass -File scripts\run_fast_tests.ps1 -Configuration Debug`
+2. integration lane:
+   - `powershell -ExecutionPolicy Bypass -File scripts\run_integration_tests.ps1 -Configuration Debug`
+3. eval lane:
+   - `powershell -ExecutionPolicy Bypass -File scripts\run_eval_harness_tests.ps1 -Configuration Debug`
+   - owns `Eval`, `EvalOffline`, `EvalV2`, and eval-package preparation coverage
+4. certification lane:
+   - `powershell -ExecutionPolicy Bypass -File scripts\run_certification_tests.ps1 -Configuration Debug`
+   - owns load/chaos, tool benchmark, lifecycle, routing, and diagnostics coverage
+5. certification compile lane:
+   - `powershell -ExecutionPolicy Bypass -File scripts\run_certification_compile_tests.ps1 -Configuration Debug`
    - owns promotion/certification smoke plus compile-gate integration coverage
-3. explicit eval lane:
-   - `powershell -ExecutionPolicy Bypass -File scripts\run_eval_harness_tests.ps1 -Configuration Debug -NoBuild`
-   - owns heavy benchmark and pass-threshold evaluation coverage
-4. do not put compile-path or eval benchmark coverage back into `Helper.Runtime.Tests`
+6. do not put compile-path or eval benchmark coverage back into `Helper.Runtime.Tests`
 
 ### Inspect Extension Registry
 

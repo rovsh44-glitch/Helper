@@ -14,8 +14,11 @@
     "preview": "vite preview",
     "config:refresh": "powershell -ExecutionPolicy Bypass -File scripts/generate_env_reference.ps1",
     "config:check": "powershell -ExecutionPolicy Bypass -File scripts/check_env_governance.ps1",
+    "solution:coverage": "powershell -ExecutionPolicy Bypass -File scripts/check_solution_build_coverage.ps1",
     "docs:check": "powershell -ExecutionPolicy Bypass -File scripts/check_docs_entrypoints.ps1",
-    "security:scan": "powershell -ExecutionPolicy Bypass -File scripts/secret_scan.ps1",
+    "security:scan": "powershell -ExecutionPolicy Bypass -File scripts/secret_scan.ps1 -ScanMode workspace",
+    "security:scan:repo": "powershell -ExecutionPolicy Bypass -File scripts/secret_scan.ps1 -ScanMode repo",
+    "public:disclosure-review": "powershell -ExecutionPolicy Bypass -File scripts/generate_public_launch_disclosure_review.ps1",
     "api:ui-gate": "powershell -ExecutionPolicy Bypass -File scripts/check_ui_api_usage.ps1",
     "frontend:check": "powershell -ExecutionPolicy Bypass -File scripts/check_frontend_architecture.ps1",
     "api:refresh-openapi-snapshot": "powershell -ExecutionPolicy Bypass -File scripts/refresh_openapi_snapshot.ps1",
@@ -29,7 +32,8 @@
     "tool:benchmark": "powershell -ExecutionPolicy Bypass -File scripts/run_tool_benchmark.ps1",
     "api:generate-client": "powershell -ExecutionPolicy Bypass -File scripts/generate_typed_client.ps1 -Output services/generatedOpenApiSummary.ts",
     "qdrant:migrate-ids": "powershell -ExecutionPolicy Bypass -File scripts/migrate_qdrant_legacy_ids.ps1",
-    "ci:gate": "powershell -ExecutionPolicy Bypass -File scripts/ci_gate.ps1"
+    "ci:gate": "powershell -ExecutionPolicy Bypass -File scripts/ci_gate.ps1",
+    "ci:gate:heavy": "powershell -ExecutionPolicy Bypass -File scripts/ci_gate_heavy.ps1"
   },
   "dependencies": {
     "@microsoft/signalr": "^10.0.0",

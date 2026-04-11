@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Helper.Api.Backend.Configuration;
+using Helper.Api.Backend.Providers;
 using Helper.Runtime.Infrastructure;
 
 namespace Helper.Api.Backend.ModelGateway;
@@ -9,6 +10,7 @@ public sealed class HelperModelGateway : IModelGateway
     private readonly AILink _ai;
     private readonly IBackendOptionsCatalog _options;
     private readonly IModelGatewayTelemetry _telemetry;
+    private readonly IProviderProfileResolver? _providerProfileResolver;
     private readonly SemaphoreSlim _interactivePool;
     private readonly SemaphoreSlim _backgroundPool;
     private readonly SemaphoreSlim _maintenancePool;
@@ -16,11 +18,13 @@ public sealed class HelperModelGateway : IModelGateway
     public HelperModelGateway(
         AILink ai,
         IBackendOptionsCatalog options,
-        IModelGatewayTelemetry telemetry)
+        IModelGatewayTelemetry telemetry,
+        IProviderProfileResolver? providerProfileResolver = null)
     {
         _ai = ai;
         _options = options;
         _telemetry = telemetry;
+        _providerProfileResolver = providerProfileResolver;
         _interactivePool = new SemaphoreSlim(options.ModelGateway.InteractiveConcurrency, options.ModelGateway.InteractiveConcurrency);
         _backgroundPool = new SemaphoreSlim(options.ModelGateway.BackgroundConcurrency, options.ModelGateway.BackgroundConcurrency);
         _maintenancePool = new SemaphoreSlim(options.ModelGateway.MaintenanceConcurrency, options.ModelGateway.MaintenanceConcurrency);
@@ -38,14 +42,26 @@ public sealed class HelperModelGateway : IModelGateway
 
     public string ResolveModel(HelperModelClass modelClass)
     {
+        var profileBinding = _providerProfileResolver?.ResolveModelBinding(modelClass);
+        if (!string.IsNullOrWhiteSpace(profileBinding))
+        {
+            return profileBinding!;
+        }
+
         var category = ResolveCategory(modelClass);
+        var routed = _ai.GetBestModel(category);
+        if (!string.IsNullOrWhiteSpace(routed))
+        {
+            return routed;
+        }
+
         var preferred = ResolveConfiguredFallback(modelClass);
         if (!string.IsNullOrWhiteSpace(preferred))
         {
             return preferred!;
         }
 
-        return _ai.GetBestModel(category);
+        return _ai.GetCurrentModel();
     }
 
     public async Task WarmAsync(HelperModelClass modelClass, CancellationToken ct)

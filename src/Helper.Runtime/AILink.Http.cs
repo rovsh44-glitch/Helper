@@ -7,7 +7,7 @@ namespace Helper.Runtime.Infrastructure
 {
     public partial class AILink
     {
-        private async Task<HttpResponseMessage> PostJsonWithRetryAsync(string endpoint, string payload, CancellationToken ct, int maxAttempts = 6)
+        private async Task<HttpResponseMessage> PostJsonWithRetryAsync(AiProviderRuntimeSettings settings, string endpoint, string payload, CancellationToken ct, int maxAttempts = 6)
         {
             HttpResponseMessage? lastResponse = null;
             for (var attempt = 1; attempt <= Math.Max(maxAttempts, 1); attempt++)
@@ -15,8 +15,8 @@ namespace Helper.Runtime.Infrastructure
                 ct.ThrowIfCancellationRequested();
                 try
                 {
-                    var content = new StringContent(payload, System.Text.Encoding.UTF8, "application/json");
-                    var response = await _httpClient.PostAsync(endpoint, content, ct);
+                    using var request = CreateRequest(HttpMethod.Post, settings, endpoint, payload);
+                    var response = await _httpClient.SendAsync(request, ct);
                     if (response.IsSuccessStatusCode || attempt == maxAttempts)
                     {
                         return response;
@@ -60,7 +60,7 @@ namespace Helper.Runtime.Infrastructure
                 return false;
             }
 
-            if (endpoint.Equals("/api/embeddings", StringComparison.OrdinalIgnoreCase))
+            if (endpoint.EndsWith("/embeddings", StringComparison.OrdinalIgnoreCase))
             {
                 var body = await SafeReadBodyAsync(response, ct);
                 if (body.Contains("input length exceeds the context length", StringComparison.OrdinalIgnoreCase))

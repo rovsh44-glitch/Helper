@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,46 +16,29 @@ namespace Helper.Runtime.Infrastructure
         private static readonly int HttpPooledConnectionLifetimeSeconds = ReadBoundedIntEnvironment("HELPER_AI_HTTP_POOLED_CONNECTION_LIFETIME_SEC", 180, 15, 1800);
         private static readonly int HttpPooledConnectionIdleTimeoutSeconds = ReadBoundedIntEnvironment("HELPER_AI_HTTP_POOLED_CONNECTION_IDLE_TIMEOUT_SEC", 30, 5, 600);
         private readonly HttpClient _httpClient;
-        private string _currentModel;
+        private string _currentModel = "qwen2.5-coder:14b";
         private List<string> _availableModels = new();
         private readonly object _modelCatalogLock = new();
         private readonly SemaphoreSlim _vramLock = new(1, 1);
-
-        public AILink(string baseUrl = "http://localhost:11434", string defaultModel = "qwen2.5-coder:14b")
-        {
-            var handler = new SocketsHttpHandler
-            {
-                PooledConnectionLifetime = TimeSpan.FromSeconds(HttpPooledConnectionLifetimeSeconds),
-                PooledConnectionIdleTimeout = TimeSpan.FromSeconds(HttpPooledConnectionIdleTimeoutSeconds),
-                MaxConnectionsPerServer = 8
-            };
-
-            _httpClient = new HttpClient(handler)
-            {
-                BaseAddress = new Uri(baseUrl),
-                Timeout = TimeSpan.FromSeconds(HttpTimeoutSeconds)
-            };
-            _currentModel = defaultModel;
-        }
+        private AiProviderRuntimeSettings _runtimeSettings = new(AiTransportKind.Ollama, "http://localhost:11434", "qwen2.5-coder:14b");
 
         public async Task DiscoverModelsAsync(CancellationToken ct = default)
         {
+            var settings = GetRuntimeSettingsSnapshot();
             try
             {
-                var response = await _httpClient.GetAsync("/api/tags", ct);
+                var endpoint = settings.TransportKind == AiTransportKind.OpenAiCompatible
+                    ? "/models"
+                    : "/api/tags";
+                using var request = CreateRequest(HttpMethod.Get, settings, endpoint);
+                using var response = await _httpClient.SendAsync(request, ct);
                 if (!response.IsSuccessStatusCode)
                 {
                     return;
                 }
 
                 var json = await response.Content.ReadAsStringAsync(ct);
-                using var doc = JsonDocument.Parse(json);
-                var discovered = doc.RootElement.GetProperty("models")
-                    .EnumerateArray()
-                    .Select(m => m.GetProperty("name").GetString() ?? string.Empty)
-                    .Where(x => !string.IsNullOrWhiteSpace(x))
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .ToList();
+                var discovered = ParseDiscoveredModels(json, settings.TransportKind);
 
                 if (discovered.Count == 0)
                 {
@@ -104,7 +86,13 @@ namespace Helper.Runtime.Infrastructure
                 current = _currentModel;
             }
 
-            var overrideModel = ResolveCategoryOverride(category);
+            var runtimeOverride = ResolveRuntimeCategoryBinding(category);
+            if (!string.IsNullOrWhiteSpace(runtimeOverride))
+            {
+                return runtimeOverride;
+            }
+
+            var overrideModel = ResolveEnvironmentCategoryOverride(category);
             if (!string.IsNullOrWhiteSpace(overrideModel))
             {
                 return overrideModel;
@@ -147,10 +135,16 @@ namespace Helper.Runtime.Infrastructure
 
         public async Task PreloadModelAsync(string category, CancellationToken ct)
         {
+            var settings = GetRuntimeSettingsSnapshot();
+            if (settings.TransportKind == AiTransportKind.OpenAiCompatible)
+            {
+                return;
+            }
+
             var targetModel = GetBestModel(category);
             var requestBody = new { model = targetModel, prompt = string.Empty, keep_alive = 300 };
-            var content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
-            await _httpClient.PostAsync("/api/generate", content, ct);
+            using var request = CreateRequest(HttpMethod.Post, settings, "/api/generate", JsonSerializer.Serialize(requestBody));
+            await _httpClient.SendAsync(request, ct);
         }
 
         private static string SelectPreferredDefaultModel(IReadOnlyList<string> models, string fallback)
@@ -175,7 +169,7 @@ namespace Helper.Runtime.Infrastructure
 
         private string? ResolveVisionFallbackModel()
         {
-            var overrideModel = ResolveCategoryOverride("vision");
+            var overrideModel = ResolveEnvironmentCategoryOverride("vision");
             if (!string.IsNullOrWhiteSpace(overrideModel))
             {
                 return overrideModel;
@@ -200,7 +194,7 @@ namespace Helper.Runtime.Infrastructure
         private string? ResolveRequestFallbackModel(string? base64Image)
             => string.IsNullOrWhiteSpace(base64Image) ? ResolveCoderFallbackModel() : ResolveVisionFallbackModel();
 
-        private static string? ResolveCategoryOverride(string category)
+        private static string? ResolveEnvironmentCategoryOverride(string category)
         {
             var envName = category.ToLowerInvariant() switch
             {

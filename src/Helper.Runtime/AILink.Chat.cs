@@ -51,31 +51,13 @@ namespace Helper.Runtime.Infrastructure
 
         private async Task<string> AskInternalAsync(string prompt, CancellationToken ct, string? overrideModel = null, string? base64Image = null, int keepAliveSeconds = 300, string? systemInstruction = null)
         {
+            var settings = GetRuntimeSettingsSnapshot();
             var modelToUse = overrideModel ?? GetCurrentModel();
-            var contextSize = (modelToUse.Contains("32b") || modelToUse.Contains("Fusion")) ? 32768 : 8192;
-            var temperature = string.IsNullOrWhiteSpace(base64Image) ? 0.6 : 0.1;
-
-            var requestBody = new Dictionary<string, object>
-            {
-                { "model", modelToUse },
-                { "prompt", prompt },
-                { "stream", false },
-                { "keep_alive", keepAliveSeconds },
-                { "options", new { num_ctx = contextSize, temperature } }
-            };
-
-            if (!string.IsNullOrEmpty(systemInstruction))
-            {
-                requestBody["system"] = systemInstruction;
-            }
-
-            if (!string.IsNullOrEmpty(base64Image))
-            {
-                requestBody["images"] = new[] { base64Image };
-            }
-
-            var payload = JsonSerializer.Serialize(requestBody);
-            using var response = await PostJsonWithRetryAsync("/api/generate", payload, ct);
+            using var response = await PostJsonWithRetryAsync(
+                settings,
+                settings.TransportKind == AiTransportKind.OpenAiCompatible ? "/chat/completions" : "/api/generate",
+                BuildAskPayload(settings, modelToUse, prompt, base64Image, keepAliveSeconds, systemInstruction),
+                ct);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -89,19 +71,7 @@ namespace Helper.Runtime.Infrastructure
             }
 
             var json = await response.Content.ReadAsStringAsync(ct);
-            using var doc = JsonDocument.Parse(json);
-            var rawResponse = doc.RootElement.GetProperty("response").GetString() ?? string.Empty;
-
-            if (rawResponse.Contains("<think>"))
-            {
-                var endThink = rawResponse.IndexOf("</think>", StringComparison.Ordinal);
-                if (endThink != -1)
-                {
-                    rawResponse = rawResponse[(endThink + 8)..].Trim();
-                }
-            }
-
-            return rawResponse;
+            return SanitizeAssistantResponse(ExtractAssistantResponse(settings, json));
         }
 
         private async IAsyncEnumerable<string> StreamInternalAsync(
@@ -112,33 +82,13 @@ namespace Helper.Runtime.Infrastructure
             int keepAliveSeconds = 300,
             string? systemInstruction = null)
         {
+            var settings = GetRuntimeSettingsSnapshot();
             var modelToUse = overrideModel ?? GetCurrentModel();
-            var contextSize = (modelToUse.Contains("32b") || modelToUse.Contains("Fusion")) ? 32768 : 8192;
-            var temperature = string.IsNullOrWhiteSpace(base64Image) ? 0.6 : 0.1;
-
-            var requestBody = new Dictionary<string, object>
-            {
-                { "model", modelToUse },
-                { "prompt", prompt },
-                { "stream", true },
-                { "keep_alive", keepAliveSeconds },
-                { "options", new { num_ctx = contextSize, temperature } }
-            };
-
-            if (!string.IsNullOrEmpty(systemInstruction))
-            {
-                requestBody["system"] = systemInstruction;
-            }
-
-            if (!string.IsNullOrEmpty(base64Image))
-            {
-                requestBody["images"] = new[] { base64Image };
-            }
-
-            using var request = new HttpRequestMessage(HttpMethod.Post, "/api/generate")
-            {
-                Content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json")
-            };
+            using var request = CreateRequest(
+                HttpMethod.Post,
+                settings,
+                settings.TransportKind == AiTransportKind.OpenAiCompatible ? "/chat/completions" : "/api/generate",
+                BuildStreamPayload(settings, modelToUse, prompt, base64Image, keepAliveSeconds, systemInstruction));
             using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
             if (!response.IsSuccessStatusCode)
             {
@@ -167,7 +117,7 @@ namespace Helper.Runtime.Infrastructure
                     continue;
                 }
 
-                if (!TryParseStreamChunk(line, out var rawToken, out var isDone))
+                if (!TryParseStreamChunk(settings, line, out var rawToken, out var isDone))
                 {
                     continue;
                 }
@@ -217,8 +167,13 @@ namespace Helper.Runtime.Infrastructure
             return true;
         }
 
-        private static bool TryParseStreamChunk(string line, out string token, out bool done)
+        private static bool TryParseStreamChunk(AiProviderRuntimeSettings settings, string line, out string token, out bool done)
         {
+            if (settings.TransportKind == AiTransportKind.OpenAiCompatible)
+            {
+                return TryParseOpenAiStreamChunk(line, out token, out done);
+            }
+
             token = string.Empty;
             done = false;
             try
@@ -242,6 +197,231 @@ namespace Helper.Runtime.Infrastructure
             }
         }
 
+        private static bool TryParseOpenAiStreamChunk(string line, out string token, out bool done)
+        {
+            token = string.Empty;
+            done = false;
+            var payload = line.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+                ? line["data:".Length..].Trim()
+                : line.Trim();
+            if (string.IsNullOrWhiteSpace(payload))
+            {
+                return false;
+            }
+
+            if (string.Equals(payload, "[DONE]", StringComparison.Ordinal))
+            {
+                done = true;
+                return true;
+            }
+
+            try
+            {
+                using var doc = JsonDocument.Parse(payload);
+                if (!doc.RootElement.TryGetProperty("choices", out var choices) || choices.ValueKind != JsonValueKind.Array || choices.GetArrayLength() == 0)
+                {
+                    return false;
+                }
+
+                var firstChoice = choices[0];
+                if (firstChoice.TryGetProperty("delta", out var delta))
+                {
+                    token = ReadMessageContent(delta, "content");
+                }
+                else if (firstChoice.TryGetProperty("message", out var message))
+                {
+                    token = ReadMessageContent(message, "content");
+                }
+
+                if (firstChoice.TryGetProperty("finish_reason", out var finishReason) &&
+                    finishReason.ValueKind != JsonValueKind.Null &&
+                    !string.IsNullOrWhiteSpace(finishReason.GetString()))
+                {
+                    done = true;
+                }
+
+                return !string.IsNullOrEmpty(token) || done;
+            }
+            catch (JsonException)
+            {
+                return false;
+            }
+        }
+
+        private static string BuildAskPayload(
+            AiProviderRuntimeSettings settings,
+            string model,
+            string prompt,
+            string? base64Image,
+            int keepAliveSeconds,
+            string? systemInstruction)
+        {
+            return settings.TransportKind == AiTransportKind.OpenAiCompatible
+                ? BuildOpenAiCompatiblePayload(model, prompt, base64Image, systemInstruction, stream: false)
+                : BuildOllamaPayload(model, prompt, base64Image, keepAliveSeconds, systemInstruction, stream: false);
+        }
+
+        private static string BuildStreamPayload(
+            AiProviderRuntimeSettings settings,
+            string model,
+            string prompt,
+            string? base64Image,
+            int keepAliveSeconds,
+            string? systemInstruction)
+        {
+            return settings.TransportKind == AiTransportKind.OpenAiCompatible
+                ? BuildOpenAiCompatiblePayload(model, prompt, base64Image, systemInstruction, stream: true)
+                : BuildOllamaPayload(model, prompt, base64Image, keepAliveSeconds, systemInstruction, stream: true);
+        }
+
+        private static string BuildOllamaPayload(string model, string prompt, string? base64Image, int keepAliveSeconds, string? systemInstruction, bool stream)
+        {
+            var contextSize = (model.Contains("32b", StringComparison.OrdinalIgnoreCase) || model.Contains("Fusion", StringComparison.OrdinalIgnoreCase)) ? 32768 : 8192;
+            var temperature = string.IsNullOrWhiteSpace(base64Image) ? 0.6 : 0.1;
+            var requestBody = new Dictionary<string, object>
+            {
+                { "model", model },
+                { "prompt", prompt },
+                { "stream", stream },
+                { "keep_alive", keepAliveSeconds },
+                { "options", new { num_ctx = contextSize, temperature } }
+            };
+
+            if (!string.IsNullOrEmpty(systemInstruction))
+            {
+                requestBody["system"] = systemInstruction;
+            }
+
+            if (!string.IsNullOrEmpty(base64Image))
+            {
+                requestBody["images"] = new[] { base64Image };
+            }
+
+            return JsonSerializer.Serialize(requestBody);
+        }
+
+        private static string BuildOpenAiCompatiblePayload(string model, string prompt, string? base64Image, string? systemInstruction, bool stream)
+        {
+            var messages = new List<object>();
+            if (!string.IsNullOrWhiteSpace(systemInstruction))
+            {
+                messages.Add(new Dictionary<string, object?>
+                {
+                    ["role"] = "system",
+                    ["content"] = systemInstruction
+                });
+            }
+
+            messages.Add(new Dictionary<string, object?>
+            {
+                ["role"] = "user",
+                ["content"] = string.IsNullOrWhiteSpace(base64Image)
+                    ? prompt
+                    : new object[]
+                    {
+                        new Dictionary<string, object?>
+                        {
+                            ["type"] = "text",
+                            ["text"] = prompt
+                        },
+                        new Dictionary<string, object?>
+                        {
+                            ["type"] = "image_url",
+                            ["image_url"] = new Dictionary<string, object?>
+                            {
+                                ["url"] = $"data:image/png;base64,{base64Image}"
+                            }
+                        }
+                    }
+            });
+
+            return JsonSerializer.Serialize(new Dictionary<string, object?>
+            {
+                ["model"] = model,
+                ["stream"] = stream,
+                ["temperature"] = string.IsNullOrWhiteSpace(base64Image) ? 0.6 : 0.1,
+                ["messages"] = messages
+            });
+        }
+
+        private static string ExtractAssistantResponse(AiProviderRuntimeSettings settings, string json)
+        {
+            using var doc = JsonDocument.Parse(json);
+            if (settings.TransportKind != AiTransportKind.OpenAiCompatible)
+            {
+                return doc.RootElement.TryGetProperty("response", out var responseNode)
+                    ? responseNode.GetString() ?? string.Empty
+                    : string.Empty;
+            }
+
+            if (!doc.RootElement.TryGetProperty("choices", out var choices) || choices.ValueKind != JsonValueKind.Array || choices.GetArrayLength() == 0)
+            {
+                return string.Empty;
+            }
+
+            var firstChoice = choices[0];
+            if (firstChoice.TryGetProperty("message", out var message))
+            {
+                return ReadMessageContent(message, "content");
+            }
+
+            return string.Empty;
+        }
+
+        private static string ReadMessageContent(JsonElement parent, string propertyName)
+        {
+            if (!parent.TryGetProperty(propertyName, out var contentNode))
+            {
+                return string.Empty;
+            }
+
+            return contentNode.ValueKind switch
+            {
+                JsonValueKind.String => contentNode.GetString() ?? string.Empty,
+                JsonValueKind.Array => string.Concat(contentNode.EnumerateArray().Select(ReadContentPart)),
+                _ => string.Empty
+            };
+        }
+
+        private static string ReadContentPart(JsonElement element)
+        {
+            if (element.ValueKind == JsonValueKind.String)
+            {
+                return element.GetString() ?? string.Empty;
+            }
+
+            if (element.ValueKind == JsonValueKind.Object)
+            {
+                if (element.TryGetProperty("text", out var textNode))
+                {
+                    return textNode.GetString() ?? string.Empty;
+                }
+
+                if (element.TryGetProperty("content", out var contentNode))
+                {
+                    return contentNode.GetString() ?? string.Empty;
+                }
+            }
+
+            return string.Empty;
+        }
+
+        private static string SanitizeAssistantResponse(string rawResponse)
+        {
+            if (!rawResponse.Contains("<think>", StringComparison.Ordinal))
+            {
+                return rawResponse;
+            }
+
+            var endThink = rawResponse.IndexOf("</think>", StringComparison.Ordinal);
+            if (endThink == -1)
+            {
+                return rawResponse;
+            }
+
+            return rawResponse[(endThink + 8)..].Trim();
+        }
+
         public async Task<T> AskJsonAsync<T>(string prompt, CancellationToken ct, string? overrideModel = null, string? base64Image = null)
         {
             var response = await AskAsync(prompt, ct, overrideModel, base64Image);
@@ -261,9 +441,15 @@ namespace Helper.Runtime.Infrastructure
 
         public async Task ReleaseVramAsync(CancellationToken ct)
         {
+            var settings = GetRuntimeSettingsSnapshot();
+            if (settings.TransportKind == AiTransportKind.OpenAiCompatible)
+            {
+                return;
+            }
+
             var request = new { model = GetCurrentModel(), prompt = string.Empty, keep_alive = 0 };
-            var content = new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json");
-            await _httpClient.PostAsync("/api/generate", content, ct);
+            using var httpRequest = CreateRequest(HttpMethod.Post, settings, "/api/generate", JsonSerializer.Serialize(request));
+            await _httpClient.SendAsync(httpRequest, ct);
         }
     }
 }

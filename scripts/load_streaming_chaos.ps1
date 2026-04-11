@@ -1,13 +1,23 @@
 param(
-    [string]$Solution = "Helper.sln",
-    [string]$ReportPath = "doc/load_streaming_chaos_report.md"
+    [Alias("Solution", "Target")]
+    [string]$ProjectPath = "test\Helper.Runtime.Certification.Tests\Helper.Runtime.Certification.Tests.csproj",
+    [string]$Configuration = "Debug",
+    [switch]$NoBuild,
+    [switch]$NoRestore,
+    [string]$ReportPath = "temp/verification/heavy/load_streaming_chaos_report.md"
 )
 
 $ErrorActionPreference = "Stop"
+Set-StrictMode -Version Latest
+. (Join-Path $PSScriptRoot "common\StrictDotnetFilteredTest.ps1")
 
 Write-Host "[LoadStreamingChaos] Running load/chaos suite..."
-$output = dotnet test $Solution --no-build --filter "Category=Load" 2>&1
-$exitCode = $LASTEXITCODE
+$result = Invoke-StrictDotnetFilteredTest `
+    -ProjectPath $ProjectPath `
+    -Filter "Category=Load" `
+    -Configuration $Configuration `
+    -NoBuild:$NoBuild `
+    -NoRestore:$NoRestore
 
 $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss K"
 $report = @"
@@ -15,21 +25,25 @@ $report = @"
 Generated: $timestamp
 
 ## Command
-dotnet test $Solution --no-build --filter Category=Load
+$($result.CommandDisplay)
 
 ## Exit Code
-$exitCode
+$($result.ExitCode)
 
 ## Raw Output
-$output
+$($result.OutputText)
 "@
 
-Set-Content -Path $ReportPath -Value $report -Encoding UTF8
-Write-Host "[LoadStreamingChaos] Report saved to $ReportPath"
-
-if ($exitCode -ne 0) {
-    throw "[LoadStreamingChaos] Load/chaos suite failed."
+$resolvedReportPath = Resolve-HelperRepoPath -Path $ReportPath
+$reportDirectory = Split-Path -Parent $resolvedReportPath
+if (-not [string]::IsNullOrWhiteSpace($reportDirectory)) {
+    New-Item -ItemType Directory -Path $reportDirectory -Force | Out-Null
 }
+
+Set-Content -Path $resolvedReportPath -Value $report -Encoding UTF8
+Write-Host "[LoadStreamingChaos] Report saved to $resolvedReportPath"
+
+Assert-StrictDotnetFilteredTestSucceeded -Result $result -FailurePrefix "[LoadStreamingChaos]"
 
 Write-Host "[LoadStreamingChaos] Passed."
 

@@ -189,6 +189,28 @@ function Get-SafeBatchName {
     return $safe
 }
 
+function Get-FreshArtifactPath {
+    param([Parameter(Mandatory = $true)][string]$Path)
+
+    if (-not (Test-Path -LiteralPath $Path)) {
+        return $Path
+    }
+
+    try {
+        Remove-Item -LiteralPath $Path -Force -ErrorAction Stop
+        return $Path
+    }
+    catch {
+        $directory = Split-Path -Parent $Path
+        $fileName = [System.IO.Path]::GetFileNameWithoutExtension($Path)
+        $extension = [System.IO.Path]::GetExtension($Path)
+        $suffix = [DateTimeOffset]::UtcNow.ToString("yyyyMMddTHHmmssfffZ")
+        $fallbackPath = Join-Path $directory ("{0}.{1}{2}" -f $fileName, $suffix, $extension)
+        Write-Host ("[DotnetTestBatch] Reusing alternate artifact path because stale file is locked: {0} -> {1}" -f $Path, $fallbackPath) -ForegroundColor Yellow
+        return $fallbackPath
+    }
+}
+
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $script:ResolvedLogPath = if ([System.IO.Path]::IsPathRooted($LogPath)) { $LogPath } else { Join-Path $repoRoot $LogPath }
 $resolvedErrorLogPath = if ([System.IO.Path]::IsPathRooted($ErrorLogPath)) { $ErrorLogPath } else { Join-Path $repoRoot $ErrorLogPath }
@@ -197,16 +219,14 @@ $resolvedResultsRoot = if ([System.IO.Path]::IsPathRooted($ResultsRoot)) { $Resu
 $wrapperScriptPath = Join-Path $PSScriptRoot "run_dotnet_test_with_monitor.ps1"
 $dotnetPath = Get-ResolvedDotnetPath
 
+$script:ResolvedLogPath = Get-FreshArtifactPath -Path $script:ResolvedLogPath
+$resolvedErrorLogPath = Get-FreshArtifactPath -Path $resolvedErrorLogPath
+$script:ResolvedStatusPath = Get-FreshArtifactPath -Path $script:ResolvedStatusPath
+
 foreach ($path in @($script:ResolvedLogPath, $resolvedErrorLogPath, $script:ResolvedStatusPath, $resolvedResultsRoot)) {
     $directory = if (Test-Path $path -PathType Container) { $path } else { Split-Path -Parent $path }
     if (-not [string]::IsNullOrWhiteSpace($directory)) {
         New-Item -ItemType Directory -Path $directory -Force | Out-Null
-    }
-}
-
-foreach ($stalePath in @($script:ResolvedLogPath, $resolvedErrorLogPath, $script:ResolvedStatusPath)) {
-    if (Test-Path $stalePath) {
-        Remove-Item $stalePath -Force
     }
 }
 

@@ -8,6 +8,7 @@ public static partial class ServiceRegistrationExtensions
             .AddHelperCoreInfrastructureServices(runtimeConfig)
             .AddHelperGenerationAndTemplateServices(runtimeConfig)
             .AddHelperResearchAndToolingServices()
+            .AddHelperProviderAndDiagnosticsServices()
             .AddHelperOrchestrationServices(runtimeConfig)
             .AddHelperDocumentParserServices()
             .AddHelperConversationServices();

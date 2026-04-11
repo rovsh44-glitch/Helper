@@ -1,0 +1,120 @@
+{"Id":"web-001-000","Language":"ru","Kind":"latest_release","Prompt":"Naidi posledniuiu versiiu platformy. Variant 000.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-002-001","Language":"en","Kind":"latest_release","Prompt":"Find the latest platform release. Variant 001.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-003-002","Language":"ru","Kind":"finance_quote","Prompt":"Prover aktualnuiu kotirovku aktiva. Variant 002.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-004-003","Language":"en","Kind":"finance_quote","Prompt":"Check the current asset quote. Variant 003.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-005-004","Language":"ru","Kind":"blocked_fetch","Prompt":"Soobshchi chto stranitsa nedostupna i predlozhi obkhod. Variant 004.","EndToEnd":true,"Labels":["web_required","blocked_fetch","ru_only"]}
+{"Id":"web-006-005","Language":"en","Kind":"blocked_fetch","Prompt":"Report that the page is blocked and suggest a fallback. Variant 005.","EndToEnd":true,"Labels":["web_required","blocked_fetch","en_only"]}
+{"Id":"web-001-006","Language":"ru","Kind":"latest_release","Prompt":"Naidi posledniuiu versiiu platformy. Variant 006.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-002-007","Language":"en","Kind":"latest_release","Prompt":"Find the latest platform release. Variant 007.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-003-008","Language":"ru","Kind":"finance_quote","Prompt":"Prover aktualnuiu kotirovku aktiva. Variant 008.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-004-009","Language":"en","Kind":"finance_quote","Prompt":"Check the current asset quote. Variant 009.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-005-010","Language":"ru","Kind":"blocked_fetch","Prompt":"Soobshchi chto stranitsa nedostupna i predlozhi obkhod. Variant 010.","EndToEnd":true,"Labels":["web_required","blocked_fetch","ru_only"]}
+{"Id":"web-006-011","Language":"en","Kind":"blocked_fetch","Prompt":"Report that the page is blocked and suggest a fallback. Variant 011.","EndToEnd":true,"Labels":["web_required","blocked_fetch","en_only"]}
+{"Id":"web-001-012","Language":"ru","Kind":"latest_release","Prompt":"Naidi posledniuiu versiiu platformy. Variant 012.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-002-013","Language":"en","Kind":"latest_release","Prompt":"Find the latest platform release. Variant 013.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-003-014","Language":"ru","Kind":"finance_quote","Prompt":"Prover aktualnuiu kotirovku aktiva. Variant 014.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-004-015","Language":"en","Kind":"finance_quote","Prompt":"Check the current asset quote. Variant 015.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-005-016","Language":"ru","Kind":"blocked_fetch","Prompt":"Soobshchi chto stranitsa nedostupna i predlozhi obkhod. Variant 016.","EndToEnd":true,"Labels":["web_required","blocked_fetch","ru_only"]}
+{"Id":"web-006-017","Language":"en","Kind":"blocked_fetch","Prompt":"Report that the page is blocked and suggest a fallback. Variant 017.","EndToEnd":true,"Labels":["web_required","blocked_fetch","en_only"]}
+{"Id":"web-001-018","Language":"ru","Kind":"latest_release","Prompt":"Naidi posledniuiu versiiu platformy. Variant 018.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-002-019","Language":"en","Kind":"latest_release","Prompt":"Find the latest platform release. Variant 019.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-003-020","Language":"ru","Kind":"finance_quote","Prompt":"Prover aktualnuiu kotirovku aktiva. Variant 020.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-004-021","Language":"en","Kind":"finance_quote","Prompt":"Check the current asset quote. Variant 021.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-005-022","Language":"ru","Kind":"blocked_fetch","Prompt":"Soobshchi chto stranitsa nedostupna i predlozhi obkhod. Variant 022.","EndToEnd":true,"Labels":["web_required","blocked_fetch","ru_only"]}
+{"Id":"web-006-023","Language":"en","Kind":"blocked_fetch","Prompt":"Report that the page is blocked and suggest a fallback. Variant 023.","EndToEnd":true,"Labels":["web_required","blocked_fetch","en_only"]}
+{"Id":"web-001-024","Language":"ru","Kind":"latest_release","Prompt":"Naidi posledniuiu versiiu platformy. Variant 024.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-002-025","Language":"en","Kind":"latest_release","Prompt":"Find the latest platform release. Variant 025.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-003-026","Language":"ru","Kind":"finance_quote","Prompt":"Prover aktualnuiu kotirovku aktiva. Variant 026.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-004-027","Language":"en","Kind":"finance_quote","Prompt":"Check the current asset quote. Variant 027.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-005-028","Language":"ru","Kind":"blocked_fetch","Prompt":"Soobshchi chto stranitsa nedostupna i predlozhi obkhod. Variant 028.","EndToEnd":true,"Labels":["web_required","blocked_fetch","ru_only"]}
+{"Id":"web-006-029","Language":"en","Kind":"blocked_fetch","Prompt":"Report that the page is blocked and suggest a fallback. Variant 029.","EndToEnd":true,"Labels":["web_required","blocked_fetch","en_only"]}
+{"Id":"web-001-030","Language":"ru","Kind":"latest_release","Prompt":"Naidi posledniuiu versiiu platformy. Variant 030.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-002-031","Language":"en","Kind":"latest_release","Prompt":"Find the latest platform release. Variant 031.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-003-032","Language":"ru","Kind":"finance_quote","Prompt":"Prover aktualnuiu kotirovku aktiva. Variant 032.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-004-033","Language":"en","Kind":"finance_quote","Prompt":"Check the current asset quote. Variant 033.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-005-034","Language":"ru","Kind":"blocked_fetch","Prompt":"Soobshchi chto stranitsa nedostupna i predlozhi obkhod. Variant 034.","EndToEnd":true,"Labels":["web_required","blocked_fetch","ru_only"]}
+{"Id":"web-006-035","Language":"en","Kind":"blocked_fetch","Prompt":"Report that the page is blocked and suggest a fallback. Variant 035.","EndToEnd":true,"Labels":["web_required","blocked_fetch","en_only"]}
+{"Id":"web-001-036","Language":"ru","Kind":"latest_release","Prompt":"Naidi posledniuiu versiiu platformy. Variant 036.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-002-037","Language":"en","Kind":"latest_release","Prompt":"Find the latest platform release. Variant 037.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-003-038","Language":"ru","Kind":"finance_quote","Prompt":"Prover aktualnuiu kotirovku aktiva. Variant 038.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-004-039","Language":"en","Kind":"finance_quote","Prompt":"Check the current asset quote. Variant 039.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-005-040","Language":"ru","Kind":"blocked_fetch","Prompt":"Soobshchi chto stranitsa nedostupna i predlozhi obkhod. Variant 040.","EndToEnd":true,"Labels":["web_required","blocked_fetch","ru_only"]}
+{"Id":"web-006-041","Language":"en","Kind":"blocked_fetch","Prompt":"Report that the page is blocked and suggest a fallback. Variant 041.","EndToEnd":true,"Labels":["web_required","blocked_fetch","en_only"]}
+{"Id":"web-001-042","Language":"ru","Kind":"latest_release","Prompt":"Naidi posledniuiu versiiu platformy. Variant 042.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-002-043","Language":"en","Kind":"latest_release","Prompt":"Find the latest platform release. Variant 043.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-003-044","Language":"ru","Kind":"finance_quote","Prompt":"Prover aktualnuiu kotirovku aktiva. Variant 044.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-004-045","Language":"en","Kind":"finance_quote","Prompt":"Check the current asset quote. Variant 045.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-005-046","Language":"ru","Kind":"blocked_fetch","Prompt":"Soobshchi chto stranitsa nedostupna i predlozhi obkhod. Variant 046.","EndToEnd":true,"Labels":["web_required","blocked_fetch","ru_only"]}
+{"Id":"web-006-047","Language":"en","Kind":"blocked_fetch","Prompt":"Report that the page is blocked and suggest a fallback. Variant 047.","EndToEnd":true,"Labels":["web_required","blocked_fetch","en_only"]}
+{"Id":"web-001-048","Language":"ru","Kind":"latest_release","Prompt":"Naidi posledniuiu versiiu platformy. Variant 048.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-002-049","Language":"en","Kind":"latest_release","Prompt":"Find the latest platform release. Variant 049.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-003-050","Language":"ru","Kind":"finance_quote","Prompt":"Prover aktualnuiu kotirovku aktiva. Variant 050.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-004-051","Language":"en","Kind":"finance_quote","Prompt":"Check the current asset quote. Variant 051.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-005-052","Language":"ru","Kind":"blocked_fetch","Prompt":"Soobshchi chto stranitsa nedostupna i predlozhi obkhod. Variant 052.","EndToEnd":true,"Labels":["web_required","blocked_fetch","ru_only"]}
+{"Id":"web-006-053","Language":"en","Kind":"blocked_fetch","Prompt":"Report that the page is blocked and suggest a fallback. Variant 053.","EndToEnd":true,"Labels":["web_required","blocked_fetch","en_only"]}
+{"Id":"web-001-054","Language":"ru","Kind":"latest_release","Prompt":"Naidi posledniuiu versiiu platformy. Variant 054.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-002-055","Language":"en","Kind":"latest_release","Prompt":"Find the latest platform release. Variant 055.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-003-056","Language":"ru","Kind":"finance_quote","Prompt":"Prover aktualnuiu kotirovku aktiva. Variant 056.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-004-057","Language":"en","Kind":"finance_quote","Prompt":"Check the current asset quote. Variant 057.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-005-058","Language":"ru","Kind":"blocked_fetch","Prompt":"Soobshchi chto stranitsa nedostupna i predlozhi obkhod. Variant 058.","EndToEnd":true,"Labels":["web_required","blocked_fetch","ru_only"]}
+{"Id":"web-006-059","Language":"en","Kind":"blocked_fetch","Prompt":"Report that the page is blocked and suggest a fallback. Variant 059.","EndToEnd":true,"Labels":["web_required","blocked_fetch","en_only"]}
+{"Id":"web-001-060","Language":"ru","Kind":"latest_release","Prompt":"Naidi posledniuiu versiiu platformy. Variant 060.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-002-061","Language":"en","Kind":"latest_release","Prompt":"Find the latest platform release. Variant 061.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-003-062","Language":"ru","Kind":"finance_quote","Prompt":"Prover aktualnuiu kotirovku aktiva. Variant 062.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-004-063","Language":"en","Kind":"finance_quote","Prompt":"Check the current asset quote. Variant 063.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-005-064","Language":"ru","Kind":"blocked_fetch","Prompt":"Soobshchi chto stranitsa nedostupna i predlozhi obkhod. Variant 064.","EndToEnd":true,"Labels":["web_required","blocked_fetch","ru_only"]}
+{"Id":"web-006-065","Language":"en","Kind":"blocked_fetch","Prompt":"Report that the page is blocked and suggest a fallback. Variant 065.","EndToEnd":true,"Labels":["web_required","blocked_fetch","en_only"]}
+{"Id":"web-001-066","Language":"ru","Kind":"latest_release","Prompt":"Naidi posledniuiu versiiu platformy. Variant 066.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-002-067","Language":"en","Kind":"latest_release","Prompt":"Find the latest platform release. Variant 067.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-003-068","Language":"ru","Kind":"finance_quote","Prompt":"Prover aktualnuiu kotirovku aktiva. Variant 068.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-004-069","Language":"en","Kind":"finance_quote","Prompt":"Check the current asset quote. Variant 069.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-005-070","Language":"ru","Kind":"blocked_fetch","Prompt":"Soobshchi chto stranitsa nedostupna i predlozhi obkhod. Variant 070.","EndToEnd":true,"Labels":["web_required","blocked_fetch","ru_only"]}
+{"Id":"web-006-071","Language":"en","Kind":"blocked_fetch","Prompt":"Report that the page is blocked and suggest a fallback. Variant 071.","EndToEnd":true,"Labels":["web_required","blocked_fetch","en_only"]}
+{"Id":"web-001-072","Language":"ru","Kind":"latest_release","Prompt":"Naidi posledniuiu versiiu platformy. Variant 072.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-002-073","Language":"en","Kind":"latest_release","Prompt":"Find the latest platform release. Variant 073.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-003-074","Language":"ru","Kind":"finance_quote","Prompt":"Prover aktualnuiu kotirovku aktiva. Variant 074.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-004-075","Language":"en","Kind":"finance_quote","Prompt":"Check the current asset quote. Variant 075.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-005-076","Language":"ru","Kind":"blocked_fetch","Prompt":"Soobshchi chto stranitsa nedostupna i predlozhi obkhod. Variant 076.","EndToEnd":true,"Labels":["web_required","blocked_fetch","ru_only"]}
+{"Id":"web-006-077","Language":"en","Kind":"blocked_fetch","Prompt":"Report that the page is blocked and suggest a fallback. Variant 077.","EndToEnd":true,"Labels":["web_required","blocked_fetch","en_only"]}
+{"Id":"web-001-078","Language":"ru","Kind":"latest_release","Prompt":"Naidi posledniuiu versiiu platformy. Variant 078.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-002-079","Language":"en","Kind":"latest_release","Prompt":"Find the latest platform release. Variant 079.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-003-080","Language":"ru","Kind":"finance_quote","Prompt":"Prover aktualnuiu kotirovku aktiva. Variant 080.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-004-081","Language":"en","Kind":"finance_quote","Prompt":"Check the current asset quote. Variant 081.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-005-082","Language":"ru","Kind":"blocked_fetch","Prompt":"Soobshchi chto stranitsa nedostupna i predlozhi obkhod. Variant 082.","EndToEnd":true,"Labels":["web_required","blocked_fetch","ru_only"]}
+{"Id":"web-006-083","Language":"en","Kind":"blocked_fetch","Prompt":"Report that the page is blocked and suggest a fallback. Variant 083.","EndToEnd":true,"Labels":["web_required","blocked_fetch","en_only"]}
+{"Id":"web-001-084","Language":"ru","Kind":"latest_release","Prompt":"Naidi posledniuiu versiiu platformy. Variant 084.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-002-085","Language":"en","Kind":"latest_release","Prompt":"Find the latest platform release. Variant 085.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-003-086","Language":"ru","Kind":"finance_quote","Prompt":"Prover aktualnuiu kotirovku aktiva. Variant 086.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-004-087","Language":"en","Kind":"finance_quote","Prompt":"Check the current asset quote. Variant 087.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-005-088","Language":"ru","Kind":"blocked_fetch","Prompt":"Soobshchi chto stranitsa nedostupna i predlozhi obkhod. Variant 088.","EndToEnd":true,"Labels":["web_required","blocked_fetch","ru_only"]}
+{"Id":"web-006-089","Language":"en","Kind":"blocked_fetch","Prompt":"Report that the page is blocked and suggest a fallback. Variant 089.","EndToEnd":true,"Labels":["web_required","blocked_fetch","en_only"]}
+{"Id":"web-001-090","Language":"ru","Kind":"latest_release","Prompt":"Naidi posledniuiu versiiu platformy. Variant 090.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-002-091","Language":"en","Kind":"latest_release","Prompt":"Find the latest platform release. Variant 091.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-003-092","Language":"ru","Kind":"finance_quote","Prompt":"Prover aktualnuiu kotirovku aktiva. Variant 092.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-004-093","Language":"en","Kind":"finance_quote","Prompt":"Check the current asset quote. Variant 093.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-005-094","Language":"ru","Kind":"blocked_fetch","Prompt":"Soobshchi chto stranitsa nedostupna i predlozhi obkhod. Variant 094.","EndToEnd":true,"Labels":["web_required","blocked_fetch","ru_only"]}
+{"Id":"web-006-095","Language":"en","Kind":"blocked_fetch","Prompt":"Report that the page is blocked and suggest a fallback. Variant 095.","EndToEnd":true,"Labels":["web_required","blocked_fetch","en_only"]}
+{"Id":"web-001-096","Language":"ru","Kind":"latest_release","Prompt":"Naidi posledniuiu versiiu platformy. Variant 096.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-002-097","Language":"en","Kind":"latest_release","Prompt":"Find the latest platform release. Variant 097.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-003-098","Language":"ru","Kind":"finance_quote","Prompt":"Prover aktualnuiu kotirovku aktiva. Variant 098.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-004-099","Language":"en","Kind":"finance_quote","Prompt":"Check the current asset quote. Variant 099.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-005-100","Language":"ru","Kind":"blocked_fetch","Prompt":"Soobshchi chto stranitsa nedostupna i predlozhi obkhod. Variant 100.","EndToEnd":true,"Labels":["web_required","blocked_fetch","ru_only"]}
+{"Id":"web-006-101","Language":"en","Kind":"blocked_fetch","Prompt":"Report that the page is blocked and suggest a fallback. Variant 101.","EndToEnd":true,"Labels":["web_required","blocked_fetch","en_only"]}
+{"Id":"web-001-102","Language":"ru","Kind":"latest_release","Prompt":"Naidi posledniuiu versiiu platformy. Variant 102.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-002-103","Language":"en","Kind":"latest_release","Prompt":"Find the latest platform release. Variant 103.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-003-104","Language":"ru","Kind":"finance_quote","Prompt":"Prover aktualnuiu kotirovku aktiva. Variant 104.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-004-105","Language":"en","Kind":"finance_quote","Prompt":"Check the current asset quote. Variant 105.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-005-106","Language":"ru","Kind":"blocked_fetch","Prompt":"Soobshchi chto stranitsa nedostupna i predlozhi obkhod. Variant 106.","EndToEnd":true,"Labels":["web_required","blocked_fetch","ru_only"]}
+{"Id":"web-006-107","Language":"en","Kind":"blocked_fetch","Prompt":"Report that the page is blocked and suggest a fallback. Variant 107.","EndToEnd":true,"Labels":["web_required","blocked_fetch","en_only"]}
+{"Id":"web-001-108","Language":"ru","Kind":"latest_release","Prompt":"Naidi posledniuiu versiiu platformy. Variant 108.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-002-109","Language":"en","Kind":"latest_release","Prompt":"Find the latest platform release. Variant 109.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-003-110","Language":"ru","Kind":"finance_quote","Prompt":"Prover aktualnuiu kotirovku aktiva. Variant 110.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-004-111","Language":"en","Kind":"finance_quote","Prompt":"Check the current asset quote. Variant 111.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-005-112","Language":"ru","Kind":"blocked_fetch","Prompt":"Soobshchi chto stranitsa nedostupna i predlozhi obkhod. Variant 112.","EndToEnd":true,"Labels":["web_required","blocked_fetch","ru_only"]}
+{"Id":"web-006-113","Language":"en","Kind":"blocked_fetch","Prompt":"Report that the page is blocked and suggest a fallback. Variant 113.","EndToEnd":true,"Labels":["web_required","blocked_fetch","en_only"]}
+{"Id":"web-001-114","Language":"ru","Kind":"latest_release","Prompt":"Naidi posledniuiu versiiu platformy. Variant 114.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-002-115","Language":"en","Kind":"latest_release","Prompt":"Find the latest platform release. Variant 115.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-003-116","Language":"ru","Kind":"finance_quote","Prompt":"Prover aktualnuiu kotirovku aktiva. Variant 116.","EndToEnd":true,"Labels":["web_required","freshness","ru_only"]}
+{"Id":"web-004-117","Language":"en","Kind":"finance_quote","Prompt":"Check the current asset quote. Variant 117.","EndToEnd":true,"Labels":["web_required","freshness","en_only"]}
+{"Id":"web-005-118","Language":"ru","Kind":"blocked_fetch","Prompt":"Soobshchi chto stranitsa nedostupna i predlozhi obkhod. Variant 118.","EndToEnd":true,"Labels":["web_required","blocked_fetch","ru_only"]}
+{"Id":"web-006-119","Language":"en","Kind":"blocked_fetch","Prompt":"Report that the page is blocked and suggest a fallback. Variant 119.","EndToEnd":true,"Labels":["web_required","blocked_fetch","en_only"]}

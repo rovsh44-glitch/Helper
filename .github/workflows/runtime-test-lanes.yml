@@ -1,7 +1,6 @@
 name: runtime-test-lanes
 
 on:
-  pull_request:
   workflow_dispatch:
     inputs:
       run_integration:
@@ -19,12 +18,27 @@ on:
         required: false
         default: false
         type: boolean
+      run_eval:
+        description: Run the eval lane
+        required: false
+        default: false
+        type: boolean
   schedule:
     - cron: "0 2 * * *"
 
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+concurrency:
+  group: runtime-test-lanes-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   fast:
-    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -53,6 +67,22 @@ jobs:
       - name: Run integration lane
         shell: pwsh
         run: ./scripts/run_integration_tests.ps1 -Configuration Debug -NoRestore
+
+  eval:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_eval
+    runs-on: windows-latest
+    needs: fast
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      - name: Restore solution
+        shell: pwsh
+        run: dotnet restore Helper.sln
+      - name: Run eval lane
+        shell: pwsh
+        run: ./scripts/run_eval_harness_tests.ps1 -Configuration Debug -NoRestore
 
   certification:
     if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.run_certification)

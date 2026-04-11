@@ -70,23 +70,36 @@ public sealed class ProviderProfileResolver : IProviderProfileResolver
         }
 
         Environment.SetEnvironmentVariable("HELPER_ACTIVE_PROVIDER_PROFILE_ID", configuration.ProfileId);
-        if (configuration.TransportKind == ProviderTransportKind.OpenAiCompatible)
-        {
-            Environment.SetEnvironmentVariable("HELPER_OPENAI_BASE_URL", configuration.BaseUrl);
-            Environment.SetEnvironmentVariable("HELPER_OPENAI_DEFAULT_MODEL", configuration.DefaultModel);
-            Environment.SetEnvironmentVariable("HELPER_OPENAI_API_KEY", configuration.ApiKey);
-        }
-        else
-        {
-            Environment.SetEnvironmentVariable("HELPER_AI_BASE_URL", configuration.BaseUrl);
-        }
-
-        Environment.SetEnvironmentVariable("HELPER_MODEL_EMBEDDING", configuration.EmbeddingModel);
-        if (!string.IsNullOrWhiteSpace(configuration.DefaultModel))
-        {
-            _aiLink.SwitchModel(configuration.DefaultModel);
-        }
+        var active = _catalog.GetActiveProfile();
+        var modelBindings = active?.Profile.ModelBindings
+            .Where(binding => !string.IsNullOrWhiteSpace(binding.ModelName))
+            .ToDictionary(
+                binding => ToRuntimeCategory(binding.ModelClass),
+                binding => binding.ModelName,
+                StringComparer.OrdinalIgnoreCase);
+        _aiLink.ApplyRuntime(new AiProviderRuntimeSettings(
+            configuration.TransportKind == ProviderTransportKind.OpenAiCompatible
+                ? AiTransportKind.OpenAiCompatible
+                : AiTransportKind.Ollama,
+            configuration.BaseUrl,
+            configuration.DefaultModel ?? _aiLink.GetCurrentModel(),
+            configuration.ApiKey,
+            configuration.EmbeddingModel,
+            modelBindings));
 
         return configuration.ProfileId;
+    }
+
+    private static string ToRuntimeCategory(HelperModelClass modelClass)
+    {
+        return modelClass switch
+        {
+            HelperModelClass.Fast => "fast",
+            HelperModelClass.Coder => "coder",
+            HelperModelClass.Vision => "vision",
+            HelperModelClass.Critic => "critic",
+            HelperModelClass.Background => "background",
+            _ => "reasoning"
+        };
     }
 }

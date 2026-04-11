@@ -37,7 +37,7 @@ Invoke-Step "Contract + unit tests" {
 }
 
 Invoke-Step "Security scan" {
-    powershell -ExecutionPolicy Bypass -File scripts/secret_scan.ps1
+    powershell -ExecutionPolicy Bypass -File scripts/secret_scan.ps1 -ScanMode repo
 }
 
 $diffDir = Join-Path (Get-Location) "doc"

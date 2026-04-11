@@ -16,7 +16,7 @@ function Invoke-CiStep {
 }
 
 Invoke-CiStep "Secret scan" {
-    powershell -ExecutionPolicy Bypass -File scripts/secret_scan.ps1
+    powershell -ExecutionPolicy Bypass -File scripts/secret_scan.ps1 -ScanMode repo
 }
 
 Invoke-CiStep "Remediation freeze" {
@@ -56,27 +56,37 @@ Invoke-CiStep "Frontend architecture" {
 }
 
 Invoke-CiStep "NuGet security gate" {
-    powershell -ExecutionPolicy Bypass -File scripts/nuget_security_gate.ps1
+    $nugetMode = if (-not [string]::IsNullOrWhiteSpace($env:HELPER_NUGET_SECURITY_GATE_MODE)) {
+        $env:HELPER_NUGET_SECURITY_GATE_MODE
+    }
+    elseif ($env:CI -eq "true") {
+        "strict-online"
+    }
+    else {
+        "best-effort-local"
+    }
+
+    powershell -ExecutionPolicy Bypass -File scripts/nuget_security_gate.ps1 -ExecutionMode $nugetMode
+}
+
+Invoke-CiStep "Solution build coverage" {
+    powershell -ExecutionPolicy Bypass -File scripts/check_solution_build_coverage.ps1
 }
 
 Invoke-CiStep "Build" {
-    dotnet build Helper.sln
+    dotnet build Helper.sln -m:1
 }
 
-Invoke-CiStep "Tests" {
-    & (Join-Path $PSScriptRoot "run_dotnet_test_batched.ps1") `
-        -Target "test\Helper.Runtime.Tests\Helper.Runtime.Tests.csproj" `
-        -BaseArguments @("--no-build", "--blame-hang", "--blame-hang-timeout", "2m") `
-        -LogPath "temp/verification/ci_gate/dotnet_test.log" `
-        -ErrorLogPath "temp/verification/ci_gate/dotnet_test.stderr.log" `
-        -StatusPath "temp/verification/ci_gate/dotnet_test_status.json" `
-        -ResultsRoot "temp/verification/ci_gate/batches" `
-        -MaxDurationSec 900 `
-        -ListTimeoutSec 300
+Invoke-CiStep "Fast runtime lane" {
+    powershell -ExecutionPolicy Bypass -File scripts/run_fast_tests.ps1 -Configuration Debug -NoBuild -NoRestore
 }
 
 Invoke-CiStep "Eval" {
-    powershell -ExecutionPolicy Bypass -File scripts/run_eval_gate.ps1
+    powershell -ExecutionPolicy Bypass -File scripts/run_eval_gate.ps1 -NoBuild -NoRestore
+}
+
+Invoke-CiStep "Tool benchmark" {
+    powershell -ExecutionPolicy Bypass -File scripts/run_tool_benchmark.ps1 -Configuration Debug -NoBuild -NoRestore
 }
 
 Invoke-CiStep "OpenAPI contract" {
@@ -91,55 +101,12 @@ Invoke-CiStep "Monitoring config" {
     powershell -ExecutionPolicy Bypass -File scripts/monitoring_gate.ps1
 }
 
-Invoke-CiStep "Load/Chaos smoke" {
-    powershell -ExecutionPolicy Bypass -File scripts/run_load_chaos_smoke.ps1
-}
-
-Invoke-CiStep "Tool benchmark" {
-    powershell -ExecutionPolicy Bypass -File scripts/run_tool_benchmark.ps1
-}
-
-Invoke-CiStep "Generation parity gate" {
-    powershell -ExecutionPolicy Bypass -File scripts/run_generation_parity_gate.ps1
-}
-
-Invoke-CiStep "Generation parity benchmark" {
-    powershell -ExecutionPolicy Bypass -File scripts/run_generation_parity_benchmark.ps1
-}
-
-Invoke-CiStep "Generation parity window gate" {
-    powershell -ExecutionPolicy Bypass -File scripts/run_generation_parity_window_gate.ps1 -WindowDays 7
-}
-
 Invoke-CiStep "Frontend build" {
     & (Join-Path $PSScriptRoot "build_frontend_verification.ps1") -RequireRebuild
 }
 
 Invoke-CiStep "Bundle budget" {
     powershell -ExecutionPolicy Bypass -File scripts/check_bundle_budget.ps1
-}
-
-Invoke-CiStep "Control-plane thresholds" {
-    powershell -ExecutionPolicy Bypass -File scripts/check_backend_control_plane.ps1 -ApiBaseUrl $env:HELPER_RUNTIME_SMOKE_API_BASE
-}
-
-Invoke-CiStep "Latency budget" {
-    powershell -ExecutionPolicy Bypass -File scripts/check_latency_budget.ps1 -ApiBaseUrl $env:HELPER_RUNTIME_SMOKE_API_BASE
-}
-
-Invoke-CiStep "UI workflow smoke" {
-    $uiUrl = $env:HELPER_RUNTIME_SMOKE_UI_URL
-    powershell -ExecutionPolicy Bypass -File scripts/run_ui_workflow_smoke.ps1 -RequireConfiguredRuntime -ApiBaseUrl $env:HELPER_RUNTIME_SMOKE_API_BASE -UiUrl $uiUrl
-}
-
-Invoke-CiStep "UI perf regression" {
-    $uiUrl = $env:HELPER_RUNTIME_SMOKE_UI_URL
-    powershell -ExecutionPolicy Bypass -File scripts/ui_perf_regression.ps1 -ApiBaseUrl $env:HELPER_RUNTIME_SMOKE_API_BASE -UiUrl $uiUrl
-}
-
-Invoke-CiStep "Release baseline capture" {
-    $uiUrl = $env:HELPER_RUNTIME_SMOKE_UI_URL
-    powershell -ExecutionPolicy Bypass -File scripts/baseline_capture.ps1 -ApiBaseUrl $env:HELPER_RUNTIME_SMOKE_API_BASE -UiUrl $uiUrl -SkipUiSmoke -RefreshActiveGateSnapshot
 }
 
 Write-Host "[CI Gate] All checks passed."

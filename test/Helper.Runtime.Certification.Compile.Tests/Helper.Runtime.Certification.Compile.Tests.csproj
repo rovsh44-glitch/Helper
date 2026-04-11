@@ -30,7 +30,7 @@
   <ItemGroup>
     <Compile Include="..\Helper.Runtime.Tests\TestCollectionConfig.cs" Link="TestCollectionConfig.cs" />
     <Compile Include="..\Helper.Runtime.Tests\TestInfrastructure\ProcessEnvironmentCollection.cs" Link="TestInfrastructure\ProcessEnvironmentCollection.cs" />
-    <Compile Include="..\Helper.Runtime.Tests\TestInfrastructure\TempDirectoryScope.cs" Link="TestInfrastructure\TempDirectoryScope.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\TempDirectoryScope.cs" Link="TempDirectoryScope.cs" />
     <Compile Include="..\Helper.Runtime.Tests\TestInfrastructure\CompileLaneTestDoubles.cs" Link="TestInfrastructure\CompileLaneTestDoubles.cs" />
     <Compile Include="..\Helper.Runtime.Tests\TestWorkspaceRoot.cs" Link="TestWorkspaceRoot.cs" />
     <Compile Include="..\Helper.Runtime.Tests\BackendRebuildRuntimeTests.cs" Link="BackendRebuildRuntimeTests.cs" />

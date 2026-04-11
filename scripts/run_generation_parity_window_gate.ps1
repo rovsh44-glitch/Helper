@@ -7,11 +7,21 @@ param(
 $ErrorActionPreference = "Stop"
 
 if ([string]::IsNullOrWhiteSpace($ReportPath)) {
-    $ReportPath = "doc/HELPER_PARITY_WINDOW_GATE_" + (Get-Date -Format "yyyy-MM-dd_HH-mm-ss") + ".md"
+    $ReportPath = "temp/verification/heavy/HELPER_PARITY_WINDOW_GATE_" + (Get-Date -Format "yyyy-MM-dd_HH-mm-ss") + ".md"
 }
 
 $window = [Math]::Max(1, [Math]::Min(30, $WindowDays))
 Write-Host "[ParityWindowGate] Evaluating rolling parity window ($window day(s))..."
+$repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+if (-not [System.IO.Path]::IsPathRooted($ReportPath)) {
+    $ReportPath = [System.IO.Path]::GetFullPath((Join-Path $repoRoot $ReportPath))
+}
+
+$reportDirectory = Split-Path -Parent $ReportPath
+if (-not [string]::IsNullOrWhiteSpace($reportDirectory)) {
+    New-Item -ItemType Directory -Path $reportDirectory -Force | Out-Null
+}
+
 $prevSnapshotRoot = $env:HELPER_PARITY_SNAPSHOT_ROOT
 if ([string]::IsNullOrWhiteSpace($SnapshotRoot)) {
     Remove-Item Env:HELPER_PARITY_SNAPSHOT_ROOT -ErrorAction SilentlyContinue
