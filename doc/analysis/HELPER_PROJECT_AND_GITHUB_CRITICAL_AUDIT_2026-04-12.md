@@ -4,7 +4,7 @@ Date: `2026-04-12`
 Repository: `https://github.com/rovsh44-glitch/Helper`
 Audit scope:
 
-- local project state in `C:\GEMINI\HELPER`
+- local project state in the current workspace root
 - remote GitHub repository `rovsh44-glitch/Helper`
 - GitHub Actions, branch governance, and security automation posture
 
