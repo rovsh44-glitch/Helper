@@ -58,6 +58,8 @@ This is the operator-facing entry point for running, checking, and certifying HE
 5. certification compile lane:
    - `powershell -ExecutionPolicy Bypass -File scripts\run_certification_compile_tests.ps1 -Configuration Debug`
    - owns promotion/certification smoke plus compile-gate integration coverage
+   - default mode is operational and should be used for CI/local validation
+   - forensic rerun: `powershell -ExecutionPolicy Bypass -File scripts\run_certification_compile_tests.ps1 -Configuration Debug -EnableBlameHang -BlameHangTimeoutSec 180`
 6. do not put compile-path or eval benchmark coverage back into `Helper.Runtime.Tests`
 
 ### Inspect Extension Registry

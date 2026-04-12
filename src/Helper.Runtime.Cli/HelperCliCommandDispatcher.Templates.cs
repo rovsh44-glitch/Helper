@@ -100,6 +100,7 @@ internal static partial class HelperCliCommandDispatcher
         Console.WriteLine("Template promotion feature profile:");
         Console.WriteLine($"- RuntimePromotionEnabled: {profile.RuntimePromotionEnabled}");
         Console.WriteLine($"- AutoActivateEnabled: {profile.AutoActivateEnabled}");
+        Console.WriteLine($"- PostActivationFullRecertifyEnabled: {profile.PostActivationFullRecertifyEnabled}");
         Console.WriteLine($"- FormatMode: {profile.FormatMode}");
         Console.WriteLine($"- RouterV2Enabled: {profile.RouterV2Enabled}");
         Console.WriteLine($"- RouterMinConfidence: {profile.RouterMinConfidence:0.00}");

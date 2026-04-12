@@ -22,8 +22,11 @@
    - версия не активируется в lifecycle.
    - действия: выполнить ручной rollback.
 4. `post_activation_certification`:
-   - активированная версия не проходит верификацию.
+   - активированная версия не проходит повторную full certification при явно включённом `HELPER_TEMPLATE_PROMOTION_POST_ACTIVATION_FULL_RECERTIFY=true`.
    - действия: rollback на предыдущую active и повторная сертификация.
+5. `post_activation_verification`:
+   - activation прошёл, но опубликованное дерево/статус/report/lifecycle не совпали с сертифицированным candidate.
+   - действия: rollback на предыдущую active, проверить `certification_status.json`, report path и integrity mismatch.
 
 ## Точки данных
 1. `/api/metrics`
@@ -33,6 +36,13 @@
 
 ## Ручной rollback
 `powershell -ExecutionPolicy Bypass -File scripts/invoke_helper_cli.ps1 template-rollback <TemplateId>`
+
+## Примечание по compile-hang диагностике
+- для обычной проверки promotion/certification использовать wrapper без blame:
+  `powershell -ExecutionPolicy Bypass -File scripts\run_certification_compile_tests.ps1 -Configuration Debug`
+- forensic режим включать отдельно:
+  `powershell -ExecutionPolicy Bypass -File scripts\run_certification_compile_tests.ps1 -Configuration Debug -EnableBlameHang -BlameHangTimeoutSec 180`
+- raw `--blame-hang-timeout 60s` больше не считается валидным baseline для compile lane, потому что давал ложный hang-signal на console promotion path.
 
 Подробный протокол отката:
 `doc/certification/reference/runbook_template_rollback.md`

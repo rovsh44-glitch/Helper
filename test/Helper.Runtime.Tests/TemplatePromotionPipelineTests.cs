@@ -35,8 +35,10 @@ public sealed class TemplatePromotionPipelineTests
     {
         var previousPromotion = Environment.GetEnvironmentVariable("HELPER_FF_TEMPLATE_RUNTIME_PROMOTION_V1");
         var previousActivate = Environment.GetEnvironmentVariable("HELPER_TEMPLATE_PROMOTION_AUTO_ACTIVATE");
+        var previousRecertify = Environment.GetEnvironmentVariable("HELPER_TEMPLATE_PROMOTION_POST_ACTIVATION_FULL_RECERTIFY");
         Environment.SetEnvironmentVariable("HELPER_FF_TEMPLATE_RUNTIME_PROMOTION_V1", "true");
         Environment.SetEnvironmentVariable("HELPER_TEMPLATE_PROMOTION_AUTO_ACTIVATE", "true");
+        Environment.SetEnvironmentVariable("HELPER_TEMPLATE_PROMOTION_POST_ACTIVATION_FULL_RECERTIFY", "false");
 
         try
         {
@@ -45,7 +47,12 @@ public sealed class TemplatePromotionPipelineTests
             Directory.CreateDirectory(generatedProject);
             await File.WriteAllTextAsync(Path.Combine(generatedProject, "Calculator.cs"), "namespace Demo; public class Calculator {}");
 
-            var service = BuildService(temp.Path, new StubTemplateRoutingService("Template_Calculator"), new StubCompileGate(success: true));
+            var certification = new StubTemplateCertificationService();
+            var service = BuildService(
+                temp.Path,
+                new StubTemplateRoutingService("Template_Calculator"),
+                new StubCompileGate(success: true),
+                certification);
             var outcome = await service.TryPromoteAsync(
                 new GenerationRequest("сгенерируй инженерный калькулятор", generatedProject),
                 new GenerationResult(true, new List<GeneratedFile>(), generatedProject, new List<BuildError>(), TimeSpan.FromSeconds(1)));
@@ -60,6 +67,15 @@ public sealed class TemplatePromotionPipelineTests
             var metadata = JsonSerializer.Deserialize<JsonElement>(await File.ReadAllTextAsync(metadataPath));
             Assert.Equal("Template_Calculator", metadata.GetProperty("Id").GetString());
             Assert.Equal("1.0.0", metadata.GetProperty("Version").GetString());
+            var publishedRoot = Path.Combine(temp.Path, "Template_Calculator", "1.0.0");
+            var status = TemplateCertificationStatusStore.TryRead(publishedRoot);
+            Assert.NotNull(status);
+            Assert.True(status!.Passed);
+            Assert.True(File.Exists(status.ReportPath));
+            Assert.Equal(1, certification.CertifyCallCount);
+            Assert.Collection(
+                certification.ObservedTemplatePaths,
+                path => Assert.Contains(Path.Combine("Template_Calculator", "candidates", "1.0.0"), path, StringComparison.OrdinalIgnoreCase));
 
             var lifecycle = new TemplateLifecycleService(temp.Path);
             var versions = await lifecycle.GetVersionsAsync("Template_Calculator");
@@ -69,6 +85,51 @@ public sealed class TemplatePromotionPipelineTests
         {
             Environment.SetEnvironmentVariable("HELPER_FF_TEMPLATE_RUNTIME_PROMOTION_V1", previousPromotion);
             Environment.SetEnvironmentVariable("HELPER_TEMPLATE_PROMOTION_AUTO_ACTIVATE", previousActivate);
+            Environment.SetEnvironmentVariable("HELPER_TEMPLATE_PROMOTION_POST_ACTIVATION_FULL_RECERTIFY", previousRecertify);
+        }
+    }
+
+    [Fact]
+    public async Task GenerationTemplatePromotionService_PostActivationFullRecertifyFlag_ReCertifiesAfterActivation()
+    {
+        var previousPromotion = Environment.GetEnvironmentVariable("HELPER_FF_TEMPLATE_RUNTIME_PROMOTION_V1");
+        var previousActivate = Environment.GetEnvironmentVariable("HELPER_TEMPLATE_PROMOTION_AUTO_ACTIVATE");
+        var previousRecertify = Environment.GetEnvironmentVariable("HELPER_TEMPLATE_PROMOTION_POST_ACTIVATION_FULL_RECERTIFY");
+        Environment.SetEnvironmentVariable("HELPER_FF_TEMPLATE_RUNTIME_PROMOTION_V1", "true");
+        Environment.SetEnvironmentVariable("HELPER_TEMPLATE_PROMOTION_AUTO_ACTIVATE", "true");
+        Environment.SetEnvironmentVariable("HELPER_TEMPLATE_PROMOTION_POST_ACTIVATION_FULL_RECERTIFY", "true");
+
+        try
+        {
+            using var temp = new TempDirectoryScope();
+            var generatedProject = Path.Combine(temp.Path, "generated_project");
+            Directory.CreateDirectory(generatedProject);
+            await File.WriteAllTextAsync(Path.Combine(generatedProject, "Calculator.cs"), "namespace Demo; public class Calculator {}");
+
+            var certification = new StubTemplateCertificationService();
+            var service = BuildService(
+                temp.Path,
+                new StubTemplateRoutingService("Template_ReCertify"),
+                new StubCompileGate(success: true),
+                certification);
+
+            var outcome = await service.TryPromoteAsync(
+                new GenerationRequest("сгенерируй инженерный калькулятор", generatedProject),
+                new GenerationResult(true, new List<GeneratedFile>(), generatedProject, new List<BuildError>(), TimeSpan.FromSeconds(1)));
+
+            Assert.True(outcome.Attempted);
+            Assert.True(outcome.Success, string.Join(" | ", outcome.Errors));
+            Assert.Equal(2, certification.CertifyCallCount);
+            Assert.Collection(
+                certification.ObservedTemplatePaths,
+                first => Assert.Contains(Path.Combine("Template_ReCertify", "candidates", "1.0.0"), first, StringComparison.OrdinalIgnoreCase),
+                second => Assert.EndsWith(Path.Combine("Template_ReCertify", "1.0.0"), second, StringComparison.OrdinalIgnoreCase));
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("HELPER_FF_TEMPLATE_RUNTIME_PROMOTION_V1", previousPromotion);
+            Environment.SetEnvironmentVariable("HELPER_TEMPLATE_PROMOTION_AUTO_ACTIVATE", previousActivate);
+            Environment.SetEnvironmentVariable("HELPER_TEMPLATE_PROMOTION_POST_ACTIVATION_FULL_RECERTIFY", previousRecertify);
         }
     }
 
@@ -118,13 +179,14 @@ public sealed class BrokenService
     private static GenerationTemplatePromotionService BuildService(
         string templatesRoot,
         ITemplateRoutingService routing,
-        IGenerationCompileGate compileGate)
+        IGenerationCompileGate compileGate,
+        ITemplateCertificationService? certification = null)
     {
         var generalizer = new StubTemplateGeneralizer(templatesRoot);
         var lifecycle = new TemplateLifecycleService(templatesRoot);
         var profile = new TemplatePromotionFeatureProfileService();
         var metrics = new GenerationMetricsService();
-        var certification = new StubTemplateCertificationService();
+        certification ??= new StubTemplateCertificationService();
         return new GenerationTemplatePromotionService(
             routing,
             generalizer,
@@ -199,23 +261,13 @@ public sealed class BrokenService
 
     private sealed class StubTemplateCertificationService : ITemplateCertificationService
     {
+        public int CertifyCallCount { get; private set; }
+
+        public List<string> ObservedTemplatePaths { get; } = new();
+
         public Task<TemplateCertificationReport> CertifyAsync(string templateId, string version, string? reportPath = null, string? templatePath = null, CancellationToken ct = default)
         {
-            var path = templatePath ?? Path.Combine(Path.GetTempPath(), "cert_stub");
-            return Task.FromResult(new TemplateCertificationReport(
-                DateTimeOffset.UtcNow,
-                templateId,
-                version,
-                path,
-                MetadataSchemaPassed: true,
-                CompileGatePassed: true,
-                ArtifactValidationPassed: true,
-                SmokePassed: true,
-                SafetyScanPassed: true,
-                Passed: true,
-                Errors: Array.Empty<string>(),
-                SmokeScenarios: Array.Empty<TemplateCertificationSmokeScenario>(),
-                ReportPath: reportPath ?? Path.Combine(Path.GetTempPath(), "report.md")));
+            return CertifyCoreAsync(templateId, version, reportPath, templatePath, ct);
         }
 
         public Task<TemplateCertificationGateReport> EvaluateGateAsync(string? reportPath = null, CancellationToken ct = default)
@@ -228,6 +280,42 @@ public sealed class BrokenService
                 FailedCount: 0,
                 Violations: Array.Empty<string>(),
                 Templates: Array.Empty<TemplateCertificationReport>()));
+        }
+
+        private async Task<TemplateCertificationReport> CertifyCoreAsync(string templateId, string version, string? reportPath, string? templatePath, CancellationToken ct)
+        {
+            var path = Path.GetFullPath(templatePath ?? Path.Combine(Path.GetTempPath(), "cert_stub"));
+            Directory.CreateDirectory(path);
+            var resolvedReportPath = Path.GetFullPath(reportPath ?? Path.Combine(Path.GetTempPath(), $"report_{Guid.NewGuid():N}.md"));
+            Directory.CreateDirectory(Path.GetDirectoryName(resolvedReportPath)!);
+            await File.WriteAllTextAsync(resolvedReportPath, $"# Stub certification report for {templateId}:{version}", ct);
+            await TemplateCertificationStatusStore.WriteAsync(
+                path,
+                new TemplateCertificationStatus(
+                    DateTimeOffset.UtcNow,
+                    Passed: true,
+                    HasCriticalAlerts: false,
+                    CriticalAlerts: Array.Empty<string>(),
+                    ReportPath: resolvedReportPath),
+                ct);
+
+            CertifyCallCount++;
+            ObservedTemplatePaths.Add(path);
+
+            return new TemplateCertificationReport(
+                DateTimeOffset.UtcNow,
+                templateId,
+                version,
+                path,
+                MetadataSchemaPassed: true,
+                CompileGatePassed: true,
+                ArtifactValidationPassed: true,
+                SmokePassed: true,
+                SafetyScanPassed: true,
+                Passed: true,
+                Errors: Array.Empty<string>(),
+                SmokeScenarios: Array.Empty<TemplateCertificationSmokeScenario>(),
+                ReportPath: resolvedReportPath);
         }
     }
 

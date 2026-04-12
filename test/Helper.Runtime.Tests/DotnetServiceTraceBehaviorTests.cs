@@ -60,6 +60,95 @@ public sealed class DotnetServiceTraceBehaviorTests
         Assert.Contains(events, x => x.operation == "build" && (x.eventType == "kill_confirmed" || x.eventType == "orphan_risk"));
     }
 
+    [Fact]
+    public void TargetResolver_PrefersRootProject_AndIgnoresCompileGateAndBuildArtifacts()
+    {
+        using var temp = new TempDirectoryScope("helper_dotnet_targets_");
+        var root = Path.Combine(temp.Path, "workspace");
+        Directory.CreateDirectory(root);
+        File.WriteAllText(Path.Combine(root, "Root.csproj"), "<Project Sdk=\"Microsoft.NET.Sdk\" />");
+        Directory.CreateDirectory(Path.Combine(root, ".compile_gate"));
+        File.WriteAllText(Path.Combine(root, ".compile_gate", "GeneratedCompileGate.csproj"), "<Project Sdk=\"Microsoft.NET.Sdk\" />");
+        Directory.CreateDirectory(Path.Combine(root, "bin", "Debug"));
+        File.WriteAllText(Path.Combine(root, "bin", "Debug", "Shadow.csproj"), "<Project Sdk=\"Microsoft.NET.Sdk\" />");
+
+        var resolution = DotnetBuildTargetResolver.Resolve(root, allowRecursiveDiscovery: true);
+
+        Assert.True(resolution.Succeeded);
+        Assert.Equal(Path.Combine(root, "Root.csproj"), resolution.TargetPath);
+    }
+
+    [Fact]
+    public void TargetResolver_WithoutRecursiveDiscovery_Fails_WhenOnlyNestedProjectExists()
+    {
+        using var temp = new TempDirectoryScope("helper_dotnet_targets_");
+        var root = Path.Combine(temp.Path, "workspace");
+        var nested = Path.Combine(root, "src", "Nested");
+        Directory.CreateDirectory(nested);
+        File.WriteAllText(Path.Combine(nested, "Nested.csproj"), "<Project Sdk=\"Microsoft.NET.Sdk\" />");
+
+        var resolution = DotnetBuildTargetResolver.Resolve(root, allowRecursiveDiscovery: false);
+
+        Assert.False(resolution.Succeeded);
+        Assert.Equal("DOTNET_TARGET_NOT_FOUND", resolution.ErrorCode);
+    }
+
+    [Fact]
+    public void TargetResolver_WithRecursiveDiscovery_FindsSingleNestedProjectOutsideIgnoredPaths()
+    {
+        using var temp = new TempDirectoryScope("helper_dotnet_targets_");
+        var root = Path.Combine(temp.Path, "workspace");
+        var nested = Path.Combine(root, "src", "Nested");
+        Directory.CreateDirectory(nested);
+        var expected = Path.Combine(nested, "Nested.csproj");
+        File.WriteAllText(expected, "<Project Sdk=\"Microsoft.NET.Sdk\" />");
+
+        var resolution = DotnetBuildTargetResolver.Resolve(root, allowRecursiveDiscovery: true);
+
+        Assert.True(resolution.Succeeded);
+        Assert.Equal(expected, resolution.TargetPath);
+    }
+
+    [Fact]
+    public void TargetResolver_ReturnsStructuredAmbiguity_ForMultipleTopLevelProjects()
+    {
+        using var temp = new TempDirectoryScope("helper_dotnet_targets_");
+        var root = Path.Combine(temp.Path, "workspace");
+        Directory.CreateDirectory(root);
+        File.WriteAllText(Path.Combine(root, "A.csproj"), "<Project Sdk=\"Microsoft.NET.Sdk\" />");
+        File.WriteAllText(Path.Combine(root, "B.csproj"), "<Project Sdk=\"Microsoft.NET.Sdk\" />");
+
+        var resolution = DotnetBuildTargetResolver.Resolve(root, allowRecursiveDiscovery: true);
+
+        Assert.False(resolution.Succeeded);
+        Assert.Equal("DOTNET_TARGET_AMBIGUOUS", resolution.ErrorCode);
+        Assert.Contains("A.csproj", resolution.ErrorMessage, StringComparison.Ordinal);
+        Assert.Contains("B.csproj", resolution.ErrorMessage, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TargetResolver_RejectsExplicitTargetOutsideRoot_AndIgnoredPath()
+    {
+        using var temp = new TempDirectoryScope("helper_dotnet_targets_");
+        var root = Path.Combine(temp.Path, "workspace");
+        var sibling = Path.Combine(temp.Path, "outside");
+        Directory.CreateDirectory(root);
+        Directory.CreateDirectory(sibling);
+        var outsideProject = Path.Combine(sibling, "Outside.csproj");
+        File.WriteAllText(outsideProject, "<Project Sdk=\"Microsoft.NET.Sdk\" />");
+        Directory.CreateDirectory(Path.Combine(root, ".compile_gate"));
+        var ignoredProject = Path.Combine(root, ".compile_gate", "GeneratedCompileGate.csproj");
+        File.WriteAllText(ignoredProject, "<Project Sdk=\"Microsoft.NET.Sdk\" />");
+
+        var outside = DotnetBuildTargetResolver.ResolveExplicit(root, outsideProject);
+        var ignored = DotnetBuildTargetResolver.ResolveExplicit(root, ignoredProject);
+
+        Assert.False(outside.Succeeded);
+        Assert.Equal("DOTNET_TARGET_OUTSIDE_ROOT", outside.ErrorCode);
+        Assert.False(ignored.Succeeded);
+        Assert.Equal("DOTNET_TARGET_IGNORED_PATH", ignored.ErrorCode);
+    }
+
     private static async Task CreateSimpleLibraryAsync(string projectRoot)
     {
         await File.WriteAllTextAsync(

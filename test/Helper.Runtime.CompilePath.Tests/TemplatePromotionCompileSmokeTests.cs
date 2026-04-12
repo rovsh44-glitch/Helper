@@ -14,6 +14,7 @@ public sealed class TemplatePromotionCompileSmokeTests
         {
             ["HELPER_FF_TEMPLATE_RUNTIME_PROMOTION_V1"] = "true",
             ["HELPER_TEMPLATE_PROMOTION_AUTO_ACTIVATE"] = "true",
+            ["HELPER_TEMPLATE_PROMOTION_POST_ACTIVATION_FULL_RECERTIFY"] = "false",
             ["HELPER_TEMPLATE_PROMOTION_FORMAT_MODE"] = "off",
             ["HELPER_TEMPLATE_CERTIFICATION_REQUIRE_SCHEMA_V2"] = "true"
         });

@@ -254,6 +254,7 @@ public enum CompileGateFormatMode
 public sealed record TemplatePromotionFeatureProfile(
     bool RuntimePromotionEnabled,
     bool AutoActivateEnabled,
+    bool PostActivationFullRecertifyEnabled,
     CompileGateFormatMode FormatMode,
     bool RouterV2Enabled,
     double RouterMinConfidence);

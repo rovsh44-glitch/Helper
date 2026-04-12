@@ -14,6 +14,7 @@ public sealed class TemplatePromotionFeatureProfileService : ITemplatePromotionF
         return new TemplatePromotionFeatureProfile(
             RuntimePromotionEnabled: !emergencyDisabled && ReadFlag("HELPER_FF_TEMPLATE_RUNTIME_PROMOTION_V1", runtimeDefault),
             AutoActivateEnabled: ReadFlag("HELPER_TEMPLATE_PROMOTION_AUTO_ACTIVATE", true),
+            PostActivationFullRecertifyEnabled: ReadFlag("HELPER_TEMPLATE_PROMOTION_POST_ACTIVATION_FULL_RECERTIFY", false),
             FormatMode: ReadFormatMode(),
             RouterV2Enabled: ReadFlag("HELPER_FF_TEMPLATE_ROUTER_V2", true),
             RouterMinConfidence: ReadDouble("HELPER_TEMPLATE_ROUTER_MIN_CONFIDENCE", 0.34, 0.05, 0.95));

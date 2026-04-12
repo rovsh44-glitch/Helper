@@ -14,6 +14,7 @@ public sealed class TemplatePromotionEndToEndAndChaosTests
         {
             ["HELPER_FF_TEMPLATE_RUNTIME_PROMOTION_V1"] = "true",
             ["HELPER_TEMPLATE_PROMOTION_AUTO_ACTIVATE"] = "true",
+            ["HELPER_TEMPLATE_PROMOTION_POST_ACTIVATION_FULL_RECERTIFY"] = "false",
             ["HELPER_TEMPLATE_PROMOTION_FORMAT_MODE"] = "off",
             ["HELPER_TEMPLATE_CERTIFICATION_REQUIRE_SCHEMA_V2"] = "true"
         });
@@ -74,6 +75,7 @@ public sealed class TemplatePromotionEndToEndAndChaosTests
         {
             ["HELPER_FF_TEMPLATE_RUNTIME_PROMOTION_V1"] = "true",
             ["HELPER_TEMPLATE_PROMOTION_AUTO_ACTIVATE"] = "true",
+            ["HELPER_TEMPLATE_PROMOTION_POST_ACTIVATION_FULL_RECERTIFY"] = "false",
             ["HELPER_TEMPLATE_PROMOTION_FORMAT_MODE"] = "off",
             ["HELPER_TEMPLATE_CERTIFICATION_REQUIRE_SCHEMA_V2"] = "true"
         });
@@ -108,6 +110,11 @@ public sealed class TemplatePromotionEndToEndAndChaosTests
         var publishedRoot = Path.Combine(templatesRoot, templateId, result.Version!);
         Assert.True(Directory.Exists(publishedRoot));
         Assert.True(File.Exists(Path.Combine(publishedRoot, "template.json")));
+        Assert.True(File.Exists(Path.Combine(publishedRoot, TemplateCertificationStatusStore.StatusFileName)));
+        var status = TemplateCertificationStatusStore.TryRead(publishedRoot);
+        Assert.NotNull(status);
+        Assert.True(status!.Passed);
+        Assert.True(File.Exists(status.ReportPath));
 
         var versions = await lifecycle.GetVersionsAsync(templateId);
         Assert.Contains(versions, x => x.IsActive && x.Version == result.Version);
@@ -437,21 +444,7 @@ public partial class MainWindow : global::System.Windows.Window
 
         public Task<TemplateCertificationReport> CertifyAsync(string templateId, string version, string? reportPath = null, string? templatePath = null, CancellationToken ct = default)
         {
-            var resolvedTemplatePath = templatePath ?? Path.Combine(Path.GetTempPath(), "certification_stub");
-            return Task.FromResult(new TemplateCertificationReport(
-                GeneratedAtUtc: DateTimeOffset.UtcNow,
-                TemplateId: templateId,
-                Version: version,
-                TemplatePath: resolvedTemplatePath,
-                MetadataSchemaPassed: _passed,
-                CompileGatePassed: _passed,
-                ArtifactValidationPassed: _passed,
-                SmokePassed: _passed,
-                SafetyScanPassed: _passed,
-                Passed: _passed,
-                Errors: _passed ? Array.Empty<string>() : new[] { "stub-failed" },
-                SmokeScenarios: Array.Empty<TemplateCertificationSmokeScenario>(),
-                ReportPath: reportPath ?? Path.Combine(Path.GetTempPath(), "report.md")));
+            return CertifyCoreAsync(templateId, version, reportPath, templatePath, ct);
         }
 
         public Task<TemplateCertificationGateReport> EvaluateGateAsync(string? reportPath = null, CancellationToken ct = default)
@@ -464,6 +457,39 @@ public partial class MainWindow : global::System.Windows.Window
                 FailedCount: _passed ? 0 : 1,
                 Violations: _passed ? Array.Empty<string>() : new[] { "stub-failed" },
                 Templates: Array.Empty<TemplateCertificationReport>()));
+        }
+
+        private async Task<TemplateCertificationReport> CertifyCoreAsync(string templateId, string version, string? reportPath, string? templatePath, CancellationToken ct)
+        {
+            var resolvedTemplatePath = Path.GetFullPath(templatePath ?? Path.Combine(Path.GetTempPath(), "certification_stub"));
+            Directory.CreateDirectory(resolvedTemplatePath);
+            var resolvedReportPath = Path.GetFullPath(reportPath ?? Path.Combine(Path.GetTempPath(), $"report_{Guid.NewGuid():N}.md"));
+            Directory.CreateDirectory(Path.GetDirectoryName(resolvedReportPath)!);
+            await File.WriteAllTextAsync(resolvedReportPath, $"# Static certification report for {templateId}:{version}", ct);
+            await TemplateCertificationStatusStore.WriteAsync(
+                resolvedTemplatePath,
+                new TemplateCertificationStatus(
+                    DateTimeOffset.UtcNow,
+                    Passed: _passed,
+                    HasCriticalAlerts: !_passed,
+                    CriticalAlerts: _passed ? Array.Empty<string>() : new[] { "stub-failed" },
+                    ReportPath: resolvedReportPath),
+                ct);
+
+            return new TemplateCertificationReport(
+                GeneratedAtUtc: DateTimeOffset.UtcNow,
+                TemplateId: templateId,
+                Version: version,
+                TemplatePath: resolvedTemplatePath,
+                MetadataSchemaPassed: _passed,
+                CompileGatePassed: _passed,
+                ArtifactValidationPassed: _passed,
+                SmokePassed: _passed,
+                SafetyScanPassed: _passed,
+                Passed: _passed,
+                Errors: _passed ? Array.Empty<string>() : new[] { "stub-failed" },
+                SmokeScenarios: Array.Empty<TemplateCertificationSmokeScenario>(),
+                ReportPath: resolvedReportPath);
         }
     }
 

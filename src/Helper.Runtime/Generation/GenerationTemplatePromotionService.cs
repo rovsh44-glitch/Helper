@@ -20,6 +20,7 @@ public sealed class GenerationTemplatePromotionService : IGenerationTemplateProm
     private readonly TemplatePromotionMetadataNormalizer _metadataNormalizer;
     private readonly TemplatePromotionScaffoldService _scaffoldService;
     private readonly TemplatePromotionFormatRunner _formatRunner;
+    private readonly TemplatePostActivationVerifier _postActivationVerifier;
 
     public GenerationTemplatePromotionService(
         ITemplateRoutingService routing,
@@ -58,7 +59,8 @@ public sealed class GenerationTemplatePromotionService : IGenerationTemplateProm
         TemplatePromotionVersionPlanner? versionPlanner,
         TemplatePromotionMetadataNormalizer? metadataNormalizer,
         TemplatePromotionScaffoldService? scaffoldService,
-        TemplatePromotionFormatRunner? formatRunner)
+        TemplatePromotionFormatRunner? formatRunner,
+        TemplatePostActivationVerifier? postActivationVerifier = null)
     {
         _routing = routing;
         _generalizer = generalizer;
@@ -72,6 +74,7 @@ public sealed class GenerationTemplatePromotionService : IGenerationTemplateProm
         _metadataNormalizer = metadataNormalizer ?? new TemplatePromotionMetadataNormalizer();
         _scaffoldService = scaffoldService ?? new TemplatePromotionScaffoldService();
         _formatRunner = formatRunner ?? new TemplatePromotionFormatRunner();
+        _postActivationVerifier = postActivationVerifier ?? new TemplatePostActivationVerifier();
     }
 
     public async Task<TemplatePromotionOutcome> TryPromoteAsync(
@@ -169,6 +172,7 @@ public sealed class GenerationTemplatePromotionService : IGenerationTemplateProm
             return BuildFailedOutcome(templateId, version, "Template certification failed.", certification.Errors);
         }
 
+        var certifiedSnapshot = await _postActivationVerifier.CaptureSnapshotAsync(generalized.RootPath, ct);
         var publishedRoot = Path.Combine(_templatesRoot, templateId, version);
         Directory.CreateDirectory(Path.Combine(_templatesRoot, templateId));
         if (Directory.Exists(publishedRoot))
@@ -181,7 +185,7 @@ public sealed class GenerationTemplatePromotionService : IGenerationTemplateProm
 
         if (profile.AutoActivateEnabled)
         {
-            var activationOutcome = await TryActivateAsync(templateId, version, publishedRoot, ct);
+            var activationOutcome = await TryActivateAsync(templateId, version, publishedRoot, profile, certifiedSnapshot, ct);
             if (activationOutcome is not null)
             {
                 return activationOutcome;
@@ -238,6 +242,8 @@ public sealed class GenerationTemplatePromotionService : IGenerationTemplateProm
         string templateId,
         string version,
         string publishedRoot,
+        TemplatePromotionFeatureProfile profile,
+        TemplateTreeIntegritySnapshot certifiedSnapshot,
         CancellationToken ct)
     {
         var previousActive = await _versionPlanner.GetCurrentActiveVersionAsync(_lifecycle, templateId, ct);
@@ -254,13 +260,37 @@ public sealed class GenerationTemplatePromotionService : IGenerationTemplateProm
             return BuildFailedOutcome(templateId, version, "Template activation failed.", new[] { activated.Message });
         }
 
-        var activeCertification = await _certificationService.CertifyAsync(
+        if (profile.PostActivationFullRecertifyEnabled)
+        {
+            var activeCertification = await _certificationService.CertifyAsync(
+                templateId,
+                version,
+                reportPath: null,
+                templatePath: publishedRoot,
+                ct: ct);
+            if (activeCertification.Passed)
+            {
+                return null;
+            }
+
+            if (!string.IsNullOrWhiteSpace(previousActive))
+            {
+                await _lifecycle.ActivateVersionAsync(templateId, previousActive, ct);
+            }
+
+            TryDeleteDirectory(publishedRoot);
+            _metrics.RecordTemplatePromotionAttempt(false, "post_activation_certification");
+            return BuildFailedOutcome(templateId, version, "Post-activation certification failed.", activeCertification.Errors);
+        }
+
+        var activeVerification = await _postActivationVerifier.VerifyAsync(
+            _lifecycle,
             templateId,
             version,
-            reportPath: null,
-            templatePath: publishedRoot,
-            ct: ct);
-        if (activeCertification.Passed)
+            publishedRoot,
+            certifiedSnapshot,
+            ct);
+        if (activeVerification.Passed)
         {
             return null;
         }
@@ -271,8 +301,8 @@ public sealed class GenerationTemplatePromotionService : IGenerationTemplateProm
         }
 
         TryDeleteDirectory(publishedRoot);
-        _metrics.RecordTemplatePromotionAttempt(false, "post_activation_certification");
-        return BuildFailedOutcome(templateId, version, "Post-activation certification failed.", activeCertification.Errors);
+        _metrics.RecordTemplatePromotionAttempt(false, "post_activation_verification");
+        return BuildFailedOutcome(templateId, version, "Post-activation verification failed.", activeVerification.Errors);
     }
 
     private static SemaphoreSlim GetTemplateLock(string templateId)
