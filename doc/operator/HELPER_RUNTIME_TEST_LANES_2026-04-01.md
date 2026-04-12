@@ -32,6 +32,9 @@ This note defines the operator and developer execution policy for the split runt
    Run the compile-gate and nested `dotnet` subset that intentionally spins child build workspaces.
    Entry point: `scripts/run_certification_compile_tests.ps1`
    Scope: compile-gate, template certification smoke, promotion end-to-end chaos, and other tests that intentionally spawn nested build execution
+   Modes:
+   - operational: default wrapper run, no blame collector
+   - forensic: opt-in `-EnableBlameHang -BlameHangTimeoutSec 180` for evidence preservation
 
 ## Execution Policy
 
@@ -50,6 +53,9 @@ This note defines the operator and developer execution policy for the split runt
 4. Targeted lock-wait regression:
    `powershell -ExecutionPolicy Bypass -File scripts\check_certification_compile_lock_wait.ps1`
 
+5. Forensic certification-compile rerun:
+   `powershell -ExecutionPolicy Bypass -File scripts\run_certification_compile_tests.ps1 -Configuration Debug -EnableBlameHang -BlameHangTimeoutSec 180`
+
 ## Notes
 
 - `Fast` and `Integration` must stay clear of heavy parity and compile-gate scenarios.
@@ -59,7 +65,11 @@ This note defines the operator and developer execution policy for the split runt
 - `CertificationCompile` owns the compile-gate and nested build subset so those scenarios do not contaminate the normal inner loop.
 - `run_certification_compile_tests.ps1` is serialized by lane lock and waits for the active compile-lane run instead of failing immediately on a concurrent launch.
 - Each `CertificationCompile` run writes to a dedicated run root under `...Debug\runs\<runId>` with isolated `HELPER_DATA`, `TestResults`, and `certification_process_trace.jsonl`.
-- Compile-lane interruption cleanup is repo-owned: the script uses `try/finally`, lane-local residue cleanup, and process-tree termination before releasing the lock.
+- Compile-lane interruption cleanup is repo-owned: the script uses `try/catch/finally`, idle and wall-time detection, process-tree snapshots, teardown summaries, and process-tree termination before releasing the lock.
 - Lock waiting is bounded and configurable through `HELPER_CERTIFICATION_COMPILE_LOCK_WAIT_SEC` and `HELPER_CERTIFICATION_COMPILE_LOCK_POLL_SEC`.
+- Operational compile-lane runs should use the wrapper without blame mode. `--blame-hang` is forensic only because the raw `60s` timeout produced false-positive hang kills for the console promotion class.
+- Forensic runs must keep `BlameHangTimeoutSec >= 120`; the current recommended floor is `180`.
+- Compile-lane stall detection is controlled by `HELPER_CERTIFICATION_COMPILE_MAX_WALL_SEC`, `HELPER_CERTIFICATION_COMPILE_IDLE_TIMEOUT_SEC`, and `HELPER_CERTIFICATION_COMPILE_HEARTBEAT_SEC`.
 - `scripts/check_certification_compile_lock_wait.ps1` is the regression runner for this behavior and should report distinct first and second `runId` values.
+- Failure diagnostics are preserved under the run root, including `teardown_summary.json`, trace data, and `TestResults`.
 - CI entry point: [runtime-test-lanes.yml](../../.github/workflows/runtime-test-lanes.yml).

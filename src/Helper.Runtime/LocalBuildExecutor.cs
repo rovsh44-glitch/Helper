@@ -22,7 +22,13 @@ namespace Helper.Runtime.Infrastructure
             var profile = PolyglotCompileGateValidator.DetectProfile(workingDirectory);
             if (profile.Kind == PolyglotProjectKind.Dotnet)
             {
-                return await _dotnet.BuildAsync(workingDirectory, ct);
+                var resolution = DotnetBuildTargetResolver.Resolve(workingDirectory, allowRecursiveDiscovery: true);
+                if (!resolution.Succeeded)
+                {
+                    return resolution.ToBuildErrors();
+                }
+
+                return await _dotnet.BuildAsync(workingDirectory, resolution.TargetPath!, ct);
             }
 
             var errors = await PolyglotCompileGateValidator.ValidateNonDotnetSourcesAsync(workingDirectory, profile, ct);

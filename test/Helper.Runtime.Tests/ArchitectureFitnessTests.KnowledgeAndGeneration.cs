@@ -168,6 +168,7 @@ public partial class ArchitectureFitnessTests
         var promotionVersionPath = ResolveWorkspaceFile("src", "Helper.Runtime", "Generation", "TemplatePromotionVersionPlanner.cs");
         var promotionScaffoldPath = ResolveWorkspaceFile("src", "Helper.Runtime", "Generation", "TemplatePromotionScaffoldService.cs");
         var promotionFormatPath = ResolveWorkspaceFile("src", "Helper.Runtime", "Generation", "TemplatePromotionFormatRunner.cs");
+        var promotionVerifierPath = ResolveWorkspaceFile("src", "Helper.Runtime", "Generation", "TemplatePostActivationVerifier.cs");
 
         Assert.True(File.ReadAllLines(turnPath).Length <= 520, "TurnOrchestrationEngine should stay sequencing-focused.");
         Assert.True(File.ReadAllLines(compileGatePath).Length <= 140, "GenerationCompileGate should stay bounded.");
@@ -189,6 +190,7 @@ public partial class ArchitectureFitnessTests
         Assert.True(File.Exists(promotionVersionPath));
         Assert.True(File.Exists(promotionScaffoldPath));
         Assert.True(File.Exists(promotionFormatPath));
+        Assert.True(File.Exists(promotionVerifierPath));
 
         var turn = File.ReadAllText(turnPath);
         var compileGate = File.ReadAllText(compileGatePath);
@@ -206,6 +208,8 @@ public partial class ArchitectureFitnessTests
         Assert.Contains("TemplatePromotionVersionPlanner", promotion, StringComparison.Ordinal);
         Assert.Contains("TemplatePromotionScaffoldService", promotion, StringComparison.Ordinal);
         Assert.Contains("TemplatePromotionFormatRunner", promotion, StringComparison.Ordinal);
+        Assert.Contains("TemplatePostActivationVerifier", promotion, StringComparison.Ordinal);
+        Assert.Contains("PostActivationFullRecertifyEnabled", promotion, StringComparison.Ordinal);
     }
 
     [Fact]

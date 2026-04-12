@@ -40,12 +40,21 @@ public partial class ArchitectureFitnessTests
         Assert.Contains("Acquire-LaneLock", certificationCompileScript, StringComparison.Ordinal);
         Assert.Contains("runs\\", certificationCompileScript, StringComparison.Ordinal);
         Assert.Contains("--results-directory", certificationCompileScript, StringComparison.Ordinal);
+        Assert.Contains("--disable-build-servers", certificationCompileScript, StringComparison.Ordinal);
+        Assert.Contains("MSBUILDDISABLENODEREUSE", certificationCompileScript, StringComparison.Ordinal);
         Assert.Contains("HELPER_DATA_ROOT", certificationCompileScript, StringComparison.Ordinal);
         Assert.Contains("HELPER_LOGS_ROOT", certificationCompileScript, StringComparison.Ordinal);
         Assert.Contains("taskkill /PID", certificationCompileScript, StringComparison.Ordinal);
-        Assert.DoesNotContain("Get-CimInstance Win32_Process", certificationCompileScript, StringComparison.Ordinal);
+        Assert.Contains("Get-CimInstance Win32_Process", certificationCompileScript, StringComparison.Ordinal);
+        Assert.Contains("EnableBlameHang", certificationCompileScript, StringComparison.Ordinal);
+        Assert.Contains("BlameHangTimeoutSec", certificationCompileScript, StringComparison.Ordinal);
+        Assert.Contains("teardown_summary.json", certificationCompileScript, StringComparison.Ordinal);
         Assert.Contains("HELPER_CERTIFICATION_COMPILE_LOCK_WAIT_SEC", certificationCompileScript, StringComparison.Ordinal);
         Assert.Contains("HELPER_CERTIFICATION_COMPILE_LOCK_POLL_SEC", certificationCompileScript, StringComparison.Ordinal);
+        Assert.Contains("HELPER_CERTIFICATION_COMPILE_MAX_WALL_SEC", certificationCompileScript, StringComparison.Ordinal);
+        Assert.Contains("HELPER_CERTIFICATION_COMPILE_IDLE_TIMEOUT_SEC", certificationCompileScript, StringComparison.Ordinal);
+        Assert.Contains("HELPER_CERTIFICATION_COMPILE_HEARTBEAT_SEC", certificationCompileScript, StringComparison.Ordinal);
+        Assert.Contains("Preserving failure diagnostics", certificationCompileScript, StringComparison.Ordinal);
         Assert.Contains("Waiting for active certification compile lane to release lock", certificationCompileScript, StringComparison.Ordinal);
         Assert.Contains("finally", certificationCompileScript, StringComparison.Ordinal);
         Assert.Contains("helper_template_e2e_", certificationCompileScript, StringComparison.Ordinal);
@@ -252,9 +261,18 @@ public partial class ArchitectureFitnessTests
         var resultMapper = File.ReadAllText(ResolveWorkspaceFile("src", "Helper.Runtime", "Infrastructure", "Dotnet", "DotnetProcessResultMapper.cs"));
         var traceWriter = File.ReadAllText(ResolveWorkspaceFile("src", "Helper.Runtime", "Infrastructure", "DotnetProcessTraceWriter.cs"));
         var compileScript = File.ReadAllText(ResolveWorkspaceFile("scripts", "run_certification_compile_tests.ps1"));
+        var compilePathScript = File.ReadAllText(ResolveWorkspaceFile("scripts", "run_compile_path_tests.ps1"));
+        var targetResolver = File.ReadAllText(ResolveWorkspaceFile("src", "Helper.Runtime", "Infrastructure", "Dotnet", "DotnetBuildTargetResolver.cs"));
+        var promotionProfile = File.ReadAllText(ResolveWorkspaceFile("src", "Helper.Runtime", "Generation", "TemplatePromotionFeatureProfileService.cs"));
+        var postActivationVerifier = File.ReadAllText(ResolveWorkspaceFile("src", "Helper.Runtime", "Generation", "TemplatePostActivationVerifier.cs"));
 
         Assert.Contains("DotnetProcessRunner.RunAsync", dotnetService, StringComparison.Ordinal);
+        Assert.Contains("--disable-build-servers", dotnetService, StringComparison.Ordinal);
+        Assert.Contains("UseSharedCompilation=false", dotnetService, StringComparison.Ordinal);
+        Assert.Contains("-nr:false", dotnetService, StringComparison.Ordinal);
         Assert.Contains("DotnetProcessResultMapper", dotnetService, StringComparison.Ordinal);
+        Assert.Contains("allowRecursiveDiscovery: false", dotnetService, StringComparison.Ordinal);
+        Assert.Contains("ResolveExplicit", dotnetService, StringComparison.Ordinal);
         Assert.Contains("HELPER_DOTNET_BUILD_TIMEOUT_SEC", timeoutPolicy, StringComparison.Ordinal);
         Assert.Contains("HELPER_DOTNET_TEST_TIMEOUT_SEC", timeoutPolicy, StringComparison.Ordinal);
         Assert.Contains("HELPER_DOTNET_RESTORE_TIMEOUT_SEC", timeoutPolicy, StringComparison.Ordinal);
@@ -268,5 +286,12 @@ public partial class ArchitectureFitnessTests
         Assert.Contains("Stop-LaneProcesses", compileScript, StringComparison.Ordinal);
         Assert.Contains("Remove-TempResidue", compileScript, StringComparison.Ordinal);
         Assert.Contains("Release-LaneLock", compileScript, StringComparison.Ordinal);
+        Assert.Contains("teardown_summary.json", compilePathScript, StringComparison.Ordinal);
+        Assert.Contains("MSBUILDDISABLENODEREUSE", compilePathScript, StringComparison.Ordinal);
+        Assert.Contains("HELPER_COMPILE_PATH_IDLE_TIMEOUT_SEC", compilePathScript, StringComparison.Ordinal);
+        Assert.Contains("Get-CimInstance Win32_Process", compilePathScript, StringComparison.Ordinal);
+        Assert.Contains("DOTNET_TARGET_AMBIGUOUS", targetResolver, StringComparison.Ordinal);
+        Assert.Contains("HELPER_TEMPLATE_PROMOTION_POST_ACTIVATION_FULL_RECERTIFY", promotionProfile, StringComparison.Ordinal);
+        Assert.Contains("TemplateCertificationStatusStore.TryRead", postActivationVerifier, StringComparison.Ordinal);
     }
 }

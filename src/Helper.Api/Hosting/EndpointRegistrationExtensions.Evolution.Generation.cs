@@ -58,6 +58,7 @@ public static partial class EndpointRegistrationExtensions
 			{
 				runtimePromotionEnabled = current.RuntimePromotionEnabled,
 				autoActivateEnabled = current.AutoActivateEnabled,
+				postActivationFullRecertifyEnabled = current.PostActivationFullRecertifyEnabled,
 				formatMode = current.FormatMode.ToString(),
 				routerV2Enabled = current.RouterV2Enabled,
 				routerMinConfidence = current.RouterMinConfidence
@@ -115,7 +116,7 @@ public static partial class EndpointRegistrationExtensions
 			{
 				return Results.Json(new { success = false, error = "Safety guard rejected build request." }, (JsonSerializerOptions?)null, (string?)null, (int?)403);
 			}
-			List<BuildError> errors = await dotnet.BuildAsync(dto.ProjectPath, ct);
+			List<BuildError> errors = await dotnet.BuildAsync(dto.ProjectPath, allowRecursiveDiscovery: true, ct);
 			return Results.Ok(new { success = errors.Count == 0, errors });
 		}));
 	}

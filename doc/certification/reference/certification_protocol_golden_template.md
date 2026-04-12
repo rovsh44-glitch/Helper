@@ -27,4 +27,10 @@ Define deterministic certification criteria before template activation.
 
 ## Activation Rule
 - Auto-activate is allowed only when `Passed=true`.
-- On activation failure or post-activation certification failure, rollback is mandatory.
+- Default post-activation contract is verification, not a second heavy rebuild:
+  - active pointer must move to the promoted version
+  - published template root must exist
+  - `certification_status.json` must remain `Passed`
+  - published tree must match the certified candidate tree
+- Optional full post-activation re-certification is controlled by `HELPER_TEMPLATE_PROMOTION_POST_ACTIVATION_FULL_RECERTIFY`.
+- On activation failure, post-activation verification failure, or explicit post-activation re-certification failure, rollback is mandatory.

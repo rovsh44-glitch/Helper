@@ -143,6 +143,8 @@ namespace Helper.Runtime.Core
     public interface IDotnetService
     {
         Task<List<BuildError>> BuildAsync(string workingDirectory, CancellationToken ct = default);
+        Task<List<BuildError>> BuildAsync(string workingDirectory, bool allowRecursiveDiscovery, CancellationToken ct = default);
+        Task<List<BuildError>> BuildAsync(string workingDirectory, string targetPath, CancellationToken ct = default);
         Task<TestReport> TestAsync(string workingDirectory, CancellationToken ct = default);
         Task RestoreAsync(string workingDirectory, CancellationToken ct = default);
     }

@@ -60,7 +60,8 @@ public sealed class GenerationCompileGate : IGenerationCompileGate
                 CompileWorkspace: compileWorkspace);
         }
 
-        var errors = await _dotnetService.BuildAsync(compileWorkspace, ct);
+        var compileProjectPath = Path.Combine(compileWorkspace, CompileGateWorkspacePreparer.GeneratedProjectFileName);
+        var errors = await _dotnetService.BuildAsync(compileWorkspace, compileProjectPath, ct);
         var repairIteration = 0;
         while (errors.Count > 0 && repairIteration < _maxRepairIterations)
         {
@@ -71,7 +72,7 @@ public sealed class GenerationCompileGate : IGenerationCompileGate
                 break;
             }
 
-            errors = await _dotnetService.BuildAsync(compileWorkspace, ct);
+            errors = await _dotnetService.BuildAsync(compileWorkspace, compileProjectPath, ct);
         }
 
         if (errors.Count == 0 && _formatMode != CompileGateFormatMode.Off)

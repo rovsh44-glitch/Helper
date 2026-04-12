@@ -8,6 +8,8 @@ namespace Helper.Runtime.Generation;
 
 public sealed class CompileGateWorkspacePreparer
 {
+    internal const string GeneratedProjectFileName = "GeneratedCompileGate.csproj";
+
     private static readonly Regex NamespaceRegex = new(@"namespace\s+([A-Za-z0-9_.]+)", RegexOptions.Compiled);
     private static readonly Regex PartialClassRegex = new(@"partial\s+class\s+([A-Za-z_][A-Za-z0-9_]*)", RegexOptions.Compiled);
     private static readonly Regex XamlEventRegex = new(@"\b(?:Click|Loaded|SelectionChanged|TextChanged|Checked|Unchecked|MouseDown|MouseUp|Drop|DragOver|KeyDown|KeyUp|Closed|Opened|Navigated)=""(?<handler>[A-Za-z_][A-Za-z0-9_]*)""", RegexOptions.Compiled);
@@ -318,7 +320,7 @@ public sealed class CompileGateWorkspacePreparer
         CompileProjectProfile profile,
         CancellationToken ct)
     {
-        var csprojPath = Path.Combine(compileWorkspace, "GeneratedCompileGate.csproj");
+        var csprojPath = Path.Combine(compileWorkspace, GeneratedProjectFileName);
         var sb = new StringBuilder();
         sb.AppendLine("""
 <Project Sdk="Microsoft.NET.Sdk">
