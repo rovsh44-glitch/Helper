@@ -73,3 +73,5 @@ This note defines the operator and developer execution policy for the split runt
 - `scripts/check_certification_compile_lock_wait.ps1` is the regression runner for this behavior and should report distinct first and second `runId` values.
 - Failure diagnostics are preserved under the run root, including `teardown_summary.json`, trace data, and `TestResults`.
 - CI entry point: [runtime-test-lanes.yml](../../.github/workflows/runtime-test-lanes.yml).
+- `npm run ci:gate:heavy` now generates a fresh parity golden batch before evaluating parity KPIs.
+- Same-day heavy runs do not force the strict parity window gate unless the required number of daily snapshots already exists or the operator explicitly passes `-RequireParityWindow` to `scripts/ci_gate_heavy.ps1`.
