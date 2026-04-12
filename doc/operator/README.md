@@ -62,6 +62,12 @@ This is the operator-facing entry point for running, checking, and certifying HE
    - forensic rerun: `powershell -ExecutionPolicy Bypass -File scripts\run_certification_compile_tests.ps1 -Configuration Debug -EnableBlameHang -BlameHangTimeoutSec 180`
 6. do not put compile-path or eval benchmark coverage back into `Helper.Runtime.Tests`
 
+### Run Heavy Verification
+
+1. `powershell -ExecutionPolicy Bypass -File scripts\ci_gate_heavy.ps1`
+2. the heavy gate now generates a fresh parity batch before evaluating the parity KPI gate
+3. the strict parity window gate is skipped on same-day heavy runs unless enough daily snapshots already exist or the operator forces it with `-RequireParityWindow`
+
 ### Inspect Extension Registry
 
 1. review [Extensions](../extensions/README.md)

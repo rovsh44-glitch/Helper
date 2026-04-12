@@ -122,7 +122,7 @@ The current recommended model is:
 
 ## License
 
-This repository is governed by [LICENSE](LICENSE). Public visibility, if enabled later, does not override the private-core disclosure policy described in `doc/security/PUBLIC_SHOWCASE_BOUNDARY_POLICY_2026-03-24.md`.
+This repository is governed by [LICENSE](LICENSE). The current license posture is proprietary and all-rights-reserved, so GitHub may classify it as `Other` rather than a standard SPDX-recognized open-source license. Public visibility, if enabled later, does not override the private-core disclosure policy described in `doc/security/PUBLIC_SHOWCASE_BOUNDARY_POLICY_2026-03-24.md`.
 
 ## Contact And Next Step
 
