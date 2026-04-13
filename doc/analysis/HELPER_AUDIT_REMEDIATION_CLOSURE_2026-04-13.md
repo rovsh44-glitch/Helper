@@ -101,8 +101,10 @@ Declared required contexts:
 - enforced required contexts on `main`:
   - `repo_gate`
   - `connected_nuget_audit`
-- the remediation package was delivered through PR `#33` and merged to `main` as:
+- the core remediation package was delivered through PR `#33` and merged to `main` as:
   - `7f7de0a6833b16077e9e4838f7310c5997c4db10`
+- the `Phase 5` structural cleanup follow-up was delivered through PR `#38` and merged to `main` as:
+  - `e86d0aa2667e9b9416ebeeae4e1fbb78cd49a1d9`
 
 ### 8. The repository still contains an operator runbook for auditability
 
@@ -110,6 +112,19 @@ Declared required contexts:
   - `repo_gate`
   - `connected_nuget_audit`
 - `doc/security/GITHUB_PRIVATE_REPO_SECURITY_AUTOMATION_STATUS_2026-04-12.md` now distinguishes in-repo declaration from real remote enforcement
+
+### 9. A retrospective baseline ledger now records the exact remediation chain
+
+- `doc/analysis/HELPER_AUDIT_REMEDIATION_BASELINE_LEDGER_2026-04-13.md` now records:
+  - the audited baseline `main` head captured in the 2026-04-12 closure:
+    - `36aa39ccbc9ed3feb485085911580e90059d7106`
+  - the core remediation merge:
+    - PR `#33`
+    - `7f7de0a6833b16077e9e4838f7310c5997c4db10`
+  - the `Phase 5` cleanup merge:
+    - PR `#38`
+    - `e86d0aa2667e9b9416ebeeae4e1fbb78cd49a1d9`
+- this is the canonical retrospective closure for `Step 0.2` without rewriting Git history or inventing a backdated remediation branch
 
 ## Verification
 
@@ -133,5 +148,5 @@ Observed results:
 
 ## Remaining Notes
 
-1. The original remediation work began from the audited `main` baseline recorded in the 2026-04-12 closure, so `Step 0.2` was satisfied retrospectively rather than literally.
-2. The critical audit defects and the `Phase 5` cleanup are now implemented in code, tests, CI, and server-side ruleset enforcement.
+1. The original remediation work began from the audited `main` baseline recorded in the 2026-04-12 closure, so `Step 0.2` was satisfied retrospectively rather than literally; the exact baseline and remediation chain are now captured in `doc/analysis/HELPER_AUDIT_REMEDIATION_BASELINE_LEDGER_2026-04-13.md`.
+2. The critical audit defects and the `Phase 5` cleanup are now merged to `main` and implemented in code, tests, CI, and server-side ruleset enforcement.
