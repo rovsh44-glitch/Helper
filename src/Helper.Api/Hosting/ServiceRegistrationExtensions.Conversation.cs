@@ -173,7 +173,15 @@ public static partial class ServiceRegistrationExtensions
         services.AddSingleton<TurnLiveWebDecisionStep>();
         services.AddSingleton<TurnAmbiguityResolutionStep>();
         services.AddSingleton<TurnIntentOverrideStep>();
-        services.AddSingleton<IChatTurnPlanner, ChatTurnPlanner>();
+        services.AddSingleton<IChatTurnPlanner>(sp => new ChatTurnPlanner(
+            sp.GetRequiredService<TurnIntentAnalysisStep>(),
+            sp.GetRequiredService<TurnPersonalizationStep>(),
+            sp.GetRequiredService<TurnReasoningSelectionStep>(),
+            sp.GetRequiredService<TurnLatencyBudgetStep>(),
+            sp.GetRequiredService<TurnLiveWebDecisionStep>(),
+            sp.GetRequiredService<TurnAmbiguityResolutionStep>(),
+            sp.GetRequiredService<TurnIntentOverrideStep>(),
+            sp.GetRequiredService<IConversationStageMetricsService>()));
         services.AddSingleton<IChatTurnExecutor, ChatTurnExecutor>();
         services.AddSingleton<IChatTurnCritic, ChatTurnCritic>();
         services.AddSingleton<IChatTurnFinalizer, ChatTurnFinalizer>();

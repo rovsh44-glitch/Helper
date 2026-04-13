@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Helper.Api.Hosting;
 using Helper.Api.Conversation.InteractionState;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Helper.Api.Conversation;
 
@@ -62,6 +63,7 @@ public sealed class ChatTurnPlanner : IChatTurnPlanner
     {
     }
 
+    [ActivatorUtilitiesConstructor]
     public ChatTurnPlanner(
         TurnIntentAnalysisStep intentAnalysisStep,
         TurnPersonalizationStep personalizationStep,

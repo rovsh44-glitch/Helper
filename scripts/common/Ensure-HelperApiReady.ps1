@@ -221,6 +221,29 @@ function Start-LocalHelperApi {
         $resolvedSessionSigningKey = Get-EnvFileVariableValue -EnvFile $envFile -Name "HELPER_SESSION_SIGNING_KEY"
     }
 
+    $resolvedAspNetcoreEnvironment = $env:ASPNETCORE_ENVIRONMENT
+    if ([string]::IsNullOrWhiteSpace($resolvedAspNetcoreEnvironment)) {
+        $resolvedAspNetcoreEnvironment = Get-EnvFileVariableValue -EnvFile $envFile -Name "ASPNETCORE_ENVIRONMENT"
+    }
+
+    $resolvedDotnetEnvironment = $env:DOTNET_ENVIRONMENT
+    if ([string]::IsNullOrWhiteSpace($resolvedDotnetEnvironment)) {
+        $resolvedDotnetEnvironment = Get-EnvFileVariableValue -EnvFile $envFile -Name "DOTNET_ENVIRONMENT"
+    }
+
+    $resolvedLocalBootstrap = $env:HELPER_AUTH_ALLOW_LOCAL_BOOTSTRAP
+    if ([string]::IsNullOrWhiteSpace($resolvedLocalBootstrap)) {
+        $resolvedLocalBootstrap = Get-EnvFileVariableValue -EnvFile $envFile -Name "HELPER_AUTH_ALLOW_LOCAL_BOOTSTRAP"
+    }
+
+    if ([string]::IsNullOrWhiteSpace($resolvedLocalBootstrap)) {
+        $resolvedLocalBootstrap = $env:HELPER_ALLOW_LOCAL_BOOTSTRAP
+    }
+
+    if ([string]::IsNullOrWhiteSpace($resolvedLocalBootstrap)) {
+        $resolvedLocalBootstrap = Get-EnvFileVariableValue -EnvFile $envFile -Name "HELPER_ALLOW_LOCAL_BOOTSTRAP"
+    }
+
     $apiPort = 0
     try {
         $apiPort = ([System.Uri]$ApiBaseUrl).Port
@@ -229,11 +252,30 @@ function Start-LocalHelperApi {
         $apiPort = 0
     }
 
+    $isLoopbackLaunch = Test-IsLoopbackApiBase -BaseUrl $ApiBaseUrl
+    if ($isLoopbackLaunch `
+        -and [string]::IsNullOrWhiteSpace($resolvedAspNetcoreEnvironment) `
+        -and [string]::IsNullOrWhiteSpace($resolvedDotnetEnvironment) `
+        -and [string]::IsNullOrWhiteSpace($resolvedLocalBootstrap)) {
+        # Local readiness/bootstrap launches should preserve the normal development-like bootstrap contract.
+        $resolvedAspNetcoreEnvironment = "Development"
+        $resolvedDotnetEnvironment = "Development"
+    }
+
     $launchSpec = Resolve-LocalHelperApiLaunchSpec -HelperRoot $HelperRoot -SkipBuild:$SkipBuild.IsPresent
 
     $env:ASPNETCORE_URLS = $ApiBaseUrl
     if ($apiPort -gt 0) {
         $env:HELPER_API_PORT = [string]$apiPort
+    }
+    if (-not [string]::IsNullOrWhiteSpace($resolvedAspNetcoreEnvironment)) {
+        $env:ASPNETCORE_ENVIRONMENT = $resolvedAspNetcoreEnvironment
+    }
+    if (-not [string]::IsNullOrWhiteSpace($resolvedDotnetEnvironment)) {
+        $env:DOTNET_ENVIRONMENT = $resolvedDotnetEnvironment
+    }
+    if (-not [string]::IsNullOrWhiteSpace($resolvedLocalBootstrap)) {
+        $env:HELPER_AUTH_ALLOW_LOCAL_BOOTSTRAP = $resolvedLocalBootstrap
     }
     $env:HELPER_LOGS_ROOT = $runtimeLogsRoot
     $env:HELPER_AUTH_KEYS_PATH = $runtimeAuthKeysPath

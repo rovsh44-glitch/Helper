@@ -264,6 +264,29 @@ public partial class ArchitectureFitnessTests
     }
 
     [Fact]
+    public void Ensure_HelperApiReady_Preserves_Local_Development_Bootstrap_For_Loopback_Launches()
+    {
+        var apiReadyScript = File.ReadAllText(ResolveWorkspaceFile("scripts", "common", "Ensure-HelperApiReady.ps1"));
+
+        Assert.Contains("HELPER_AUTH_ALLOW_LOCAL_BOOTSTRAP", apiReadyScript, StringComparison.Ordinal);
+        Assert.Contains("ASPNETCORE_ENVIRONMENT", apiReadyScript, StringComparison.Ordinal);
+        Assert.Contains("DOTNET_ENVIRONMENT", apiReadyScript, StringComparison.Ordinal);
+        Assert.Contains("Test-IsLoopbackApiBase -BaseUrl $ApiBaseUrl", apiReadyScript, StringComparison.Ordinal);
+        Assert.Contains("$resolvedAspNetcoreEnvironment = \"Development\"", apiReadyScript, StringComparison.Ordinal);
+        Assert.Contains("$resolvedDotnetEnvironment = \"Development\"", apiReadyScript, StringComparison.Ordinal);
+        Assert.Contains("Local readiness/bootstrap launches should preserve the normal development-like bootstrap contract.", apiReadyScript, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Conversation_Composition_Root_Uses_Explicit_ChatTurnPlanner_Factory()
+    {
+        var registration = File.ReadAllText(ResolveWorkspaceFile("src", "Helper.Api", "Hosting", "ServiceRegistrationExtensions.Conversation.cs"));
+
+        Assert.Contains("AddSingleton<IChatTurnPlanner>(sp => new ChatTurnPlanner(", registration, StringComparison.Ordinal);
+        Assert.DoesNotContain("AddSingleton<IChatTurnPlanner, ChatTurnPlanner>()", registration, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Heavy_Report_Scripts_Do_Not_Default_To_Doc_Root_Residue()
     {
         var loadChaosScript = File.ReadAllText(ResolveWorkspaceFile("scripts", "load_streaming_chaos.ps1"));
