@@ -243,6 +243,27 @@ public partial class ArchitectureFitnessTests
     }
 
     [Fact]
+    public void Remediation_Baseline_Ledger_Anchors_Retrospective_Step_0_2_Closure()
+    {
+        var ledger = File.ReadAllText(ResolveWorkspaceFile("doc", "analysis", "HELPER_AUDIT_REMEDIATION_BASELINE_LEDGER_2026-04-13.md"));
+        var closureUpdate = File.ReadAllText(ResolveWorkspaceFile("doc", "analysis", "HELPER_AUDIT_REMEDIATION_CLOSURE_2026-04-13.md"));
+
+        Assert.Contains("36aa39ccbc9ed3feb485085911580e90059d7106", ledger, StringComparison.Ordinal);
+        Assert.Contains("PR `#33`", ledger, StringComparison.Ordinal);
+        Assert.Contains("7f7de0a6833b16077e9e4838f7310c5997c4db10", ledger, StringComparison.Ordinal);
+        Assert.Contains("PR `#38`", ledger, StringComparison.Ordinal);
+        Assert.Contains("e86d0aa2667e9b9416ebeeae4e1fbb78cd49a1d9", ledger, StringComparison.Ordinal);
+        Assert.Contains("Protect main", ledger, StringComparison.Ordinal);
+        Assert.Contains("repo_gate", ledger, StringComparison.Ordinal);
+        Assert.Contains("connected_nuget_audit", ledger, StringComparison.Ordinal);
+
+        Assert.Contains("Step 0.2` was satisfied retrospectively rather than literally", closureUpdate, StringComparison.Ordinal);
+        Assert.Contains("HELPER_AUDIT_REMEDIATION_BASELINE_LEDGER_2026-04-13.md", closureUpdate, StringComparison.Ordinal);
+        Assert.Contains("PR `#38`", closureUpdate, StringComparison.Ordinal);
+        Assert.Contains("e86d0aa2667e9b9416ebeeae4e1fbb78cd49a1d9", closureUpdate, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Heavy_Report_Scripts_Do_Not_Default_To_Doc_Root_Residue()
     {
         var loadChaosScript = File.ReadAllText(ResolveWorkspaceFile("scripts", "load_streaming_chaos.ps1"));
