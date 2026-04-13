@@ -13,7 +13,7 @@ internal sealed class BuiltinToolRegistry
     {
         registry.Register(
             "dotnet_test",
-            "Run dotnet test safely with structured class-name filters and optional live process monitor. Prefer this over shell_execute for dotnet test runs.",
+            "Run dotnet test safely with structured class-name filters and optional live process monitor. Prefer this over generic shell execution for dotnet test runs.",
             new Dictionary<string, string>
             {
                 { "target", "Required test project or solution path." },
@@ -24,16 +24,6 @@ internal sealed class BuiltinToolRegistry
                 { "batched", "Optional boolean. Uses class-batched runner instead of a single filtered run." }
             },
             _executionGateway.ExecuteDotnetTestAsync);
-
-        registry.Register(
-            "shell_execute",
-            "Execute a shell command. Prefer dotnet_test for dotnet test runs, filters, or monitored execution.",
-            new Dictionary<string, string>
-            {
-                { "command", "The command to execute" },
-                { "workingDir", "Optional working directory" }
-            },
-            _executionGateway.ExecuteShellCommandAsync);
 
         registry.Register(
             "read_file",

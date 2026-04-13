@@ -61,6 +61,11 @@ namespace Helper.Runtime.Infrastructure
                 return Task.FromResult(new ToolPermitDecision(false, argumentReason));
             }
 
+            if (normalizedToolName.Equals("shell_execute", StringComparison.OrdinalIgnoreCase))
+            {
+                return Task.FromResult(new ToolPermitDecision(false, "Tool 'shell_execute' is retired from the production local tool surface."));
+            }
+
             if (_allowedLocalTools.Contains(normalizedToolName))
             {
                 return Task.FromResult(DecideForLocalTool(normalizedToolName));
@@ -76,12 +81,6 @@ namespace Helper.Runtime.Infrastructure
 
         private ToolPermitDecision DecideForLocalTool(string toolName)
         {
-            if (toolName.Equals("shell_execute", StringComparison.OrdinalIgnoreCase) &&
-                !ReadFlag("HELPER_ALLOW_SHELL_TOOLS", fallback: false))
-            {
-                return new ToolPermitDecision(false, "Shell execution disabled by policy (set HELPER_ALLOW_SHELL_TOOLS=true if intended).");
-            }
-
             return new ToolPermitDecision(true, "Permitted local tool.");
         }
 
@@ -197,7 +196,7 @@ namespace Helper.Runtime.Infrastructure
                     .ToArray();
                 tools = manifestTools is { Length: > 0 }
                     ? manifestTools
-                    : new[] { "shell_execute", "dotnet_test", "read_file", "write_file" };
+                    : new[] { "dotnet_test", "read_file", "write_file" };
             }
 
             return tools

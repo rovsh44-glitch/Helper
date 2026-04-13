@@ -84,6 +84,22 @@ namespace Helper.Runtime.Tests
 
             Assert.Contains("Command chaining or redirection detected", ex.Message);
         }
+
+        [Theory]
+        [InlineData("pwsh -Command Get-ChildItem")]
+        [InlineData("powershell -Command dir")]
+        [InlineData("python -c print('hi')")]
+        [InlineData("node -e console.log('hi')")]
+        [InlineData("cmd /c dir")]
+        public void EnsureSafeCommand_BlocksInterpreterCommands(string command)
+        {
+            var mockAi = new Mock<AILink>("http://localhost:11434", "qwen");
+            var guard = new ProcessGuard(mockAi.Object);
+
+            var ex = Assert.Throws<UnauthorizedAccessException>(() => guard.EnsureSafeCommand(command));
+
+            Assert.Contains("Interpreter command", ex.Message);
+        }
     }
 }
 

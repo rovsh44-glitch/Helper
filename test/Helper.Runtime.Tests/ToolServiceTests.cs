@@ -86,6 +86,21 @@ public sealed class ToolServiceTests
     }
 
     [Fact]
+    public async Task GetAvailableToolsAsync_DoesNotRegisterShellExecuteTool()
+    {
+        var service = new ToolService(
+            new RecordingMcpProxy(),
+            new AllowAllProcessGuard(),
+            new EmptyGoalManager(),
+            new PermissiveFileSystemGuard(),
+            extensionRegistry: new StubExtensionRegistry());
+
+        var tools = await service.GetAvailableToolsAsync();
+
+        Assert.DoesNotContain(tools, tool => string.Equals(tool.Name, "shell_execute", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task ExecuteToolAsync_ReturnsPermitDenial_WithoutInvokingHandler()
     {
         var service = new ToolService(

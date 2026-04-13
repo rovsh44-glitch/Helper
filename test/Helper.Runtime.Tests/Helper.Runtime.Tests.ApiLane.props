@@ -6,6 +6,9 @@
     <RuntimeApiLaneCompile Include="$(MSBuildThisFileDirectory)ApiRuntimePathResolverTests.cs">
       <Link>ApiRuntimePathResolverTests.cs</Link>
     </RuntimeApiLaneCompile>
+    <RuntimeApiLaneCompile Include="$(MSBuildThisFileDirectory)ArchitecturePlanEndpointTests.cs">
+      <Link>ArchitecturePlanEndpointTests.cs</Link>
+    </RuntimeApiLaneCompile>
     <RuntimeApiLaneCompile Include="$(MSBuildThisFileDirectory)BehavioralCalibrationPolicyTests.cs">
       <Link>BehavioralCalibrationPolicyTests.cs</Link>
     </RuntimeApiLaneCompile>

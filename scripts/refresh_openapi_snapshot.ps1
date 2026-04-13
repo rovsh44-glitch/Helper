@@ -1,5 +1,5 @@
 param(
-    [string]$TestProject = "test/Helper.Runtime.Tests/Helper.Runtime.Tests.csproj"
+    [string]$TestProject = "test/Helper.Runtime.Api.Tests/Helper.Runtime.Api.Tests.csproj"
 )
 
 $ErrorActionPreference = "Stop"

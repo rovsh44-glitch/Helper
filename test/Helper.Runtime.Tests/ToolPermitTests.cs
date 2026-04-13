@@ -7,16 +7,17 @@ public class ToolPermitTests
     private static readonly object EnvSync = new();
 
     [Fact]
-    public async Task ToolPermit_DeniesShell_WhenFeatureDisabled()
+    public async Task ToolPermit_DeniesRetiredShellTool_EvenWhenFeatureFlagIsEnabled()
     {
         await RunWithEnvAsync(new Dictionary<string, string?>
         {
-            ["HELPER_ALLOW_SHELL_TOOLS"] = "false"
+            ["HELPER_ALLOW_SHELL_TOOLS"] = "true"
         }, async () =>
         {
             var permit = new ToolPermitService();
             var decision = await permit.DecideAsync("shell_execute", new Dictionary<string, object> { ["command"] = "dotnet build" });
             Assert.False(decision.Allowed);
+            Assert.Contains("retired", decision.Reason, StringComparison.OrdinalIgnoreCase);
         });
     }
 
