@@ -1,3 +1,5 @@
+using Helper.Api.Conversation;
+using Helper.Api.Conversation.InteractionState;
 using Helper.Api.Hosting;
 using Helper.Runtime.Core;
 using Helper.Runtime.Infrastructure;
@@ -44,6 +46,56 @@ public sealed class RuntimeServiceProfileTests
         Assert.Contains("not implemented", result.Error, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public void ChatTurnPlanner_Resolves_When_All_Dependencies_Are_Available_In_DI()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<IIntentClassifier, StaticIntentClassifier>();
+        services.AddSingleton<IAmbiguityDetector, HybridAmbiguityDetector>();
+        services.AddSingleton<IClarificationPolicy, ClarificationPolicy>();
+        services.AddSingleton<IIntentTelemetryService, IntentTelemetryService>();
+        services.AddSingleton<ILatencyBudgetPolicy, LatencyBudgetPolicy>();
+        services.AddSingleton<IAssumptionCheckPolicy, AssumptionCheckPolicy>();
+        services.AddSingleton<IFeatureFlags, FeatureFlags>();
+        services.AddSingleton<IConversationStageMetricsService, ConversationStageMetricsService>();
+        services.AddSingleton<IUserProfileService, UserProfileService>();
+        services.AddSingleton<ITurnLanguageResolver, TurnLanguageResolver>();
+        services.AddSingleton<ILiveWebRequirementPolicy, LiveWebRequirementPolicy>();
+        services.AddSingleton<ILocalFirstBenchmarkPolicy, LocalFirstBenchmarkPolicy>();
+        services.AddSingleton<ICollaborationIntentDetector, CollaborationIntentDetector>();
+        services.AddSingleton<ICommunicationQualityPolicy, CommunicationQualityPolicy>();
+        services.AddSingleton<IPersonalizationMergePolicy, PersonalizationMergePolicy>();
+        services.AddSingleton<IInteractionStateAnalyzer, InteractionStateAnalyzer>();
+        services.AddSingleton<IInteractionPolicyProjector, InteractionPolicyProjector>();
+        services.AddSingleton<IReasoningEffortPolicy, ReasoningEffortPolicy>();
+        services.AddSingleton<IClarificationQualityPolicy, ClarificationQualityPolicy>();
+        services.AddSingleton<TurnIntentAnalysisStep>();
+        services.AddSingleton<TurnPersonalizationStep>();
+        services.AddSingleton<TurnReasoningSelectionStep>();
+        services.AddSingleton<TurnLatencyBudgetStep>();
+        services.AddSingleton<TurnLiveWebDecisionStep>();
+        services.AddSingleton<TurnAmbiguityResolutionStep>();
+        services.AddSingleton<TurnIntentOverrideStep>();
+        services.AddSingleton<IChatTurnPlanner>(sp => new ChatTurnPlanner(
+            sp.GetRequiredService<TurnIntentAnalysisStep>(),
+            sp.GetRequiredService<TurnPersonalizationStep>(),
+            sp.GetRequiredService<TurnReasoningSelectionStep>(),
+            sp.GetRequiredService<TurnLatencyBudgetStep>(),
+            sp.GetRequiredService<TurnLiveWebDecisionStep>(),
+            sp.GetRequiredService<TurnAmbiguityResolutionStep>(),
+            sp.GetRequiredService<TurnIntentOverrideStep>(),
+            sp.GetRequiredService<IConversationStageMetricsService>()));
+
+        using var provider = services.BuildServiceProvider(new ServiceProviderOptions
+        {
+            ValidateOnBuild = true,
+            ValidateScopes = true
+        });
+
+        var planner = provider.GetRequiredService<IChatTurnPlanner>();
+        Assert.IsType<ChatTurnPlanner>(planner);
+    }
+
     private static IServiceCollection BuildServices(string root)
     {
         var services = new ServiceCollection();
@@ -60,5 +112,17 @@ public sealed class RuntimeServiceProfileTests
         services.AddSingleton(runtimeConfig);
         services.AddHelperApplicationServices(runtimeConfig);
         return services;
+    }
+
+    private sealed class StaticIntentClassifier : IIntentClassifier
+    {
+        public Task<IntentClassification> ClassifyAsync(string message, CancellationToken ct)
+        {
+            return Task.FromResult(new IntentClassification(
+                new IntentAnalysis(IntentType.Unknown, string.Empty),
+                0.0,
+                "test",
+                Array.Empty<string>()));
+        }
     }
 }
