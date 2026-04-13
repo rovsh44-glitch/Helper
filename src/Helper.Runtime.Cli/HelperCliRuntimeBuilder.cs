@@ -82,7 +82,9 @@ internal static class HelperCliRuntimeBuilder
             fixSafetyPolicy,
             fixInvariantEvaluator);
         var testGenerator = new SimpleTestGenerator(ai);
-        var executor = new PythonSandbox();
+        ICodeExecutor executor = RuntimeServiceProfileSupport.PrototypeRuntimeServicesEnabled()
+            ? new PythonSandbox()
+            : new DisabledCodeExecutor();
         var researcher = ResearchRuntimeFactory.CreateSimpleResearcher(ai, executor, searcher, memory);
         var selector = new ModelOrchestrator(ai);
         var deployer = new CloudDeployer();

@@ -55,6 +55,10 @@ Invoke-CiStep "Frontend architecture" {
     powershell -ExecutionPolicy Bypass -File scripts/check_frontend_architecture.ps1 -SkipApiBoundary
 }
 
+Invoke-CiStep "Required status contract" {
+    powershell -ExecutionPolicy Bypass -File scripts/check_required_status_contract.ps1
+}
+
 Invoke-CiStep "NuGet security gate" {
     $nugetMode = if (-not [string]::IsNullOrWhiteSpace($env:HELPER_NUGET_SECURITY_GATE_MODE)) {
         $env:HELPER_NUGET_SECURITY_GATE_MODE

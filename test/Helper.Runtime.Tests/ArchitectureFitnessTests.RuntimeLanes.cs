@@ -170,6 +170,9 @@ public partial class ArchitectureFitnessTests
         var ciGate = File.ReadAllText(ResolveWorkspaceFile("scripts", "ci_gate.ps1"));
         var ciGateHeavy = File.ReadAllText(ResolveWorkspaceFile("scripts", "ci_gate_heavy.ps1"));
         var repoGateWorkflow = File.ReadAllText(ResolveWorkspaceFile(".github", "workflows", "repo-gate.yml"));
+        var nugetAuditWorkflow = File.ReadAllText(ResolveWorkspaceFile(".github", "workflows", "nuget-security-audit.yml"));
+        var requiredChecksManifest = File.ReadAllText(ResolveWorkspaceFile(".github", "branch-protection.required-status-checks.json"));
+        var nugetConfig = File.ReadAllText(ResolveWorkspaceFile("NuGet.Config"));
 
         Assert.Contains("\"ci:gate\":", packageJson, StringComparison.Ordinal);
         Assert.Contains("\"ci:gate:heavy\":", packageJson, StringComparison.Ordinal);
@@ -178,6 +181,7 @@ public partial class ArchitectureFitnessTests
         Assert.Contains("run_eval_gate.ps1 -NoBuild -NoRestore", ciGate, StringComparison.Ordinal);
         Assert.Contains("run_tool_benchmark.ps1 -Configuration Debug -NoBuild -NoRestore", ciGate, StringComparison.Ordinal);
         Assert.Contains("monitoring_gate.ps1", ciGate, StringComparison.Ordinal);
+        Assert.Contains("check_required_status_contract.ps1", ciGate, StringComparison.Ordinal);
         Assert.DoesNotContain("run_load_chaos_smoke.ps1", ciGate, StringComparison.Ordinal);
         Assert.DoesNotContain("run_generation_parity_gate.ps1", ciGate, StringComparison.Ordinal);
         Assert.DoesNotContain("run_generation_parity_benchmark.ps1", ciGate, StringComparison.Ordinal);
@@ -201,9 +205,40 @@ public partial class ArchitectureFitnessTests
         Assert.Contains("Monitoring config", repoGateWorkflow, StringComparison.Ordinal);
         Assert.Contains("Eval gate", repoGateWorkflow, StringComparison.Ordinal);
         Assert.Contains("Tool benchmark", repoGateWorkflow, StringComparison.Ordinal);
+        Assert.Contains("Required status contract", repoGateWorkflow, StringComparison.Ordinal);
+        Assert.DoesNotContain("NuGet security gate", repoGateWorkflow, StringComparison.Ordinal);
         Assert.DoesNotContain("Load/Chaos smoke", repoGateWorkflow, StringComparison.Ordinal);
         Assert.DoesNotContain("Generation parity gate", repoGateWorkflow, StringComparison.Ordinal);
         Assert.DoesNotContain("UI workflow smoke", repoGateWorkflow, StringComparison.Ordinal);
+
+        Assert.Contains("nuget_security_gate.ps1 -ExecutionMode strict-online", nugetAuditWorkflow, StringComparison.Ordinal);
+        Assert.Contains("actions/upload-artifact@v4", nugetAuditWorkflow, StringComparison.Ordinal);
+        Assert.Contains("nuget-security-gate-report", nugetAuditWorkflow, StringComparison.Ordinal);
+        Assert.Contains("Remove-Item Env:ALL_PROXY", nugetAuditWorkflow, StringComparison.Ordinal);
+        Assert.Contains("GITHUB_STEP_SUMMARY", nugetAuditWorkflow, StringComparison.Ordinal);
+
+        Assert.Contains("<packageSources>", nugetConfig, StringComparison.Ordinal);
+        Assert.Contains("<auditSources>", nugetConfig, StringComparison.Ordinal);
+        Assert.Contains("https://api.nuget.org/v3/index.json", nugetConfig, StringComparison.Ordinal);
+        Assert.Contains("\"repo_gate\"", requiredChecksManifest, StringComparison.Ordinal);
+        Assert.Contains("\"connected_nuget_audit\"", requiredChecksManifest, StringComparison.Ordinal);
+        Assert.Contains("\"protectedBranch\": \"main\"", requiredChecksManifest, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Required_Status_Governance_Docs_Are_Explicit_About_Remote_Attachment()
+    {
+        var operatorReadme = File.ReadAllText(ResolveWorkspaceFile("doc", "operator", "README.md"));
+        var operatorRunbook = File.ReadAllText(ResolveWorkspaceFile("doc", "operator", "GITHUB_BRANCH_PROTECTION_REQUIRED_STATUS_CHECKS_2026-04-13.md"));
+        var securityStatus = File.ReadAllText(ResolveWorkspaceFile("doc", "security", "GITHUB_PRIVATE_REPO_SECURITY_AUTOMATION_STATUS_2026-04-12.md"));
+        var closureUpdate = File.ReadAllText(ResolveWorkspaceFile("doc", "analysis", "HELPER_AUDIT_REMEDIATION_CLOSURE_2026-04-13.md"));
+
+        Assert.Contains("GitHub Branch Protection Required Status Checks", operatorReadme, StringComparison.Ordinal);
+        Assert.Contains("repo_gate", operatorRunbook, StringComparison.Ordinal);
+        Assert.Contains("connected_nuget_audit", operatorRunbook, StringComparison.Ordinal);
+        Assert.Contains("Those contexts still require explicit server-side attachment", securityStatus, StringComparison.Ordinal);
+        Assert.Contains("do not mutate GitHub server-side rules", operatorRunbook, StringComparison.Ordinal);
+        Assert.Contains("still requires repository-admin action on GitHub itself", closureUpdate, StringComparison.Ordinal);
     }
 
     [Fact]

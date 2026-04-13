@@ -5,6 +5,7 @@ using Helper.Runtime.Generation;
 using Helper.Runtime.Infrastructure;
 using Helper.Runtime.Knowledge;
 using Helper.Runtime.Swarm;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Helper.Api.Hosting;
 
@@ -25,7 +26,7 @@ public static partial class ServiceRegistrationExtensions
         services.AddSingleton<ITestGenerator, SimpleTestGenerator>();
         services.AddSingleton<IProjectPlanner, SimplePlanner>();
         services.AddSingleton<ICodeGenerator, SimpleCoder>();
-        services.AddSingleton<ICodeExecutor, PythonSandbox>();
+        services.AddSingleton<ICodeExecutor, DisabledCodeExecutor>();
         services.AddSingleton<IHealthMonitor, HealthMonitor>();
         services.AddSingleton<SystemScanner>();
         services.AddSingleton<IGoalManager, GoalManager>();
@@ -70,6 +71,11 @@ public static partial class ServiceRegistrationExtensions
         services.AddSingleton<IRouteTelemetryService, RouteTelemetryService>();
         services.AddSingleton<ISurgicalToolbox, SurgicalToolbox>();
         services.AddSingleton<IPlatformGuard, PlatformGuard>();
+
+        if (RuntimeServiceProfileSupport.PrototypeRuntimeServicesEnabled())
+        {
+            services.Replace(ServiceDescriptor.Singleton<ICodeExecutor, PythonSandbox>());
+        }
 
         return services;
     }

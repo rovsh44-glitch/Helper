@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Helper.Runtime.Core;
@@ -23,26 +21,25 @@ namespace Helper.Runtime.Infrastructure
 
         public async Task<GeneratedFile> GenerateFileAsync(FileTask task, ProjectPlan context, List<GeneratedFile>? previousFiles = null, CancellationToken ct = default)
         {
-            bool isWpf = task.Path.EndsWith(".xaml") || task.Path.EndsWith(".cs");
-            bool isCSharp = task.Path.EndsWith(".cs");
-            bool isCsproj = task.Path.EndsWith(".csproj");
-
-            var wpfGuidelines = isWpf ? @"WPF RULES: 1. NO SUBDIRECTORIES: Save files directly in root. 2. STARTUP: App.xaml MUST have StartupUri=""MainWindow.xaml"". 3. BOOTSTRAP: MainWindow.xaml.cs MUST contain 'this.DataContext = new MainViewModel();'. 4. X:CLASS: x:Class=""Namespace.ClassName"". 5. INTERFACE: Implement planned interfaces exactly. 6. PATTERNS: Reuse the project's shared WPF command and observable patterns when available." : "";
+            var normalizedPath = task.Path ?? string.Empty;
+            var isXaml = normalizedPath.EndsWith(".xaml", StringComparison.OrdinalIgnoreCase);
+            var isCSharp = normalizedPath.EndsWith(".cs", StringComparison.OrdinalIgnoreCase);
+            var isCsproj = normalizedPath.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase);
 
             var existingClasses = new List<string>();
-            
+
             if (previousFiles != null)
             {
                 foreach (var pf in previousFiles)
                 {
                     var matches = System.Text.RegularExpressions.Regex.Matches(pf.Content, @"(class|interface|record|struct)\s+(\w+)");
-                    foreach (System.Text.RegularExpressions.Match m in matches) 
+                    foreach (System.Text.RegularExpressions.Match m in matches)
                     {
                         existingClasses.Add(m.Groups[2].Value);
                     }
                 }
             }
-            
+
             var forbiddenClasses = string.Join(", ", existingClasses.Distinct());
             var projectNamespace = "GeneratedApp";
             if (!string.IsNullOrEmpty(context.Description))
@@ -54,34 +51,28 @@ namespace Helper.Runtime.Infrastructure
                     if (!string.IsNullOrEmpty(firstWord) && firstWord.Length > 2) projectNamespace = firstWord;
                 }
             }
-            
+
+            var languageGuidance = BuildLanguageGuidance(normalizedPath, isCSharp, isXaml, isCsproj, projectNamespace);
             var prompt = $@"
             TASK: Write source code for {task.Path}. 
             Project Purpose: {context.Description}.
             File Purpose: {task.Purpose}. 
             TECHNICAL CONTRACT (MUST FOLLOW): {task.TechnicalContract}
-            {wpfGuidelines}
-            CRITICAL: 1. Output ONLY raw code. 2. DO NOT include headers or explanations.
-            3. Implement EVERYTHING that belongs in THIS file.
-            4. FORBIDDEN (exist elsewhere): {forbiddenClasses}.
-            5. NAMESPACE RULE: Use ONLY the namespace '{projectNamespace}' for ALL files. 
-            6. ALWAYS INCLUDE these using directives:
-               using System;
-               using System.Collections.Generic;
-               using System.Collections.ObjectModel;
-               using System.Linq;
-               using System.Windows;
-               using System.Windows.Input;
-               using CommunityToolkit.Mvvm.ComponentModel;
-               using CommunityToolkit.Mvvm.Input;
-               using {projectNamespace};";
+            FILE-TYPE RULES: {languageGuidance}
+            GENERAL RULES:
+            1. Output ONLY the raw file content. Do not include markdown fences, headers, or explanations.
+            2. Implement EVERYTHING that belongs in THIS file, but do not redefine types that already exist elsewhere.
+            3. FORBIDDEN (exist elsewhere): {forbiddenClasses}.
+            4. Namespace rule: when the file type uses namespaces, use ONLY the namespace '{projectNamespace}' unless the technical contract explicitly requires otherwise.
+            5. Include ONLY the using/import directives actually required by this file.
+            6. Prefer platform-neutral, framework-appropriate code. Do not assume WPF, CommunityToolkit, or any specific UI stack unless the file type or technical contract explicitly requires it.";
 
             string finalCode = "";
             int retry = 0;
             while (retry < 3)
             {
                 var response = await _ai.AskAsync(prompt, ct);
-                finalCode = _sanitizer.Sanitize(response, isCSharp ? "csharp" : (isWpf ? "xaml" : "text"));
+                finalCode = _sanitizer.Sanitize(response, isCSharp ? "csharp" : (isXaml ? "xaml" : "text"));
 
                 if (isCsproj) finalCode = _sanitizer.FixCsproj(finalCode);
 
@@ -94,7 +85,27 @@ namespace Helper.Runtime.Infrastructure
                 }
                 else break;
             }
-            return new GeneratedFile(task.Path, finalCode);
+            return new GeneratedFile(normalizedPath, finalCode);
+        }
+
+        private static string BuildLanguageGuidance(string path, bool isCSharp, bool isXaml, bool isCsproj, string projectNamespace)
+        {
+            if (isCsproj)
+            {
+                return "Return valid SDK-style project XML only. Preserve well-formed XML and include only required project metadata, references, and build items.";
+            }
+
+            if (isXaml)
+            {
+                return $"This is a XAML file. Return valid XAML only. Use x:Class that matches the '{projectNamespace}' namespace when the file requires a code-behind pair.";
+            }
+
+            if (isCSharp)
+            {
+                return $"This is a C# file. Return compilable C# only. Infer the minimal set of namespaces and framework dependencies from '{path}' and the technical contract.";
+            }
+
+            return $"Return the exact file content for '{path}' without markdown fencing.";
         }
     }
 }

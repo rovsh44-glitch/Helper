@@ -37,7 +37,7 @@ Each manifest declares:
 
 ## Categories
 
-1. `built_in`: code-backed local tools such as `shell_execute`, `read_file`, `write_file`
+1. `built_in`: code-backed local tools such as `dotnet_test`, `read_file`, `write_file`
 2. `internal`: higher-level Helper actions published via the MCP host
 3. `external`: optional trusted MCP providers
 4. `experimental`: optional providers that require explicit experimental enablement

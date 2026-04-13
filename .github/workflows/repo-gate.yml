@@ -22,7 +22,6 @@ jobs:
     runs-on: windows-latest
     env:
       CI: "true"
-      HELPER_NUGET_SECURITY_GATE_MODE: strict-online
     steps:
       - uses: actions/checkout@v4
 
@@ -80,9 +79,9 @@ jobs:
         shell: pwsh
         run: ./scripts/check_frontend_architecture.ps1 -SkipApiBoundary
 
-      - name: NuGet security gate
+      - name: Required status contract
         shell: pwsh
-        run: ./scripts/nuget_security_gate.ps1 -ExecutionMode strict-online
+        run: ./scripts/check_required_status_contract.ps1
 
       - name: Solution build coverage
         shell: pwsh

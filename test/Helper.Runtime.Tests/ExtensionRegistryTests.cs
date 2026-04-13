@@ -23,7 +23,7 @@ public sealed class ExtensionRegistryTests
               "providerType": "local_tools",
               "transport": "none",
               "description": "Built-in local tools.",
-              "declaredTools": ["shell_execute", "dotnet_test", "read_file", "write_file"],
+              "declaredTools": ["dotnet_test", "read_file", "write_file"],
               "capabilities": ["filesystem", "process-execution"],
               "trustLevel": "built_in",
               "defaultEnabled": true,

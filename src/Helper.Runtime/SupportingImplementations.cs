@@ -35,7 +35,11 @@ namespace Helper.Runtime.Infrastructure
     public class PythonSandbox : ICodeExecutor
     {
         public async Task<ExecutionResult> ExecuteAsync(string code, string lang = "python", CancellationToken ct = default) => 
-            await Task.FromResult(new ExecutionResult(true, "Success", "", new List<string>()));
+            await Task.FromResult(new ExecutionResult(
+                false,
+                string.Empty,
+                $"PythonSandbox execution is not implemented for language '{(string.IsNullOrWhiteSpace(lang) ? "python" : lang)}'.",
+                new List<string>()));
     }
 
     public class SimpleResearcher : IResearchService

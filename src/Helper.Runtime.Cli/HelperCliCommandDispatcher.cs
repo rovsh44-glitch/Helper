@@ -70,14 +70,16 @@ internal static partial class HelperCliCommandDispatcher
             new Dictionary<string, object> { ["command"] = "rm -rf src/" },
             ct);
 
-        if (!result.Success && result.Error is not null && result.Error.Contains("ProcessGuard", StringComparison.Ordinal))
+        if (!result.Success && result.Error is not null && (
+            result.Error.Contains("Tool not found", StringComparison.OrdinalIgnoreCase) ||
+            result.Error.Contains("retired", StringComparison.OrdinalIgnoreCase)))
         {
-            Console.WriteLine("✅ SUCCESS: Dangerous command was BLOCKED by ProcessGuard.");
+            Console.WriteLine("✅ SUCCESS: Generic shell execution is not available on the local tool surface.");
             Console.WriteLine($"Message: {result.Error}");
             return;
         }
 
-        Console.WriteLine("❌ FAILURE: Security breach! Command was not blocked correctly.");
+        Console.WriteLine("❌ FAILURE: Generic shell execution is still reachable.");
     }
 
     private static async Task HandleCreateAsync(string query, HelperCliRuntime runtime, CancellationToken ct)

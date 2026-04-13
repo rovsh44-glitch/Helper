@@ -14,7 +14,7 @@ public sealed class ArchitectureFitnessTestsPublicMainRuntimeLanes
     }
 
     [Fact]
-    public void CertificationCompile_Project_Replaces_Legacy_CompilePath_Project()
+    public void CertificationCompile_And_CompilePath_Projects_Are_Both_Present_In_CanonicalSolution()
     {
         var certificationCompileProject = ResolveWorkspaceFile("test", "Helper.Runtime.Certification.Compile.Tests", "Helper.Runtime.Certification.Compile.Tests.csproj");
         var projectText = File.ReadAllText(certificationCompileProject);
@@ -23,7 +23,7 @@ public sealed class ArchitectureFitnessTestsPublicMainRuntimeLanes
         Assert.Contains("TemplateCertificationServiceTests.cs", projectText, StringComparison.Ordinal);
         Assert.Contains("TemplatePromotionEndToEndAndChaosTests.cs", projectText, StringComparison.Ordinal);
         Assert.Contains("DotnetServiceTraceBehaviorTests.cs", projectText, StringComparison.Ordinal);
-        Assert.DoesNotContain("Helper.Runtime.CompilePath.Tests", solutionText, StringComparison.Ordinal);
+        Assert.Contains("Helper.Runtime.CompilePath.Tests", solutionText, StringComparison.Ordinal);
         Assert.Contains("Helper.Runtime.Certification.Compile.Tests", solutionText, StringComparison.Ordinal);
     }
 

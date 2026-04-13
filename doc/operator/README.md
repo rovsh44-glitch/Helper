@@ -14,6 +14,7 @@ This is the operator-facing entry point for running, checking, and certifying HE
 3. [Extensions](../extensions/README.md)
 4. [Certification Hub](../certification/README.md)
 5. [Remediation Closure Checklist](HELPER_REMEDIATION_CLOSURE_CHECKLIST_2026-03-28.md)
+6. [GitHub Branch Protection Required Status Checks](GITHUB_BRANCH_PROTECTION_REQUIRED_STATUS_CHECKS_2026-04-13.md)
 
 ## Common Operator Tasks
 

@@ -11,12 +11,15 @@ namespace Helper.Runtime.Infrastructure
     public class ProcessGuard : IProcessGuard
     {
         private readonly AILink _ai;
+        private readonly string[] _interpreterCommands = {
+            "pwsh", "powershell", "python", "node", "cmd"
+        };
         private readonly string[] _forbiddenCommands = { 
             "rm", "del", "erase", "format", "mkfs", "chmod", "chown", 
             "attrib", "net", "user", "kill", "taskkill", "shutdown", "reboot" 
         };
         private readonly string[] _allowedCommands = {
-            "dotnet", "npm", "git", "pwsh", "powershell", "python", "node", "cmd", "mkdir", "cd", "ls", "dir", "echo", "type", "cat", "code", "nuget"
+            "dotnet", "npm", "git", "mkdir", "cd", "ls", "dir", "echo", "type", "cat", "code", "nuget"
         };
 
         private readonly string[] _protectedPaths = { 
@@ -42,6 +45,11 @@ namespace Helper.Runtime.Infrastructure
             if (_forbiddenCommands.Contains(baseCmd))
             {
                 throw new UnauthorizedAccessException($"[ProcessGuard] ⛔ BLOCK: Command '{baseCmd}' is restricted for safety.");
+            }
+
+            if (_interpreterCommands.Contains(baseCmd))
+            {
+                throw new UnauthorizedAccessException($"[ProcessGuard] ⛔ BLOCK: Interpreter command '{baseCmd}' is not allowed.");
             }
 
             if (!_allowedCommands.Contains(baseCmd))
@@ -117,7 +125,7 @@ Reply SAFE or DANGEROUS.";
             var normalizedCommand = command.ToLowerInvariant();
             var allowedPrefixes = new[]
             {
-                "dotnet", "npm", "git", "pwsh", "powershell", "python", "node", "cmd", "mkdir", "cd", "ls", "dir", "echo"
+                "dotnet", "npm", "git", "mkdir", "cd", "ls", "dir", "echo"
             };
 
             if (allowedPrefixes.Any(prefix => normalizedCommand == prefix || normalizedCommand.StartsWith(prefix + " ")))

@@ -45,7 +45,7 @@ public sealed class CapabilityCatalogTests
                         Description: "Built-in local tools.",
                         Command: null,
                         Args: Array.Empty<string>(),
-                        DeclaredTools: new[] { "shell_execute", "dotnet_test" },
+                        DeclaredTools: new[] { "dotnet_test", "read_file" },
                         RequiredEnv: Array.Empty<string>(),
                         Capabilities: new[] { "filesystem" },
                         TrustLevel: ExtensionTrustLevel.BuiltIn,
@@ -69,13 +69,13 @@ public sealed class CapabilityCatalogTests
 
             Assert.Contains(snapshot.Entries, entry =>
                 entry.SurfaceKind == "tool" &&
-                entry.OwnerId == "shell_execute" &&
+                entry.OwnerId == "dotnet_test" &&
                 entry.EvidenceType == "extension-manifest" &&
                 entry.OwningGate is null);
 
             Assert.Contains(snapshot.Entries, entry =>
                 entry.SurfaceKind == "tool" &&
-                entry.OwnerId == "dotnet_test" &&
+                entry.OwnerId == "read_file" &&
                 entry.EvidenceType == "extension-manifest" &&
                 entry.OwningGate is null);
 
@@ -123,11 +123,11 @@ public sealed class CapabilityCatalogTests
             new[]
             {
                 new DeclaredCapabilityCatalogEntry(
-                    CapabilityId: CapabilityCatalogIds.Tool("shell_execute"),
+                    CapabilityId: CapabilityCatalogIds.Tool("dotnet_test"),
                     SurfaceKind: "tool",
-                    OwnerId: "shell_execute",
-                    DisplayName: "shell_execute",
-                    DeclaredCapability: "shell_execute",
+                    OwnerId: "dotnet_test",
+                    DisplayName: "dotnet_test",
+                    DeclaredCapability: "dotnet_test",
                     Status: "unmapped",
                     OwningGate: null,
                     EvidenceType: "extension-manifest",
