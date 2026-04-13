@@ -45,6 +45,9 @@
     <Compile Include="..\Helper.Runtime.Tests\ConversationE2ETests.cs" Link="ConversationE2ETests.cs" />
     <Compile Include="..\Helper.Runtime.Tests\ConversationMemoryLayeringTests.cs" Link="ConversationMemoryLayeringTests.cs" />
     <Compile Include="..\Helper.Runtime.Tests\ConversationRuntimeTests.cs" Link="ConversationRuntimeTests.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\ConversationRuntimeTests.ResponseComposerAndFinalizer.cs" Link="ConversationRuntimeTests.ResponseComposerAndFinalizer.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\ConversationRuntimeTests.PlanningAndMetrics.cs" Link="ConversationRuntimeTests.PlanningAndMetrics.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\ConversationRuntimeTests.OrchestrationAndExecution.cs" Link="ConversationRuntimeTests.OrchestrationAndExecution.cs" />
     <Compile Include="..\Helper.Runtime.Tests\ExtensionRegistryTests.cs" Link="ExtensionRegistryTests.cs" />
     <Compile Include="..\Helper.Runtime.Tests\FixLoopOrchestratorTests.cs" Link="FixLoopOrchestratorTests.cs" />
     <Compile Include="..\Helper.Runtime.Tests\FixLoopSemanticSafetyTests.cs" Link="FixLoopSemanticSafetyTests.cs" />
@@ -54,6 +57,10 @@
     <Compile Include="..\Helper.Runtime.Tests\ProjectForgeOrchestratorTests.cs" Link="ProjectForgeOrchestratorTests.cs" />
     <Compile Include="..\Helper.Runtime.Tests\ReasoningBranchExecutorTests.cs" Link="ReasoningBranchExecutorTests.cs" />
     <Compile Include="..\Helper.Runtime.Tests\RetrievalPipelineTests.cs" Link="RetrievalPipelineTests.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\RetrievalPipelineTests.Foundation.cs" Link="RetrievalPipelineTests.Foundation.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\RetrievalPipelineTests.GlobalRoutingA.cs" Link="RetrievalPipelineTests.GlobalRoutingA.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\RetrievalPipelineTests.DomainReranking.cs" Link="RetrievalPipelineTests.DomainReranking.cs" />
+    <Compile Include="..\Helper.Runtime.Tests\RetrievalPipelineTests.GlobalRoutingB.cs" Link="RetrievalPipelineTests.GlobalRoutingB.cs" />
     <Compile Include="..\Helper.Runtime.Tests\RuntimeSafetyTests.cs" Link="RuntimeSafetyTests.cs" />
     <Compile Include="..\Helper.Runtime.Tests\SimpleResearcherTests.cs" Link="SimpleResearcherTests.cs" />
     <Compile Include="..\Helper.Runtime.Tests\ToolPermitTests.cs" Link="ToolPermitTests.cs" />

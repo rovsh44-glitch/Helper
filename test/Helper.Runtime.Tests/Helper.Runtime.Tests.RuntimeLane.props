@@ -18,6 +18,9 @@
       ConversationE2ETests.cs;
       ConversationMemoryLayeringTests.cs;
       ConversationRuntimeTests.cs;
+      ConversationRuntimeTests.ResponseComposerAndFinalizer.cs;
+      ConversationRuntimeTests.PlanningAndMetrics.cs;
+      ConversationRuntimeTests.OrchestrationAndExecution.cs;
       EvalHarnessTests.cs;
       EpistemicAnswerModePolicyTests.cs;
       EvalRunnerV2Tests.cs;
@@ -51,6 +54,10 @@
       RetrievalPipeline.DomainRoutingTests.cs;
       RetrievalPipeline.RecallExpansionTests.cs;
       RetrievalPipelineTests.cs;
+      RetrievalPipelineTests.Foundation.cs;
+      RetrievalPipelineTests.GlobalRoutingA.cs;
+      RetrievalPipelineTests.DomainReranking.cs;
+      RetrievalPipelineTests.GlobalRoutingB.cs;
       RuntimeSafetyTests.cs;
       SimpleResearcherTests.cs;
       TemplateCertificationServiceTests.cs;

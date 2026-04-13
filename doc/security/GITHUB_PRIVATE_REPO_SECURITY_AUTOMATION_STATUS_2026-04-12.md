@@ -1,7 +1,7 @@
 # GitHub Private Repo Security Automation Status
 
 Status: `active`
-Date: `2026-04-12`
+Date: `2026-04-13`
 Repository: `rovsh44-glitch/Helper`
 
 ## Purpose
@@ -42,14 +42,14 @@ This note records which GitHub-native security features are enabled for the curr
 
 ## Compensating Controls
 
-1. The repository declares the intended required status contexts for `main` in `.github/branch-protection.required-status-checks.json` and validates the declaration with `scripts/check_required_status_contract.ps1`.
-2. Those contexts still require explicit server-side attachment in the GitHub `main` ruleset or branch protection configuration; the in-repo declaration is not itself remote enforcement.
-3. `scripts/nuget_security_gate.ps1` runs locally through `scripts/ci_gate.ps1` in `best-effort-local` mode and remotely through a dedicated connected GitHub Actions workflow in `strict-online` mode.
-4. The connected NuGet audit workflow uploads its JSON report as a CI artifact instead of coupling network-only vulnerability metadata retrieval to the offline-oriented main repo gate.
-5. The intended required contexts are:
+1. The repository declares the required status contexts for `main` in `.github/branch-protection.required-status-checks.json` and validates the declaration with `scripts/check_required_status_contract.ps1`.
+2. Those contexts are attached server-side to the active GitHub `Protect main` ruleset.
+3. The enforced required contexts are:
    - `repo_gate`
    - `connected_nuget_audit`
-6. The operator runbook for that GitHub-side attachment lives at `doc/operator/GITHUB_BRANCH_PROTECTION_REQUIRED_STATUS_CHECKS_2026-04-13.md`.
+4. `scripts/nuget_security_gate.ps1` runs locally through `scripts/ci_gate.ps1` in `best-effort-local` mode and remotely through a dedicated connected GitHub Actions workflow in `strict-online` mode.
+5. The connected NuGet audit workflow uploads its JSON report as a CI artifact instead of coupling network-only vulnerability metadata retrieval to the offline-oriented main repo gate.
+6. The operator runbook for reattachment or ruleset recovery remains at `doc/operator/GITHUB_BRANCH_PROTECTION_REQUIRED_STATUS_CHECKS_2026-04-13.md`.
 7. `scripts/secret_scan.ps1` remains the repository-owned secret hygiene control.
 8. `scripts/check_ui_api_usage.ps1`, frontend architecture checks, and deterministic runtime lanes remain part of the CI boundary.
 9. The repository keeps public/private disclosure controls under `doc/security/`.
