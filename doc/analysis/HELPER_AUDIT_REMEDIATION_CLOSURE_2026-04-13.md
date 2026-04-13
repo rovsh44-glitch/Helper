@@ -7,7 +7,7 @@ Source plan: `doc/analysis/HELPER_AUDIT_REMEDIATION_PLAN_2026-04-12.md`
 
 ## Scope Of This Update
 
-This update closes the post-closure follow-up around local NuGet audit behavior, required-status governance, and regression coverage for the OpenAPI contract gate.
+This update closes the post-closure follow-up around local NuGet audit behavior, required-status governance, regression coverage for the OpenAPI contract gate, and the `Phase 5` structural cleanup backlog.
 
 ## Added After The 2026-04-12 Closure
 
@@ -62,7 +62,49 @@ Declared required contexts:
   - clean pass-through runs
 - `scripts/openapi_gate.ps1` supports simulated output injection for script-level regression coverage without reintroducing the old false-green path
 
-### 6. The repository now contains an operator runbook for the remaining GitHub admin step
+### 6. `Phase 5` structural cleanup is now implemented
+
+#### 6.1. Oversized hotspot files were split by responsibility
+
+- `test/Helper.Runtime.Tests/ConversationRuntimeTests.cs` was split into:
+  - `ConversationRuntimeTests.ResponseComposerAndFinalizer.cs`
+  - `ConversationRuntimeTests.PlanningAndMetrics.cs`
+  - `ConversationRuntimeTests.OrchestrationAndExecution.cs`
+- `test/Helper.Runtime.Tests/RetrievalPipelineTests.cs` was split into:
+  - `RetrievalPipelineTests.Foundation.cs`
+  - `RetrievalPipelineTests.GlobalRoutingA.cs`
+  - `RetrievalPipelineTests.DomainReranking.cs`
+  - `RetrievalPipelineTests.GlobalRoutingB.cs`
+- the original root files now act as slim ownership anchors plus shared helpers:
+  - `ConversationRuntimeTests.cs` reduced from ~161 KB to ~10 KB
+  - `RetrievalPipelineTests.cs` reduced from ~113 KB to ~2 KB
+- integration-lane project ownership was updated so the split partial files remain in the same heavy lane surface as before
+
+#### 6.2. Broad nullability suppression was reduced to a narrow documented set
+
+- every `#pragma warning disable` in `src/Helper.Api/Hosting` was reduced from the former blanket set:
+  - `CS8600, CS8601, CS8602, CS8603, CS8604, CS8619, CS8622, CS8632`
+- the hosting partials now use the narrower documented suppression:
+  - `CS8600, CS8619, CS8622`
+- `dotnet build .\src\Helper.Api\Helper.Api.csproj -m:1` now passes with:
+  - `0 warnings`
+  - `0 errors`
+
+#### 6.3. Historical dead directories remain explicitly documented
+
+- `src/SelfEvolvingAI.Infrastructure/README.md`
+- `src/SelfEvolvingAI.Infrastructure.Core/README.md`
+
+### 7. GitHub required checks are now attached server-side
+
+- the declared required contexts are no longer only in-repo intent; they are attached to the active `Protect main` ruleset (`id 14308867`)
+- enforced required contexts on `main`:
+  - `repo_gate`
+  - `connected_nuget_audit`
+- the remediation package was delivered through PR `#33` and merged to `main` as:
+  - `7f7de0a6833b16077e9e4838f7310c5997c4db10`
+
+### 8. The repository still contains an operator runbook for auditability
 
 - `doc/operator/GITHUB_BRANCH_PROTECTION_REQUIRED_STATUS_CHECKS_2026-04-13.md` records the exact server-side attachment procedure for:
   - `repo_gate`
@@ -74,17 +116,22 @@ Declared required contexts:
 The following checks passed for this update:
 
 ```powershell
+dotnet build .\src\Helper.Api\Helper.Api.csproj -m:1
 dotnet test .\test\Helper.Runtime.Tests\Helper.Runtime.Tests.csproj -m:1 --filter "FullyQualifiedName~NugetSecurityGateScriptTests|FullyQualifiedName~OpenApiGateScriptTests|FullyQualifiedName~ArchitectureFitnessTests" -v:m
+dotnet build .\test\Helper.Runtime.Integration.Tests\Helper.Runtime.Integration.Tests.csproj -m:1
 dotnet nuget list source --configfile .\NuGet.Config
 npm run ci:gate
 ```
 
 Observed results:
 
-- targeted runtime/fitness verification: `60/60`
+- targeted runtime/fitness verification: `61/61`
+- `Helper.Api` build after nullability cleanup: `0 warnings`, `0 errors`
+- integration test project build after hotspot split: `0 warnings`, `0 errors`
 - repo-owned `NuGet.Config` resolves `nuget.org` as the sole configured source under `--configfile`
 - local `ci:gate` passes after the follow-up update, while the NuGet lane now supports fast offline short-circuit semantics when a dead loopback proxy is detected
 
-## Remaining Boundary
+## Remaining Notes
 
-The repository now declares and checks the intended required status contexts locally, but attaching those contexts to the remote GitHub branch protection or ruleset still requires repository-admin action on GitHub itself.
+1. The original remediation work began from the audited `main` baseline recorded in the 2026-04-12 closure, so `Step 0.2` was satisfied retrospectively rather than literally.
+2. The critical audit defects and the `Phase 5` cleanup are now implemented in code, tests, CI, and server-side ruleset enforcement.

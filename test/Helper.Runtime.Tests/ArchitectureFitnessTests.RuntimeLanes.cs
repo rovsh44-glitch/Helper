@@ -236,9 +236,10 @@ public partial class ArchitectureFitnessTests
         Assert.Contains("GitHub Branch Protection Required Status Checks", operatorReadme, StringComparison.Ordinal);
         Assert.Contains("repo_gate", operatorRunbook, StringComparison.Ordinal);
         Assert.Contains("connected_nuget_audit", operatorRunbook, StringComparison.Ordinal);
-        Assert.Contains("Those contexts still require explicit server-side attachment", securityStatus, StringComparison.Ordinal);
+        Assert.Contains("Those contexts are attached server-side", securityStatus, StringComparison.Ordinal);
         Assert.Contains("do not mutate GitHub server-side rules", operatorRunbook, StringComparison.Ordinal);
-        Assert.Contains("still requires repository-admin action on GitHub itself", closureUpdate, StringComparison.Ordinal);
+        Assert.Contains("GitHub required checks are now attached server-side", closureUpdate, StringComparison.Ordinal);
+        Assert.Contains("Protect main", closureUpdate, StringComparison.Ordinal);
     }
 
     [Fact]
