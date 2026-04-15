@@ -12,17 +12,20 @@ Functionally, the Helper remediation and proof-bundle work is in a strong local 
 Repository-wise, the project is now aligned with GitHub:
 
 - Local `main` is checked out.
-- Local `main` and `origin/main` both point at `c2f38df`.
+- Local `main` and `origin/main` both point at `8cc34c2`.
 - Divergence is `0 0`.
-- The working tree was clean before the 2026-04-15 security/posture remediation branch.
+- The working tree was clean after the 2026-04-15 security/posture remediation merge before the public-proof docs update.
 - PR `#42` is merged as the GitHub squash commit `c2f38df`.
+- PR `#43` is merged as the GitHub squash commit `8cc34c2`.
+- Baseline tag `helper-private-core-2026-04-15-green` is attached to the current private-core `main`.
+- The sanitized public LFL20 proof-bundle repository is published at `https://github.com/rovsh44-glitch/helper-proof-bundle-lfl20`.
 
 ## Git State Observed
 
 - Remote repository: `https://github.com/rovsh44-glitch/Helper.git`.
-- GitHub `main`: `c2f38df` (`Add LFL20 proof bundle and local library evidence fusion (#42)`).
-- Local `main`: `c2f38df`.
-- Current remediation branch for follow-up work: `security-posture-dependency-isolation-2026-04-15`.
+- GitHub `main`: `8cc34c2` (`Close dependency security and private-core posture (#43)`).
+- Local `main`: `8cc34c2`.
+- Current remediation branch for follow-up work: none; security/posture remediation is merged.
 - Previous stale feature branches remain local-only historical refs unless explicitly pruned.
 
 The earlier warning about a stale checked-out branch is closed. Current follow-up work must proceed through a normal feature branch and PR because `main` is protected.
@@ -103,13 +106,23 @@ Observed final audit result:
 - Public path leaks: `0`.
 - Missing local metadata: `0`.
 
+## Current Closure
+
+The security/posture branch is no longer pending:
+
+1. PR `#43` was merged into `main`.
+2. Hosted `repo_gate` on `8cc34c2` completed with `success`.
+3. Hosted `connected_nuget_audit` on `8cc34c2` completed with `success`.
+4. Dependabot dynamic jobs on `8cc34c2` completed with `success`.
+5. Local `main` and `origin/main` are aligned.
+6. The private-core repository remains `Private`.
+7. The public proof surface has been split into `https://github.com/rovsh44-glitch/helper-proof-bundle-lfl20`.
+
 ## Remaining Work
 
-The remaining work after this security/posture branch is hosted verification and merge, not proof-bundle runtime remediation:
+The next work is not proof-bundle runtime remediation. It is controlled expansion:
 
-1. Push this branch and open a PR.
-2. Rerun hosted `repo-gate` and `nuget-security-audit`.
-3. Merge after hosted checks pass.
-4. Confirm updated `main` remains aligned locally and remotely.
-5. Keep the private-core repository Private.
-6. Publish only a separate curated public showcase/proof-bundle repo when external publication is needed.
+1. Keep `Helper` private-core source in the private repository.
+2. Use the public proof repository only for sanitized artifacts and reviewed narrative.
+3. Start a separate model A/B stage against baseline tag `helper-private-core-2026-04-15-green`.
+4. If private-code scanning becomes mandatory, solve it through an eligible GitHub security tier or external scanner, not by publishing the full source tree.

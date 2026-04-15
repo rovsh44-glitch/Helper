@@ -56,3 +56,24 @@ The intended public claim is therefore narrow:
 It is not:
 
 `The full Helper private-core source tree is public/open-source.`
+
+## 2026-04-15 Publication Closure
+
+Status: `implemented`
+
+The approved publication path has now been executed for the first narrow public proof surface:
+
+1. Private-core `Helper` remains `Private`.
+2. Baseline tag `helper-private-core-2026-04-15-green` was created on the green private-core `main`.
+3. A separate public proof repository was created: `https://github.com/rovsh44-glitch/helper-proof-bundle-lfl20`.
+4. The public repository contains sanitized LFL20 artifacts only:
+   - selected `LFL20` corpus JSONL
+   - sanitized per-case results
+   - analyzer summaries
+   - evidence-fusion audit
+   - case-level metrics
+   - manifest/checksums
+   - reproducibility and limitation notes
+5. The public repository does not contain private-core source, tests, internal scripts, runtime logs, auth files, local paths, or raw request envelopes.
+
+This closes the immediate public/private alignment gap. Future public updates should extend the proof-bundle repository or create additional sanitized showcase repositories, not widen the private-core repository visibility.

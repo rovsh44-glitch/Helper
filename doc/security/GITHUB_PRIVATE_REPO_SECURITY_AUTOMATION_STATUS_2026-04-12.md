@@ -84,3 +84,21 @@ Correct publication/security split:
 2. Keep Dependabot alerts, automated security fixes, `repo_gate`, `connected_nuget_audit`, and repo-owned scans as the private-core controls.
 3. Create a separate public showcase/proof-bundle repository for reviewed public-safe material, especially the reproducible LFL20 proof bundle and narrative docs.
 4. If code scanning is required for private-core source, move to an eligible GitHub security tier or eligible organization/enterprise setup instead of widening source visibility.
+
+## 2026-04-15 Implementation Update
+
+Status: `implemented for LFL20 public proof`
+
+The separate public proof repository has been created:
+
+- `https://github.com/rovsh44-glitch/helper-proof-bundle-lfl20`
+
+Current private-core security baseline:
+
+1. `repo_gate` on private `main` commit `8cc34c2`: `success`.
+2. `connected_nuget_audit` on private `main` commit `8cc34c2`: `success`.
+3. Dependabot dynamic jobs on private `main` commit `8cc34c2`: `success`.
+4. `npm audit --json` on current local `main`: `0` vulnerabilities.
+5. Magick.NET runtime dependency was removed from the private-core security boundary.
+
+This means the absence of GitHub code scanning on the private repository remains a known tier limitation, but it is no longer blocking the current dependency-security or public-proof publication path.

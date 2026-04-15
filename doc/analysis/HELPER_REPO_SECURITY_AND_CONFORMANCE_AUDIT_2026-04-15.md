@@ -160,11 +160,28 @@ Closure on this branch:
 - Private-core/public-showcase policy was revalidated.
 - Full `npm run ci:gate` passed after the remediation.
 
-## Current Action Plan
+## Closure After PR 43
 
-1. Push this remediation through a normal PR.
-2. Rerun `repo-gate` and `nuget-security-audit` on the PR.
-3. Merge the remediation PR after hosted checks pass.
-4. Confirm `repo-gate` and `nuget-security-audit` on updated `main`.
-5. Close or let GitHub supersede stale Dependabot PRs `#34` through `#37`.
-6. Keep the private-core repo Private and create a separate public showcase/proof-bundle repository when publication is needed.
+Current private-core baseline:
+
+1. `main` is aligned locally and remotely at `8cc34c2`.
+2. Baseline tag `helper-private-core-2026-04-15-green` is attached to the current private-core `main`.
+3. PR `#43` closed dependency security and private-core posture.
+4. Hosted `repo_gate` on `8cc34c2` completed with `success`.
+5. Hosted `connected_nuget_audit` on `8cc34c2` completed with `success`.
+6. Dependabot jobs on `8cc34c2` completed with `success`.
+7. `npm audit --json` on current `main` returns `0` vulnerabilities.
+8. Stale Dependabot PRs `#34` through `#37` are closed as superseded by the consolidated lockfile remediation.
+
+Public/private split:
+
+1. The private-core repository remains `Private`.
+2. The public proof repository is published at `https://github.com/rovsh44-glitch/helper-proof-bundle-lfl20`.
+3. The public repository contains sanitized LFL20 corpus/results/reports/manifest material only, not private-core source code.
+
+## Next Action Plan
+
+1. Keep private-core controls green: `repo_gate`, `connected_nuget_audit`, Dependabot, repo-owned secret/config/docs gates.
+2. Treat `https://github.com/rovsh44-glitch/helper-proof-bundle-lfl20` as the public evidence surface for LFL20.
+3. Start the model A/B stage only after this fixed baseline, using `helper-private-core-2026-04-15-green` as the comparison anchor.
+4. If code scanning becomes mandatory for private-core source, use an eligible GitHub security tier or an external scanner instead of making the full source tree public.
