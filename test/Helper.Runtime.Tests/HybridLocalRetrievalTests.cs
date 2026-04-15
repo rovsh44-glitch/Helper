@@ -114,8 +114,13 @@ public sealed class HybridLocalRetrievalTests
         Assert.Contains("Sports Recovery Review.pdf", ai.LastPrompt!, StringComparison.Ordinal);
         Assert.Contains("local_retrieval.mode=hybrid_rrf", result.Trace);
         Assert.Single(result.Sources);
+        Assert.DoesNotContain(@"C:\LIB\", result.Sources[0], StringComparison.OrdinalIgnoreCase);
         Assert.Single(result.EvidenceItems);
         Assert.Equal("local_library_chunk", result.EvidenceItems[0].EvidenceKind);
+        Assert.Equal("local_library", result.EvidenceItems[0].SourceLayer);
+        Assert.Equal("pdf", result.EvidenceItems[0].SourceFormat);
+        Assert.Equal("Sports Recovery Review.pdf", result.EvidenceItems[0].DisplayTitle);
+        Assert.Contains("page:1", result.EvidenceItems[0].Locator, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("Моё мнение:", result.Answer, StringComparison.Ordinal);
     }
 

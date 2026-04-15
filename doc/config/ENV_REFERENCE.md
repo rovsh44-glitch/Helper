@@ -1,6 +1,6 @@
 ﻿# HELPER Environment Reference
 
-Generated: `2026-04-10 20:04:35 UTC`
+Generated: `2026-04-15 08:37:10 UTC`
 Source of truth: `src/Helper.Api/Backend/Configuration/BackendEnvironmentInventory.cs`
 
 This reference covers the governed configuration surface for:
@@ -97,6 +97,11 @@ Unknown names in `.env.local.example` are treated as repo drift. Deprecated name
 | `HELPER_RESEARCH_CACHE_TTL_MINUTES` | `int` | `20` | `backend_runtime` | Research cache TTL in minutes.; range: `1`..`720` |
 | `HELPER_GROUNDING_CASUAL_CHAT_ENABLED` | `bool` | `false` | `backend_runtime` | Allow grounding for casual chat. |
 | `HELPER_RESEARCH_MAX_SOURCES` | `int` | `8` | `backend_runtime` | Maximum grounded sources per response.; range: `1`..`64` |
+| `HELPER_RESPONSE_SHOW_LOCAL_PATHS` | `bool` | `false` | `backend_runtime` | Expose absolute local library paths in local source labels. Defaults to false so public proof artifacts remain path-redacted. |
+| `HELPER_LOCAL_LIBRARY_PUBLIC_SOURCE_MODE` | `enum` | `redacted` | `backend_runtime` | Local-library source rendering mode for public artifacts.; allowed: `redacted`, `developer` |
+| `HELPER_LOCAL_LIBRARY_ALLOW_CURRENT_FACTS` | `bool` | `false` | `backend_runtime` | Allow explicitly trusted local-library documents to support current external facts. Defaults to false; web remains required for fresh/regulatory claims. |
+| `HELPER_LOCAL_LIBRARY_CURRENT_FACT_ALLOWLIST` | `csv` | none | `backend_runtime` | Optional stable source IDs allowed by operator policy to support current-fact claims. |
+| `HELPER_MIXED_EVIDENCE_REQUIRE_WEB_FOR_FRESH` | `bool` | `true` | `backend_runtime` | Require web evidence for freshness-sensitive claims even when local library evidence is available. |
 | `HELPER_RESEARCH_BACKGROUND_BUDGET` | `int` | `1` | `backend_runtime` | Background research parallelism budget.; range: `0`..`16` |
 | `HELPER_WEB_SEARCH_LOCAL_URL` | `url` | `http://localhost:8080` | `backend_runtime` | Primary local web-search endpoint used by the local provider adapter. |
 | `HELPER_WEB_SEARCH_SEARX_URL` | `url` | none | `backend_runtime` | Optional secondary Searx-compatible endpoint used for graceful failover. |

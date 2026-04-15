@@ -59,4 +59,52 @@ public sealed class BehavioralCalibrationPolicyTests
         Assert.True(snapshot.CalibrationThreshold >= 0.82);
         Assert.True(snapshot.ConfidenceCeiling <= 0.42);
     }
+
+    [Fact]
+    public void BuildSnapshot_Treats_LocalOnly_FreshClaims_As_Unsupported_For_WebRequiredTurns()
+    {
+        var policy = new BehavioralCalibrationPolicy();
+        var context = new ChatTurnContext
+        {
+            TurnId = "epistemic-local-only-fresh",
+            Request = new ChatRequestDto("Какие сегодня актуальные налоговые пороги?", null, 12, null),
+            Conversation = new ConversationState("epistemic-local-only-fresh"),
+            History = Array.Empty<ChatMessageDto>(),
+            IsFactualPrompt = true,
+            ResolvedLiveWebRequirement = "web_required",
+            GroundingStatus = "grounded",
+            CitationCoverage = 1.0,
+            VerifiedClaims = 1,
+            TotalClaims = 1,
+            Confidence = 0.74
+        };
+        context.ResearchEvidenceItems.Add(new ResearchEvidenceItem(
+            1,
+            "Tax Handbook.pdf (pdf) | page:12 | id=tax-handbook",
+            "Tax Handbook.pdf",
+            "Historical tax threshold background.",
+            TrustLevel: "local_library",
+            EvidenceKind: "local_library_chunk",
+            SourceLayer: "local_library",
+            SourceFormat: "pdf",
+            SourceId: "tax-handbook",
+            DisplayTitle: "Tax Handbook.pdf",
+            Locator: "page:12"));
+        context.ClaimGroundings.Add(new ClaimGrounding(
+            "Сегодня действует актуальный налоговый порог.",
+            ClaimSentenceType.Fact,
+            SourceIndex: 1,
+            EvidenceGrade: "strong",
+            MatchConfidence: 0.9));
+
+        var snapshot = policy.BuildSnapshot(context);
+
+        Assert.True(snapshot.FreshnessSensitive);
+        Assert.True(snapshot.HasWeakEvidence);
+        Assert.True(snapshot.AbstentionRecommended);
+        Assert.NotNull(context.EvidenceFusionSnapshot);
+        Assert.Equal(0, context.EvidenceFusionSnapshot!.WebSourceCount);
+        Assert.Equal(1, context.EvidenceFusionSnapshot.LocalSourceCount);
+        Assert.Equal(1, context.EvidenceFusionSnapshot.LocalOnlyFreshClaimCount);
+    }
 }

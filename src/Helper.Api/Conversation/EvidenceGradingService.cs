@@ -32,11 +32,12 @@ public sealed class EvidenceGradingService : IEvidenceGradingService
             return flags;
         }
 
+        var verifiedRatio = (double)verifiedClaims / totalFactualClaims;
         if (verifiedClaims == 0)
         {
             flags.Add("uncertainty.no_verified_claims");
         }
-        else if ((double)verifiedClaims / totalFactualClaims < 0.70)
+        else if (verifiedRatio < 0.70)
         {
             flags.Add("uncertainty.low_coverage");
         }
@@ -49,7 +50,13 @@ public sealed class EvidenceGradingService : IEvidenceGradingService
             flags.Add("uncertainty.evidence_none");
         }
 
-        if (weakCount > 0)
+        var weakShare = groundedClaims.Count > 0
+            ? weakCount / (double)groundedClaims.Count
+            : 0.0;
+        var materialWeakEvidence =
+            weakCount > 0 &&
+            (noneCount > 0 || verifiedRatio < 0.70 || weakShare >= 0.30);
+        if (materialWeakEvidence)
         {
             flags.Add("uncertainty.evidence_weak");
         }

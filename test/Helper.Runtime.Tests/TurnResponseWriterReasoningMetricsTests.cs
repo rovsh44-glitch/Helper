@@ -246,6 +246,8 @@ public class TurnResponseWriterReasoningMetricsTests
         Assert.Contains("web_search.iteration_count=2", response.SearchTrace.Events!);
         Assert.Single(response.SearchTrace.Sources!);
         Assert.Equal("Observability guide", response.SearchTrace.Sources![0].Title);
+        Assert.Equal("web", response.SearchTrace.Sources![0].SourceLayer);
+        Assert.Equal("html", response.SearchTrace.Sources![0].SourceFormat);
     }
 
     [Fact]
@@ -293,6 +295,17 @@ public class TurnResponseWriterReasoningMetricsTests
                 CalibrationThreshold: 0.78,
                 AbstentionRecommended: true,
                 Trace: new[] { "epistemic.abstention_recommended=true" }),
+            EvidenceFusionSnapshot = new EvidenceFusionSnapshot(
+                WebSourceCount: 0,
+                LocalSourceCount: 1,
+                AttachmentSourceCount: 0,
+                WebCitationCoverage: 0,
+                LocalCitationCoverage: 1,
+                FreshClaimWebCoverage: 0,
+                BackgroundClaimCoverage: 0,
+                UnsupportedFreshClaimCount: 1,
+                LocalOnlyFreshClaimCount: 1,
+                Trace: new[] { "evidence_fusion.local_only_fresh_claims=1" }),
             InteractionState = new Helper.Api.Conversation.InteractionState.InteractionStateSnapshot(
                 FrustrationLevel: Helper.Api.Conversation.InteractionState.InteractionSignalLevel.Moderate,
                 UrgencyLevel: Helper.Api.Conversation.InteractionState.InteractionSignalLevel.Low,
@@ -310,6 +323,9 @@ public class TurnResponseWriterReasoningMetricsTests
         Assert.NotNull(response.EpistemicRisk);
         Assert.Equal("abstain", response.EpistemicRisk!.AnswerMode);
         Assert.True(response.EpistemicRisk.AbstentionRecommended);
+        Assert.NotNull(response.EvidenceFusion);
+        Assert.Equal(0, response.EvidenceFusion!.WebSourceCount);
+        Assert.Equal(1, response.EvidenceFusion.LocalSourceCount);
         Assert.NotNull(response.InteractionState);
         Assert.Equal("high", response.InteractionState!.ReassuranceNeed);
     }

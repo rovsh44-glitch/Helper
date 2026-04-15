@@ -77,6 +77,15 @@ internal sealed class FetchStabilityPolicy : IFetchStabilityPolicy
             successTarget = Math.Min(selectionLimit, attemptBudget);
             mode = "freshness_cluster_fetch";
         }
+        else if ((domainProfile.Name == "law_regulation" || domainProfile.Name == "finance_market") &&
+                 rerankProfile.Name == "factual_freshness")
+        {
+            selectionLimit = Math.Min(availableCandidates, Math.Max(boundedMaxResults + 2, 4));
+            attemptBudget = Math.Min(selectionLimit, Math.Max(baseFetchBudget, 4));
+            successTarget = Math.Min(2, attemptBudget);
+            backfillEnabled = attemptBudget > baseFetchBudget || selectionLimit > boundedMaxResults;
+            mode = "regulation_freshness_backfill";
+        }
 
         return new FetchStabilityBudgetDecision(
             SelectionLimit: selectionLimit,

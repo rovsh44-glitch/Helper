@@ -24,7 +24,11 @@ public static partial class ServiceRegistrationExtensions
         services.AddSingleton<IRemoteDocumentExtractor, PdfRemoteDocumentExtractor>();
         services.AddSingleton<IHardPageDetectionPolicy, HardPageDetectionPolicy>();
         services.AddSingleton<IRenderedPageBudgetPolicy, RenderedPageBudgetPolicy>();
-        services.AddSingleton<IBrowserRenderFallbackService, DisabledBrowserRenderFallbackService>();
+        services.AddSingleton<IBrowserRenderFallbackService>(sp => ReadBrowserRenderEnabled()
+            ? new BrowserRenderFallbackService(
+                sp.GetRequiredService<IWebFetchSecurityPolicy>(),
+                sp.GetRequiredService<IWebPageContentExtractor>())
+            : new DisabledBrowserRenderFallbackService());
         services.AddSingleton<IWebProviderHealthState, WebProviderHealthState>();
         services.AddSingleton<ISearchCostBudgetPolicy, SearchCostBudgetPolicy>();
         services.AddSingleton<ITurnLatencyBudgetPolicy, TurnLatencyBudgetPolicy>();
@@ -93,6 +97,13 @@ public static partial class ServiceRegistrationExtensions
         services.AddSingleton<IModelOrchestrator, ModelOrchestrator>();
 
         return services;
+    }
+
+    private static bool ReadBrowserRenderEnabled()
+    {
+        var raw = Environment.GetEnvironmentVariable("HELPER_WEB_RENDER_ENABLED");
+        return !string.Equals(raw, "0", StringComparison.OrdinalIgnoreCase) &&
+               !string.Equals(raw, "false", StringComparison.OrdinalIgnoreCase);
     }
 }
 

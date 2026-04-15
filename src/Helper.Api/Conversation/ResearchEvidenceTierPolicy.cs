@@ -35,6 +35,12 @@ internal sealed class ResearchEvidenceTierPolicy : IResearchEvidenceTierPolicy
                     AllowsHardContradiction: true,
                     RequiresGroundingCaution: false,
                     UncertaintyFlags: Array.Empty<string>()),
+                "local_library_chunk" => new ResearchEvidenceTierAssessment(
+                    strongestTier,
+                    AllowsFullGrounding: true,
+                    AllowsHardContradiction: false,
+                    RequiresGroundingCaution: false,
+                    UncertaintyFlags: Array.Empty<string>()),
                 "search_hit" => new ResearchEvidenceTierAssessment(
                     strongestTier,
                     AllowsFullGrounding: false,
@@ -93,6 +99,13 @@ internal sealed class ResearchEvidenceTierPolicy : IResearchEvidenceTierPolicy
         if (evidenceItems.Any(static item => string.Equals(item.EvidenceKind, "fetched_page", StringComparison.OrdinalIgnoreCase)))
         {
             return "fetched_page";
+        }
+
+        if (evidenceItems.Any(static item =>
+                string.Equals(item.SourceLayer, "local_library", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(item.EvidenceKind, "local_library_chunk", StringComparison.OrdinalIgnoreCase)))
+        {
+            return "local_library_chunk";
         }
 
         if (evidenceItems.Any(static item => string.Equals(item.EvidenceKind, "search_hit", StringComparison.OrdinalIgnoreCase)))

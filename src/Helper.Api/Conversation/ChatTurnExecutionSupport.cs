@@ -3,6 +3,7 @@ using Helper.Api.Backend.Configuration;
 using Helper.Api.Backend.ModelGateway;
 using Helper.Runtime.Core;
 using Helper.Runtime.Infrastructure;
+using Helper.Runtime.WebResearch;
 
 namespace Helper.Api.Conversation;
 
@@ -61,7 +62,7 @@ internal static class ChatTurnExecutionSupport
 
     public static CancellationTokenSource CreateStageCancellation(string stage, ChatTurnContext context, CancellationToken requestToken)
     {
-        var timeout = ResolveStageTimeout(stage, context.TimeBudget);
+        var timeout = ResolveStageTimeout(stage, context);
         var cts = CancellationTokenSource.CreateLinkedTokenSource(requestToken);
         cts.CancelAfter(timeout);
         return cts;
@@ -298,8 +299,9 @@ internal static class ChatTurnExecutionSupport
         return Math.Clamp(parsed, min, max);
     }
 
-    private static TimeSpan ResolveStageTimeout(string stage, TimeSpan turnBudget)
+    private static TimeSpan ResolveStageTimeout(string stage, ChatTurnContext context)
     {
+        var turnBudget = context.TimeBudget;
         var fallback = stage switch
         {
             "generate" => TimeSpan.FromSeconds(30),
@@ -318,9 +320,32 @@ internal static class ChatTurnExecutionSupport
 
         var configured = ReadInt(envName, (int)fallback.TotalSeconds, 3, 180);
         var hardCap = TimeSpan.FromSeconds(configured);
+        if (string.Equals(stage, "research", StringComparison.OrdinalIgnoreCase))
+        {
+            hardCap += ResolveResearchStageSlack(context);
+        }
+
         return turnBudget <= TimeSpan.Zero
             ? hardCap
             : TimeSpan.FromSeconds(Math.Max(1, Math.Min(hardCap.TotalSeconds, turnBudget.TotalSeconds)));
+    }
+
+    private static TimeSpan ResolveResearchStageSlack(ChatTurnContext context)
+    {
+        if (!context.IsLocalFirstBenchmarkTurn ||
+            context.LocalFirstBenchmarkMode != LocalFirstBenchmarkMode.WebRequired ||
+            !string.Equals(context.ResolvedLiveWebRequirement, "web_required", StringComparison.OrdinalIgnoreCase))
+        {
+            return TimeSpan.Zero;
+        }
+
+        var profile = ResearchRequestProfileResolver.From(context.Request.Message);
+        if (profile.StrictLiveEvidenceRequired)
+        {
+            return TimeSpan.FromSeconds(10);
+        }
+
+        return TimeSpan.FromSeconds(6);
     }
 
     private static bool IsEvalOrCertMode()

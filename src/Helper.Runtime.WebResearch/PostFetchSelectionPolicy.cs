@@ -119,7 +119,21 @@ internal sealed class PostFetchSelectionPolicy : IPostFetchSelectionPolicy
         List<string> trace)
     {
         var queryProfile = SourceAuthorityScorer.BuildQueryProfile(request.Query, plan.QueryKind);
-        if (!queryProfile.EvidenceHeavy && !queryProfile.MedicalEvidenceHeavy)
+        var intentProfile = SearchQueryIntentProfileClassifier.Classify(request.Query, queryProfile);
+        var requestProfile = ResearchRequestProfileResolver.From(request.Query);
+        var guardSensitive =
+            queryProfile.EvidenceHeavy ||
+            queryProfile.MedicalEvidenceHeavy ||
+            queryProfile.RegulationFreshnessHeavy ||
+            LooksLikeArxivPublisherPolicyQuery(request.Query) ||
+            intentProfile.ComparisonSensitive ||
+            intentProfile.FreshnessSensitive ||
+            intentProfile.BroadPromptLike ||
+            intentProfile.AmbiguousPromptLike ||
+            intentProfile.PaperAnalysisLike ||
+            queryProfile.OfficialBias ||
+            requestProfile.StrictLiveEvidenceRequired;
+        if (!guardSensitive)
         {
             return candidates.ToArray();
         }
@@ -128,7 +142,7 @@ internal sealed class PostFetchSelectionPolicy : IPostFetchSelectionPolicy
         var dropped = new List<(PostFetchSelectionCandidate Candidate, string Reason)>();
         foreach (var candidate in candidates)
         {
-            if (TryResolveSearchHitOnlyDropReason(queryProfile, candidate, out var reason))
+            if (TryResolveSearchHitOnlyDropReason(queryProfile, intentProfile, candidate, out var reason))
             {
                 dropped.Add((candidate, reason));
                 continue;
@@ -143,14 +157,37 @@ internal sealed class PostFetchSelectionPolicy : IPostFetchSelectionPolicy
             trace.Add($"web_search.search_hit_only_guard.drop url={droppedCandidate.Candidate.Document.Url} reason={droppedCandidate.Reason} final={droppedCandidate.Candidate.Ranking.FinalScore:0.000}");
         }
 
-        return kept.Count == 0 ? candidates.ToArray() : kept.ToArray();
+        if (kept.Count == 0)
+        {
+            var strictEmptyFallback =
+                queryProfile.MedicalEvidenceHeavy ||
+                queryProfile.RegulationFreshnessHeavy ||
+                LooksLikeArxivPublisherPolicyQuery(request.Query) ||
+                requestProfile.StrictLiveEvidenceRequired;
+            if (strictEmptyFallback)
+            {
+                trace.Add("web_search.search_hit_only_guard fallback=empty_strict");
+                return Array.Empty<PostFetchSelectionCandidate>();
+            }
+
+            return candidates.ToArray();
+        }
+
+        return kept.ToArray();
     }
 
     private static bool TryResolveSearchHitOnlyDropReason(
         SearchRankingQueryProfile queryProfile,
+        SearchQueryIntentProfile intentProfile,
         PostFetchSelectionCandidate candidate,
         out string reason)
     {
+        if (candidate.Ranking.Spam.LowTrust)
+        {
+            reason = "low_trust_without_fetch";
+            return true;
+        }
+
         var spamReasons = candidate.Ranking.Spam.Reasons;
         if (spamReasons.Contains("chat_or_app_landing_for_evidence_query", StringComparer.OrdinalIgnoreCase))
         {
@@ -189,10 +226,23 @@ internal sealed class PostFetchSelectionPolicy : IPostFetchSelectionPolicy
             return true;
         }
 
-        if (queryProfile.EvidenceHeavy &&
+        if (LooksLikeRetractionEvidenceSource(candidate.Document))
+        {
+            reason = string.Empty;
+            return false;
+        }
+
+        var nonMedicalEvidenceSensitive =
             !queryProfile.MedicalEvidenceHeavy &&
+            (queryProfile.EvidenceHeavy ||
+             queryProfile.RegulationFreshnessHeavy ||
+             intentProfile.ComparisonSensitive ||
+             intentProfile.FreshnessSensitive ||
+             intentProfile.BroadPromptLike ||
+             intentProfile.PaperAnalysisLike);
+        if (nonMedicalEvidenceSensitive &&
             !hasStrongEvidenceSignal &&
-            candidate.Ranking.FinalScore < 0.45d)
+            candidate.Ranking.FinalScore < 0.50d)
         {
             reason = "insufficient_evidence_authority_without_fetch";
             return true;
@@ -200,6 +250,31 @@ internal sealed class PostFetchSelectionPolicy : IPostFetchSelectionPolicy
 
         reason = string.Empty;
         return false;
+    }
+
+    private static bool LooksLikeRetractionEvidenceSource(WebSearchDocument document)
+    {
+        var descriptor = $"{document.Url} {document.Title} {document.Snippet}";
+        return descriptor.Contains("retraction", StringComparison.OrdinalIgnoreCase) ||
+               descriptor.Contains("retrak", StringComparison.OrdinalIgnoreCase) ||
+               descriptor.Contains("ретрак", StringComparison.OrdinalIgnoreCase) ||
+               descriptor.Contains("ethics", StringComparison.OrdinalIgnoreCase) ||
+               descriptor.Contains("crossmark", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool LooksLikeArxivPublisherPolicyQuery(string? text)
+    {
+        var value = text ?? string.Empty;
+        return value.Contains("arxiv", StringComparison.OrdinalIgnoreCase) &&
+               (value.Contains("publisher", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("repository", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("journal", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("sherpa", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("romeo", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("open access", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("self-archiving", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("accepted manuscript", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("embargo", StringComparison.OrdinalIgnoreCase));
     }
 
     private sealed record PostFetchSelectionCandidate(

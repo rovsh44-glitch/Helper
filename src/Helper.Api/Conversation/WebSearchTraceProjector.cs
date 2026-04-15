@@ -122,15 +122,22 @@ internal sealed class WebSearchTraceProjector : IWebSearchTraceProjector
                         CitationRenderSurface.Trace);
                     return new SearchTraceSourceDto(
                         Ordinal: item.Ordinal,
-                        Title: string.IsNullOrWhiteSpace(item.Title) ? $"Source {item.Ordinal}" : item.Title.Trim(),
-                        Url: string.IsNullOrWhiteSpace(item.Url) ? string.Empty : item.Url.Trim(),
+                        Title: string.IsNullOrWhiteSpace(item.DisplayTitle ?? item.Title) ? $"Source {item.Ordinal}" : (item.DisplayTitle ?? item.Title).Trim(),
+                        Url: ConversationSourceClassifier.FormatEvidenceSourceForDisplay(item),
                         PublishedAt: item.PublishedAt,
                         EvidenceKind: item.EvidenceKind,
                         TrustLevel: item.TrustLevel,
                         WasSanitized: item.WasSanitized,
                         SafetyFlags: MergeSafetyFlags(item.SafetyFlags, excerptDecision.Flags),
                         Snippet: excerptDecision.Included ? excerptDecision.Text : null,
-                        PassageCount: item.Passages?.Count ?? 0);
+                        PassageCount: item.Passages?.Count ?? 0,
+                        SourceLayer: ConversationSourceClassifier.ResolveLayer(item),
+                        SourceFormat: ConversationSourceClassifier.ResolveFormat(item),
+                        SourceId: item.SourceId,
+                        DisplayTitle: item.DisplayTitle,
+                        Locator: item.Locator,
+                        FreshnessEligibility: item.FreshnessEligibility,
+                        AllowedClaimRoles: item.AllowedClaimRoles);
                 })
                 .ToArray();
         }
@@ -142,7 +149,8 @@ internal sealed class WebSearchTraceProjector : IWebSearchTraceProjector
                 Ordinal: index + 1,
                 Title: source.Trim(),
                 Url: source.Trim(),
-                Snippet: null))
+                Snippet: null,
+                SourceLayer: ConversationSourceClassifier.IsHttpSource(source) ? "web" : "local_library"))
             .ToArray();
     }
 

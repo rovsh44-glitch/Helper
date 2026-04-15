@@ -1,5 +1,5 @@
 ﻿{
-  "generatedAtUtc": "2026-04-10T20:04:35.9665195\u002B00:00",
+  "generatedAtUtc": "2026-04-15T08:37:10.7020949\u002B00:00",
   "source": "src/Helper.Api/Backend/Configuration/BackendEnvironmentInventory.cs",
   "definitions": [
     {
@@ -1098,6 +1098,117 @@
       "MaxValue": "64",
       "Consumers": [
         "src/Helper.Api/Backend/Configuration/BackendOptions.cs"
+      ],
+      "Notes": null
+    },
+    {
+      "Name": "HELPER_RESPONSE_SHOW_LOCAL_PATHS",
+      "Category": "Research",
+      "Scope": "backend_runtime",
+      "ValueType": "bool",
+      "Description": "Expose absolute local library paths in local source labels. Defaults to false so public proof artifacts remain path-redacted.",
+      "DefaultValue": "false",
+      "ExampleValue": null,
+      "Secret": false,
+      "IncludeInLocalExample": false,
+      "CommentOutInLocalExample": false,
+      "Deprecated": false,
+      "Replacement": null,
+      "AllowedValues": [],
+      "MinValue": null,
+      "MaxValue": null,
+      "Consumers": [
+        "src/Helper.Runtime/LocalLibraryGroundingSupport.cs"
+      ],
+      "Notes": null
+    },
+    {
+      "Name": "HELPER_LOCAL_LIBRARY_PUBLIC_SOURCE_MODE",
+      "Category": "Research",
+      "Scope": "backend_runtime",
+      "ValueType": "enum",
+      "Description": "Local-library source rendering mode for public artifacts.",
+      "DefaultValue": "redacted",
+      "ExampleValue": null,
+      "Secret": false,
+      "IncludeInLocalExample": false,
+      "CommentOutInLocalExample": false,
+      "Deprecated": false,
+      "Replacement": null,
+      "AllowedValues": [
+        "redacted",
+        "developer"
+      ],
+      "MinValue": null,
+      "MaxValue": null,
+      "Consumers": [
+        "scripts/analyze_local_first_librarian_run.ps1",
+        "src/Helper.Runtime/LocalLibraryGroundingSupport.cs"
+      ],
+      "Notes": null
+    },
+    {
+      "Name": "HELPER_LOCAL_LIBRARY_ALLOW_CURRENT_FACTS",
+      "Category": "Research",
+      "Scope": "backend_runtime",
+      "ValueType": "bool",
+      "Description": "Allow explicitly trusted local-library documents to support current external facts. Defaults to false; web remains required for fresh/regulatory claims.",
+      "DefaultValue": "false",
+      "ExampleValue": null,
+      "Secret": false,
+      "IncludeInLocalExample": false,
+      "CommentOutInLocalExample": false,
+      "Deprecated": false,
+      "Replacement": null,
+      "AllowedValues": [],
+      "MinValue": null,
+      "MaxValue": null,
+      "Consumers": [
+        "src/Helper.Api/Conversation/EvidenceFusionService.cs",
+        "src/Helper.Api/Conversation/Epistemic/BehavioralCalibrationPolicy.cs"
+      ],
+      "Notes": null
+    },
+    {
+      "Name": "HELPER_LOCAL_LIBRARY_CURRENT_FACT_ALLOWLIST",
+      "Category": "Research",
+      "Scope": "backend_runtime",
+      "ValueType": "csv",
+      "Description": "Optional stable source IDs allowed by operator policy to support current-fact claims.",
+      "DefaultValue": null,
+      "ExampleValue": null,
+      "Secret": false,
+      "IncludeInLocalExample": false,
+      "CommentOutInLocalExample": false,
+      "Deprecated": false,
+      "Replacement": null,
+      "AllowedValues": [],
+      "MinValue": null,
+      "MaxValue": null,
+      "Consumers": [
+        "src/Helper.Api/Conversation/EvidenceFusionService.cs"
+      ],
+      "Notes": null
+    },
+    {
+      "Name": "HELPER_MIXED_EVIDENCE_REQUIRE_WEB_FOR_FRESH",
+      "Category": "Research",
+      "Scope": "backend_runtime",
+      "ValueType": "bool",
+      "Description": "Require web evidence for freshness-sensitive claims even when local library evidence is available.",
+      "DefaultValue": "true",
+      "ExampleValue": null,
+      "Secret": false,
+      "IncludeInLocalExample": false,
+      "CommentOutInLocalExample": false,
+      "Deprecated": false,
+      "Replacement": null,
+      "AllowedValues": [],
+      "MinValue": null,
+      "MaxValue": null,
+      "Consumers": [
+        "src/Helper.Api/Conversation/EvidenceFusionService.cs",
+        "src/Helper.Api/Conversation/Epistemic/BehavioralCalibrationPolicy.cs"
       ],
       "Notes": null
     },

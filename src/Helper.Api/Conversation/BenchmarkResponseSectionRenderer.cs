@@ -48,6 +48,8 @@ internal sealed class BenchmarkResponseSectionRenderer : IBenchmarkResponseSecti
 
     private string BuildLocalFindings(ChatTurnContext context, string solution, bool isFallback, string? topicalBody)
     {
+        var hasWebSources = ConversationSourceClassifier.HasWebSource(context);
+        var hasLocalSources = ConversationSourceClassifier.HasLocalSource(context);
         if (isFallback)
         {
             if (!string.IsNullOrWhiteSpace(topicalBody))
@@ -62,12 +64,17 @@ internal sealed class BenchmarkResponseSectionRenderer : IBenchmarkResponseSecti
 
             return context.IsFactualPrompt
                 ? "В этом ходе у меня не появилось достаточно надёжной локальной опоры, чтобы выдавать проверенный фактический ответ без внешней проверки."
-                : "Локальная база здесь дала только общий контур вопроса, но не дала достаточно надёжной опоры для уверенного ответа по существу.";
+            : "Локальная база здесь дала только общий контур вопроса, но не дала достаточно надёжной опоры для уверенного ответа по существу.";
         }
 
-        if (context.Sources.Count > 0)
+        if (hasWebSources)
         {
             return "Сначала ответ опирался на локальный контекст и базовые знания системы, а затем был дополнен внешней сверкой.";
+        }
+
+        if (hasLocalSources)
+        {
+            return "Локальная библиотека дала дополнительный контекст, но он не заменяет live web-проверку для свежих или регуляторных фактов.";
         }
 
         if (_qualityPolicy.LooksLowQualityBenchmarkDraft(context, solution))
@@ -83,7 +90,8 @@ internal sealed class BenchmarkResponseSectionRenderer : IBenchmarkResponseSecti
     private static string BuildWebFindings(ChatTurnContext context, bool isFallback)
     {
         var evidenceLevel = BenchmarkEvidenceFallbackSummaryBuilder.GetPassageEvidenceSupportLevel(context);
-        if (context.Sources.Count > 0)
+        var hasWebSources = ConversationSourceClassifier.HasWebSource(context);
+        if (hasWebSources)
         {
             if (isFallback && evidenceLevel == BenchmarkPassageEvidenceSupportLevel.Strong)
             {
@@ -102,6 +110,11 @@ internal sealed class BenchmarkResponseSectionRenderer : IBenchmarkResponseSecti
                 : "Live web-маршрут был использован для уточнения ответа; перечень реально использованных источников приведён ниже.";
         }
 
+        if (ConversationSourceClassifier.HasLiveWebAttempt(context))
+        {
+            return "Live web-маршрут был задействован, но проверяемые live web-источники не были получены или не прошли evidence-quality фильтр; локальные библиотечные источники не считаются заменой свежей внешней проверки.";
+        }
+
         if (ShouldDescribeWebAsUnused(context))
         {
             return "Live web-поиск в этом ходе не использовался, поэтому внешняя сверка и проверка актуальности поверх локального ответа не проводились.";
@@ -114,10 +127,13 @@ internal sealed class BenchmarkResponseSectionRenderer : IBenchmarkResponseSecti
 
     private static void AppendSources(StringBuilder builder, ChatTurnContext context, bool isFallback)
     {
-        var sources = context.Sources;
-        if (sources.Count == 0)
+        var webSources = ConversationSourceClassifier.GetWebSources(context);
+        var localSources = ConversationSourceClassifier.GetLocalSources(context);
+        if (webSources.Count == 0 && localSources.Count == 0)
         {
-            builder.AppendLine(ShouldDescribeWebAsUnused(context)
+            builder.AppendLine(ConversationSourceClassifier.HasLiveWebAttempt(context)
+                ? "- Проверяемые live web-источники в этом ходе не были получены."
+                : ShouldDescribeWebAsUnused(context)
                 ? "- Live web-источники в этом ходе не использовались."
                 : isFallback
                     ? "- В этом ходе проверяемые источники не были получены."
@@ -125,10 +141,28 @@ internal sealed class BenchmarkResponseSectionRenderer : IBenchmarkResponseSecti
             return;
         }
 
-        foreach (var source in sources.Distinct().Take(8))
+        var remaining = 8;
+        if (webSources.Count > 0)
         {
-            builder.Append("- ");
-            builder.AppendLine(source);
+            builder.AppendLine("- Web sources:");
+            foreach (var source in webSources.Take(remaining))
+            {
+                builder.Append("  - web: ");
+                builder.AppendLine(source);
+            }
+
+            remaining = Math.Max(0, remaining - webSources.Count);
+        }
+
+        if (localSources.Count > 0)
+        {
+            builder.AppendLine("- Local library sources:");
+            foreach (var source in localSources.Take(Math.Max(1, remaining)))
+            {
+                builder.Append("  - ");
+                builder.Append(webSources.Count > 0 ? "local: " : "local-only: ");
+                builder.AppendLine(source);
+            }
         }
     }
 

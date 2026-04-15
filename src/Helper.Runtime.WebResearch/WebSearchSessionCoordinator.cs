@@ -7,19 +7,22 @@ public sealed class WebSearchSessionCoordinator : IWebSearchSessionCoordinator
     private readonly ISearchIterationPolicy _iterationPolicy;
     private readonly ISearchEvidenceSufficiencyPolicy _evidenceSufficiencyPolicy;
     private readonly IWebSearchDocumentPipeline _documentPipeline;
+    private readonly IAuthoritativeSourceFamilyPolicy _authoritativeSourceFamilyPolicy;
 
     internal WebSearchSessionCoordinator(
         IWebSearchProviderClient providerClient,
         IWebQueryPlanner queryPlanner,
         ISearchIterationPolicy iterationPolicy,
         ISearchEvidenceSufficiencyPolicy evidenceSufficiencyPolicy,
-        IWebSearchDocumentPipeline documentPipeline)
+        IWebSearchDocumentPipeline documentPipeline,
+        IAuthoritativeSourceFamilyPolicy? authoritativeSourceFamilyPolicy = null)
     {
         _providerClient = providerClient;
         _queryPlanner = queryPlanner;
         _iterationPolicy = iterationPolicy;
         _evidenceSufficiencyPolicy = evidenceSufficiencyPolicy;
         _documentPipeline = documentPipeline;
+        _authoritativeSourceFamilyPolicy = authoritativeSourceFamilyPolicy ?? new AuthoritativeSourceFamilyPolicy();
     }
 
     public async Task<WebSearchSession> ExecuteAsync(WebSearchRequest request, CancellationToken ct = default)
@@ -63,6 +66,13 @@ public sealed class WebSearchSessionCoordinator : IWebSearchSessionCoordinator
             {
                 documents = Array.Empty<WebSearchDocument>();
                 failureReason ??= ex.Message;
+            }
+
+            var authoritativeFamily = _authoritativeSourceFamilyPolicy.Augment(request, plan, documents);
+            documents = authoritativeFamily.Documents;
+            if (authoritativeFamily.Trace.Count > 0)
+            {
+                providerTrace.AddRange(authoritativeFamily.Trace.Select(trace => $"{trace} query_kind={plan.QueryKind}"));
             }
 
             var rankingTrace = new List<string>();

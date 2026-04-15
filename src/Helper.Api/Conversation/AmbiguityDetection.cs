@@ -50,7 +50,7 @@ public sealed class HybridAmbiguityDetector : IAmbiguityDetector
 
     private static readonly string[] FormatTokens =
     {
-        "format", "формат", "output", "выведи", "json", "table", "таблица", "bullet", "список"
+        "format", "формат", "выведи", "json", "table", "таблица", "bullet", "список"
     };
 
     private static readonly string[] ConstraintTokens =

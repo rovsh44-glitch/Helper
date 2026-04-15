@@ -279,7 +279,14 @@ public record SearchTraceSourceDto(
     bool WasSanitized = false,
     IReadOnlyList<string>? SafetyFlags = null,
     string? Snippet = null,
-    int PassageCount = 0);
+    int PassageCount = 0,
+    string? SourceLayer = null,
+    string? SourceFormat = null,
+    string? SourceId = null,
+    string? DisplayTitle = null,
+    string? Locator = null,
+    string? FreshnessEligibility = null,
+    IReadOnlyList<string>? AllowedClaimRoles = null);
 public record SearchTraceDto(
     string RequestedMode,
     string ResolvedRequirement,
@@ -301,6 +308,17 @@ public record EpistemicRiskSnapshotDto(
     double ConfidenceCeiling,
     double CalibrationThreshold,
     bool AbstentionRecommended,
+    IReadOnlyList<string>? Trace = null);
+public record EvidenceFusionSnapshotDto(
+    int WebSourceCount,
+    int LocalSourceCount,
+    int AttachmentSourceCount,
+    double WebCitationCoverage,
+    double LocalCitationCoverage,
+    double FreshClaimWebCoverage,
+    double BackgroundClaimCoverage,
+    int UnsupportedFreshClaimCount,
+    int LocalOnlyFreshClaimCount,
     IReadOnlyList<string>? Trace = null);
 public record InteractionStateSnapshotDto(
     string FrustrationLevel,
@@ -348,6 +366,7 @@ public record ChatResponseDto(
     PostTurnAuditStatusDto? AuditStatus = null,
     ConversationStyleTelemetryDto? StyleTelemetry = null,
     SearchTraceDto? SearchTrace = null,
+    EvidenceFusionSnapshotDto? EvidenceFusion = null,
     string? InputMode = null);
 
 public record ConversationFeedbackSnapshot(

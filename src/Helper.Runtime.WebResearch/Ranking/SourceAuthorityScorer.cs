@@ -1,3 +1,5 @@
+using System.Text.RegularExpressions;
+
 namespace Helper.Runtime.WebResearch.Ranking;
 
 internal readonly record struct SearchRankingQueryProfile(
@@ -7,7 +9,8 @@ internal readonly record struct SearchRankingQueryProfile(
     bool LocalityHeavy,
     bool OfficialBias,
     bool EvidenceHeavy,
-    bool MedicalEvidenceHeavy);
+    bool MedicalEvidenceHeavy,
+    bool RegulationFreshnessHeavy);
 
 internal sealed record SourceAuthorityAssessment(
     double Score,
@@ -160,6 +163,7 @@ internal sealed class SourceAuthorityScorer : ISourceAuthorityScorer
         var text = (query ?? string.Empty).Trim();
         var recoveryTherapyEvidenceHeavy = LooksLikeRecoveryTherapyEvidenceQuery(text);
         var evidenceBoundaryHeavy = LooksLikeEvidenceBoundaryQuery(text);
+        var retractionStatusHeavy = LooksLikeRetractionStatusQuery(text);
         var documentationHeavy = ContainsAny(
             text,
             "docs", "documentation", "reference", "api", "sdk", "release notes", "support", "version",
@@ -183,6 +187,7 @@ internal sealed class SourceAuthorityScorer : ISourceAuthorityScorer
             "профилактик", "лечение", "вакцин", "вспышк", "эпидеми", "официальные меры", "официальные рекомендации",
             "prediabetes", "nutrition", "diet", "meal", "glycemic", "glucose", "insulin", "carbohydrate",
             "преддиаб", "рацион", "питани", "диет", "гликем", "глюкоз", "инсулин", "углевод") ||
+            retractionStatusHeavy ||
             evidenceBoundaryHeavy ||
             recoveryTherapyEvidenceHeavy;
         var regulationFreshnessHeavy = LooksLikeRegulationFreshnessQuery(text);
@@ -194,17 +199,26 @@ internal sealed class SourceAuthorityScorer : ISourceAuthorityScorer
             "мигрен", "корь", "вакцин", "вакцинац", "вспышк", "болезн", "лечение", "профилактик", "мышц", "мышеч", "вес", "голодан",
             "преддиаб", "рацион", "питани", "диет", "гликем", "глюкоз", "инсулин", "углевод") ||
             recoveryTherapyEvidenceHeavy;
+        currentnessHeavy = currentnessHeavy || LooksLikeTimeBoundYearQuery(text);
         var officialBias = documentationHeavy ||
                            evidenceHeavy ||
                            regulationFreshnessHeavy ||
+                           retractionStatusHeavy ||
                            ContainsAny(
                                text,
                                "official", "guidance", "sec", "ftc", "irs", "act", "law", "regulation",
-                               "официаль", "руководств", "закон", "регуляц", "минздрав", "всемирная организация здравоохранения", "who");
+                               "european commission", "ai office", "eur-lex", "easa", "customs",
+                               "официаль", "руководств", "закон", "регуляц", "минздрав", "всемирная организация здравоохранения", "who", "тамож");
 
         if (string.Equals(queryKind, "freshness", StringComparison.OrdinalIgnoreCase))
         {
             currentnessHeavy = true;
+            officialBias = true;
+        }
+
+        if (string.Equals(queryKind, "publisher_policy", StringComparison.OrdinalIgnoreCase))
+        {
+            evidenceHeavy = true;
             officialBias = true;
         }
 
@@ -215,7 +229,8 @@ internal sealed class SourceAuthorityScorer : ISourceAuthorityScorer
             localityHeavy,
             officialBias,
             evidenceHeavy,
-            medicalEvidenceHeavy);
+            medicalEvidenceHeavy,
+            regulationFreshnessHeavy);
     }
 
     internal static double ComputeQueryOverlapRatio(string? query, string? text)
@@ -511,7 +526,32 @@ internal sealed class SourceAuthorityScorer : ISourceAuthorityScorer
         return ContainsAny(
             text,
             "tax", "taxes", "threshold", "thresholds", "deadline", "deadlines", "reporting", "filing", "compliance", "regulation",
-            "налог", "налоги", "налогов", "порог", "пороги", "лимит", "лимиты", "срок", "сроки", "отчетност", "отчётност", "регуляц");
+            "ai act", "artificial intelligence act", "provider obligations", "implementation guidance",
+            "customs", "import", "import restrictions", "vat", "duty", "drone", "easa", "battery", "batteries", "ce marking",
+            "visa", "visas", "immigration", "migration", "relocation", "residence permit", "work permit", "blue card", "bluecard", "skilled worker",
+            "налог", "налоги", "налогов", "порог", "пороги", "лимит", "лимиты", "срок", "сроки", "отчетност", "отчётност", "регуляц",
+            "тамож", "ввоз", "дрон", "батаре", "ндс", "пошлин", "маркировк",
+            "виза", "визы", "визовые", "миграц", "релокац", "внж", "вид на жительство", "разрешение на работу", "голубая карта");
+    }
+
+    private static bool LooksLikeRetractionStatusQuery(string text)
+    {
+        return ContainsAny(
+            text,
+            "retracted", "retraction", "retract", "withdrawn", "withdrawal", "erratum", "correction", "corrected", "expression of concern", "disputed", "contested",
+            "отозван", "отозвана", "отозваны", "ретракц", "исправлен", "исправлена", "исправлены", "эррат", "выражение обеспокоенности", "оспорен", "оспорена", "оспорены");
+    }
+
+    private static bool LooksLikeTimeBoundYearQuery(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return false;
+        }
+
+        var currentYear = DateTime.UtcNow.Year;
+        var pattern = $@"\b(?:{currentYear - 1}|{currentYear}|{currentYear + 1}|{currentYear + 2})\b";
+        return Regex.IsMatch(text, pattern, RegexOptions.CultureInvariant);
     }
 
     private static bool ContainsAny(string text, params string[] markers)

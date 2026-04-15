@@ -147,6 +147,27 @@ public sealed class ResponseComposerCollaboratorTests
     }
 
     [Fact]
+    public void BenchmarkResponseFormatter_AppendsExplicitUncertainty_ForSparseEvidenceRussianDraft()
+    {
+        var formatter = BenchmarkResponseFormatterFactory.CreateDefault();
+        var context = CreateContext(
+            "Объясни, насколько надёжны текущие claims о fully autonomous AI software engineers.",
+            preferredLanguage: "ru",
+            systemInstruction: "## Local Findings\n## Web Findings\n## Sources\n## Analysis\n## Conclusion\n## Opinion");
+        context.RequireExplicitBenchmarkUncertainty = true;
+        context.ResolvedTurnLanguage = "ru";
+        context.Sources.Add("https://openai.com/index/introducing-gpt-5");
+
+        var handled = formatter.TryComposeLocalFirstBenchmarkResponse(
+            context,
+            "Сейчас я не могу ответственно утверждать это как установленный факт.",
+            out var formatted);
+
+        Assert.True(handled);
+        Assert.Contains("неопредел", formatted, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task ChatTurnFinalizer_ComposesStructuredBenchmarkClarification_WhenBenchmarkSectionsAreRequired()
     {
         var finalizer = new ChatTurnFinalizer(new CitationGroundingService(), ResponseComposerServiceFactory.CreateDefault());

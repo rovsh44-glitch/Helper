@@ -85,6 +85,25 @@ namespace Helper.Runtime.Infrastructure
 
             if (!profile.IsDocumentAnalysis && !hasGroundedEvidence)
             {
+                if (profile.StrictLiveEvidenceRequired)
+                {
+                    p?.Invoke("Strict live evidence is required for this query; skipping local-library fallback.");
+                    var strictTrace = BuildSearchTrace(session)
+                        .Concat(new[] { "research.local_fallback.skipped reason=strict_live_evidence_required" })
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .ToArray();
+
+                    return new ResearchResult(
+                        topic,
+                        "Synthesized Research",
+                        sources,
+                        new List<string>(),
+                        ResearchSynthesisSupport.BuildHonestFallbackResponse(topic, sources),
+                        DateTime.Now,
+                        EvidenceItems: evidenceItems,
+                        SearchTrace: strictTrace);
+                }
+
                 p?.Invoke("Synthesizing local-first baseline from library evidence...");
                 var localBaseline = await LocalBaselineAnswerServiceSupport
                     .GenerateDetailedAsync(_localBaselineAnswerService, topic, ct)

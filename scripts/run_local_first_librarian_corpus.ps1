@@ -247,6 +247,58 @@ function Get-SafeArrayValue {
     return @($value | Where-Object { $null -ne $_ })
 }
 
+function Get-SearchTraceSourcesFromResponse {
+    param(
+        [Parameter(Mandatory = $true)]$ResponseDto
+    )
+
+    $trace = Get-SafePropertyValue -InputObject $ResponseDto -PropertyName "searchTrace"
+    if ($null -eq $trace) {
+        return @()
+    }
+
+    return Get-SafeArrayValue -InputObject $trace -PropertyName "sources"
+}
+
+function Get-SourceLayerValue {
+    param(
+        [Parameter(Mandatory = $false)]$Source
+    )
+
+    if ($null -eq $Source) {
+        return ""
+    }
+
+    $layer = Get-SafePropertyValue -InputObject $Source -PropertyName "sourceLayer"
+    if ($null -ne $layer -and -not [string]::IsNullOrWhiteSpace([string]$layer)) {
+        return ([string]$layer).Trim().ToLowerInvariant()
+    }
+
+    $url = Get-SafePropertyValue -InputObject $Source -PropertyName "url"
+    if ($null -eq $url) {
+        return ""
+    }
+
+    $raw = [string]$url
+    if ($raw.StartsWith("http://", [System.StringComparison]::OrdinalIgnoreCase) -or
+        $raw.StartsWith("https://", [System.StringComparison]::OrdinalIgnoreCase)) {
+        return "web"
+    }
+
+    return "local_library"
+}
+
+function Get-LayeredSourceCount {
+    param(
+        [Parameter(Mandatory = $true)]$Sources,
+        [Parameter(Mandatory = $true)][string]$Layer
+    )
+
+    return @($Sources | Where-Object {
+            [string]::Equals((Get-SourceLayerValue -Source $_), $Layer, [System.StringComparison]::OrdinalIgnoreCase)
+        }).Count
+}
+
 function Get-CaseSliceIds {
     param(
         [Parameter(Mandatory = $true)]$Case
@@ -378,12 +430,12 @@ if ($StartIndex -lt 1) {
     throw "StartIndex must be >= 1."
 }
 
-$indexedCases = for ($index = 0; $index -lt $cases.Count; $index++) {
+$indexedCases = @(for ($index = 0; $index -lt $cases.Count; $index++) {
     [PSCustomObject]@{
         GlobalSequence = $index + 1
         Case = $cases[$index]
     }
-}
+})
 
 if ($MaxCases -lt $indexedCases.Count) {
     $indexedCases = $indexedCases | Select-Object -First $MaxCases
@@ -477,6 +529,26 @@ foreach ($entry in $selectedCases) {
         $sources = Get-SafeArrayValue -InputObject $responseDto -PropertyName "sources"
         $uncertaintyFlags = Get-SafeArrayValue -InputObject $responseDto -PropertyName "uncertaintyFlags"
         $messages = Get-SafeArrayValue -InputObject $responseDto -PropertyName "messages"
+        $searchTraceSources = @(Get-SearchTraceSourcesFromResponse -ResponseDto $responseDto)
+        $evidenceFusion = Get-SafePropertyValue -InputObject $responseDto -PropertyName "evidenceFusion"
+        $webSourcesCount = if ($null -ne $evidenceFusion) {
+            Get-SafeIntValue -InputObject $evidenceFusion -PropertyName "webSourceCount"
+        }
+        else {
+            Get-LayeredSourceCount -Sources $searchTraceSources -Layer "web"
+        }
+        $localSourcesCount = if ($null -ne $evidenceFusion) {
+            Get-SafeIntValue -InputObject $evidenceFusion -PropertyName "localSourceCount"
+        }
+        else {
+            Get-LayeredSourceCount -Sources $searchTraceSources -Layer "local_library"
+        }
+        $attachmentSourcesCount = if ($null -ne $evidenceFusion) {
+            Get-SafeIntValue -InputObject $evidenceFusion -PropertyName "attachmentSourceCount"
+        }
+        else {
+            Get-LayeredSourceCount -Sources $searchTraceSources -Layer "attachment"
+        }
         $result = [ordered]@{
             id = $caseId
             externalId = [string]$case.externalId
@@ -511,12 +583,18 @@ foreach ($entry in $selectedCases) {
             confidence = Get-SafeDoubleValue -InputObject $responseDto -PropertyName "confidence"
             sources = $sources
             sourcesCount = @($sources).Count
+            webSourcesCount = $webSourcesCount
+            localSourcesCount = $localSourcesCount
+            attachmentSourcesCount = $attachmentSourcesCount
             groundingStatus = Get-SafeStringValue -InputObject $responseDto -PropertyName "groundingStatus"
             citationCoverage = Get-SafeDoubleValue -InputObject $responseDto -PropertyName "citationCoverage"
             verifiedClaims = Get-SafeIntValue -InputObject $responseDto -PropertyName "verifiedClaims"
             totalClaims = Get-SafeIntValue -InputObject $responseDto -PropertyName "totalClaims"
             epistemicAnswerMode = Get-SafeStringValue -InputObject $responseDto -PropertyName "epistemicAnswerMode"
             epistemicRisk = Get-SafePropertyValue -InputObject $responseDto -PropertyName "epistemicRisk"
+            evidenceFusion = $evidenceFusion
+            freshClaimWebCoverage = if ($null -ne $evidenceFusion) { Get-SafeDoubleValue -InputObject $evidenceFusion -PropertyName "freshClaimWebCoverage" } else { 0.0 }
+            localOnlyFreshClaimCount = if ($null -ne $evidenceFusion) { Get-SafeIntValue -InputObject $evidenceFusion -PropertyName "localOnlyFreshClaimCount" } else { 0 }
             interactionState = Get-SafePropertyValue -InputObject $responseDto -PropertyName "interactionState"
             repairDriver = Get-SafeStringValue -InputObject $responseDto -PropertyName "repairDriver"
             uncertaintyFlags = $uncertaintyFlags
@@ -564,12 +642,18 @@ foreach ($entry in $selectedCases) {
             confidence = 0.0
             sources = @()
             sourcesCount = 0
+            webSourcesCount = 0
+            localSourcesCount = 0
+            attachmentSourcesCount = 0
             groundingStatus = ""
             citationCoverage = 0.0
             verifiedClaims = 0
             totalClaims = 0
             epistemicAnswerMode = ""
             epistemicRisk = $null
+            evidenceFusion = $null
+            freshClaimWebCoverage = 0.0
+            localOnlyFreshClaimCount = 0
             interactionState = $null
             repairDriver = ""
             uncertaintyFlags = @()

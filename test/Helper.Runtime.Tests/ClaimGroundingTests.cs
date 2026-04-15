@@ -339,5 +339,26 @@ public class ClaimGroundingTests
         Assert.Contains("uncertainty.evidence_none", flags);
         Assert.Contains("uncertainty.evidence_mixed", flags);
     }
+
+    [Fact]
+    public void EvidenceGradingService_DoesNotEscalateSingleWeakBridgeClaim_WhenCoverageIsComplete()
+    {
+        var service = new EvidenceGradingService();
+        var claims = new[]
+        {
+            new ClaimGrounding("Claim A", ClaimSentenceType.Fact, 1, "strong"),
+            new ClaimGrounding("Claim B", ClaimSentenceType.Fact, 2, "strong"),
+            new ClaimGrounding("Claim C", ClaimSentenceType.Fact, 3, "strong"),
+            new ClaimGrounding("Claim D", ClaimSentenceType.Fact, 1, "medium"),
+            new ClaimGrounding("Claim E", ClaimSentenceType.Fact, 2, "medium"),
+            new ClaimGrounding("Claim F", ClaimSentenceType.Fact, 3, "strong"),
+            new ClaimGrounding("Synthetic bridge claim", ClaimSentenceType.Fact, 2, "weak")
+        };
+
+        var flags = service.BuildUncertaintyFlags(claims, totalFactualClaims: 7, verifiedClaims: 7);
+
+        Assert.DoesNotContain("uncertainty.evidence_weak", flags);
+        Assert.Contains("uncertainty.evidence_mixed", flags);
+    }
 }
 

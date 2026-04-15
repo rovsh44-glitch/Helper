@@ -191,7 +191,7 @@ public sealed class WebResearchTelemetryService : IWebResearchTelemetryService
         }
 
         return (trace.Sources ?? Array.Empty<SearchTraceSourceDto>())
-            .Count(static source => source.PassageCount > 0);
+            .Count(static source => IsWebSource(source) && source.PassageCount > 0);
     }
 
     private static int ResolvePassageCount(SearchTraceDto trace)
@@ -203,6 +203,7 @@ public sealed class WebResearchTelemetryService : IWebResearchTelemetryService
         }
 
         return (trace.Sources ?? Array.Empty<SearchTraceSourceDto>())
+            .Where(IsWebSource)
             .Sum(static source => Math.Max(0, source.PassageCount));
     }
 
@@ -259,6 +260,18 @@ public sealed class WebResearchTelemetryService : IWebResearchTelemetryService
         return string.IsNullOrWhiteSpace(value)
             ? string.Empty
             : value.Trim();
+    }
+
+    private static bool IsWebSource(SearchTraceSourceDto source)
+    {
+        if (string.IsNullOrWhiteSpace(source.SourceLayer))
+        {
+            return Uri.TryCreate(source.Url, UriKind.Absolute, out var uri) &&
+                   (uri.Scheme.Equals(Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase) ||
+                    uri.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase));
+        }
+
+        return string.Equals(source.SourceLayer, "web", StringComparison.OrdinalIgnoreCase);
     }
 }
 

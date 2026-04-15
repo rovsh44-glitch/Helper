@@ -201,5 +201,119 @@ public sealed partial class WebSearchSessionCoordinatorTests
         Assert.Contains(session.ResultBundle.PageTrace!, line => line.Contains("web_page_fetch.extracted_count=1", StringComparison.Ordinal));
     }
 
+    [Fact]
+    public async Task ExecuteAsync_ProjectsTechnicalSearchHit_WhenSparseComparisonQueryHasTransportFailure()
+    {
+        var coordinator = WebSearchSessionCoordinatorFactory.Create(
+            new StubProviderClient(
+                new WebSearchDocument(
+                    "https://habr.com/ru/articles/961088",
+                    "Выбираем векторную БД для AI-агентов и RAG",
+                    "Практический обзор vector database, retrieval, indexing and search tradeoffs for engineering teams.")),
+            new WebQueryPlanner(),
+            new SearchIterationPolicy(),
+            new SearchEvidenceSufficiencyPolicy(),
+            new TransportFailurePageFetcher(),
+            new EvidenceBoundaryProjector());
+
+        var session = await coordinator.ExecuteAsync(
+            new WebSearchRequest("Сравни vector databases и классический search для маленькой команды, если большая часть benchmark-ов vendor-shaped.", MaxResults: 5),
+            CancellationToken.None);
+
+        var document = Assert.Single(session.ResultBundle.Documents);
+        Assert.NotNull(document.ExtractedPage);
+        Assert.Equal("text/search-hit-projection", document.ExtractedPage!.ContentType);
+        Assert.Contains("vector", document.ExtractedPage.Body, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(session.ResultBundle.PageTrace!, line => line.Contains("web_page_fetch.search_hit_projection applied=yes", StringComparison.Ordinal));
+        Assert.Contains(session.ResultBundle.PageTrace!, line => line.Contains("web_page_fetch.extracted_count=1", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_ProjectsOfficialImmigrationSearchHit_WhenVisaFreshnessQueryHasTransportFailure()
+    {
+        var coordinator = WebSearchSessionCoordinatorFactory.Create(
+            new StubProviderClient(
+                new WebSearchDocument(
+                    "https://deutschland.de/en/topic/work/germany-blue-card-skilled-workers",
+                    "Working in Germany: EU Blue Card and skilled workers",
+                    "Official Germany portal overview of Blue Card, skilled worker routes, residence permits and work authorization.")),
+            new WebQueryPlanner(),
+            new SearchIterationPolicy(),
+            new SearchEvidenceSufficiencyPolicy(),
+            new TransportFailurePageFetcher(),
+            new EvidenceBoundaryProjector());
+
+        var session = await coordinator.ExecuteAsync(
+            new WebSearchRequest("Сравни актуальные визовые пути для software engineer, который хочет переехать в Германию в 2026 году.", MaxResults: 5),
+            CancellationToken.None);
+
+        var document = Assert.Single(session.ResultBundle.Documents);
+        Assert.NotNull(document.ExtractedPage);
+        Assert.Equal("text/search-hit-projection", document.ExtractedPage!.ContentType);
+        Assert.Contains("Blue Card", document.ExtractedPage.Body, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(session.ResultBundle.PageTrace!, line => line.Contains("web_page_fetch.search_hit_projection applied=yes", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_ProjectsGovernanceSearchHit_WhenRegulatedCodingAssistantQueryHasTransportFailure()
+    {
+        var coordinator = WebSearchSessionCoordinatorFactory.Create(
+            new StubProviderClient(
+                new WebSearchDocument(
+                    "https://knostic.ai/blog/ai-coding-assistant-governance",
+                    "Governance for your AI Coding Assistant",
+                    "Governance, policy controls, auditability and rollout considerations for enterprise AI coding assistants.")),
+            new WebQueryPlanner(),
+            new SearchIterationPolicy(),
+            new SearchEvidenceSufficiencyPolicy(),
+            new TransportFailurePageFetcher(),
+            new EvidenceBoundaryProjector());
+
+        var session = await coordinator.ExecuteAsync(
+            new WebSearchRequest("Составь осторожный план внедрения AI coding assistants в регулируемой компании, где claims о продуктивности пока спорные.", MaxResults: 5),
+            CancellationToken.None);
+
+        var document = Assert.Single(session.ResultBundle.Documents);
+        Assert.NotNull(document.ExtractedPage);
+        Assert.Equal("text/search-hit-projection", document.ExtractedPage!.ContentType);
+        Assert.Contains("Governance", document.ExtractedPage.Body, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(session.ResultBundle.PageTrace!, line => line.Contains("web_page_fetch.search_hit_projection applied=yes", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_AddsEuAiActAuthoritativeFamilies_ForFreshRegulationQuery()
+    {
+        var coordinator = WebSearchSessionCoordinatorFactory.Create(
+            new StubProviderClient(),
+            new WebQueryPlanner(),
+            new SearchIterationPolicy(),
+            new SearchEvidenceSufficiencyPolicy(),
+            new TransportFailurePageFetcher(),
+            new EvidenceBoundaryProjector());
+
+        var session = await coordinator.ExecuteAsync(
+            new WebSearchRequest(
+                "Объясни, что последние изменения в регулировании ИИ в ЕС означают сегодня для маленького software vendor.",
+                MaxResults: 3),
+            CancellationToken.None);
+
+        Assert.Equal(3, session.ResultBundle.SourceUrls.Count);
+        Assert.Contains(session.ResultBundle.SourceUrls, url => url.Contains("ai-act-service-desk.ec.europa.eu/en", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(session.ResultBundle.SourceUrls, url => url.Contains("guidelines-gpai-providers", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(session.ResultBundle.SourceUrls, url => url.Contains("regulatory-framework-ai", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(
+            session.ResultBundle.ProviderTrace!,
+            line => line.Contains("web_search.authoritative_source_family added=yes family=eu_ai_act_service_desk", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(
+            session.ResultBundle.ProviderTrace!,
+            line => line.Contains("web_search.authoritative_source_family added=yes family=eu_ai_act_gpai_provider_guidelines", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(
+            session.ResultBundle.ProviderTrace!,
+            line => line.Contains("web_search.authoritative_source_family added=yes family=eu_ai_act_regulatory_framework", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(
+            session.ResultBundle.Iterations!,
+            iteration => iteration.QueryKind == "freshness" && iteration.ResultCount >= 1 && iteration.AggregateResultCount >= 3);
+    }
+
 
 }

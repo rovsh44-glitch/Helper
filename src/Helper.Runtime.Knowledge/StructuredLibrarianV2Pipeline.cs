@@ -248,7 +248,17 @@ public sealed class StructuredLibrarianV2Pipeline
         {
             ["title"] = document.Title,
             ["domain"] = domain,
-            ["format"] = Path.GetExtension(filePath),
+            ["format"] = NormalizeSourceFormat(document.Format, filePath),
+            ["source_layer"] = "local_library",
+            ["source_format"] = NormalizeSourceFormat(document.Format, filePath),
+            ["source_id"] = ResolveSourceId(document, filePath),
+            ["display_title"] = string.IsNullOrWhiteSpace(document.Title) ? Path.GetFileName(filePath) : document.Title.Trim(),
+            ["locator"] = BuildLocator(chunk),
+            ["indexed_at_utc"] = DateTimeOffset.UtcNow.ToString("O", System.Globalization.CultureInfo.InvariantCulture),
+            ["content_hash"] = fileHash,
+            ["parser_name"] = ResolveParserName(parserVersion),
+            ["source_freshness_class"] = ResolveSourceFreshnessClass(year, domain),
+            ["allowed_claim_roles"] = ResolveAllowedClaimRoles(year, domain),
             ["chunk_index"] = chunk.ChunkIndex.ToString(System.Globalization.CultureInfo.InvariantCulture),
             ["file_hash"] = fileHash,
             ["published_year"] = year,
@@ -299,6 +309,88 @@ public sealed class StructuredLibrarianV2Pipeline
         }
 
         return metadata;
+    }
+
+    private static string NormalizeSourceFormat(DocumentFormatType format, string filePath)
+    {
+        if (format != DocumentFormatType.Unknown)
+        {
+            return format.ToString().ToLowerInvariant();
+        }
+
+        var extension = Path.GetExtension(filePath).TrimStart('.').Trim();
+        return string.IsNullOrWhiteSpace(extension) ? "unknown" : extension.ToLowerInvariant();
+    }
+
+    private static string ResolveSourceId(DocumentParseResult document, string filePath)
+    {
+        if (document.Metadata?.TryGetValue("source_id", out var sourceId) == true &&
+            !string.IsNullOrWhiteSpace(sourceId))
+        {
+            return sourceId.Trim();
+        }
+
+        return string.IsNullOrWhiteSpace(document.DocumentId)
+            ? StructuredParserUtilities.CreateDocumentId(filePath)
+            : document.DocumentId.Trim();
+    }
+
+    private static string ResolveParserName(string parserVersion)
+    {
+        var parts = parserVersion.Split('_', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return parts.Length == 0 ? parserVersion : parts[0];
+    }
+
+    private static string BuildLocator(StructuredChunk chunk)
+    {
+        var parts = new List<string>();
+        if (chunk.PageStart.HasValue)
+        {
+            var page = chunk.PageEnd.HasValue && chunk.PageEnd != chunk.PageStart
+                ? $"pages:{chunk.PageStart}-{chunk.PageEnd}"
+                : $"page:{chunk.PageStart}";
+            parts.Add(page);
+        }
+
+        if (!string.IsNullOrWhiteSpace(chunk.SectionPath))
+        {
+            parts.Add($"section:{chunk.SectionPath.Trim()}");
+        }
+
+        parts.Add($"chunk:{chunk.ChunkIndex}");
+        return string.Join(" | ", parts);
+    }
+
+    private static string ResolveSourceFreshnessClass(string year, string domain)
+    {
+        if (string.Equals(year, "unknown", StringComparison.OrdinalIgnoreCase))
+        {
+            return "unknown_date";
+        }
+
+        return KnowledgeCollectionNaming.IsHistoricalEncyclopediaSource(domain, domain)
+            ? "historical"
+            : "stable_reference";
+    }
+
+    private static string ResolveAllowedClaimRoles(string year, string domain)
+    {
+        var roles = new List<string>
+        {
+            "background",
+            "definition",
+            "methodology",
+            "historical_context",
+            "user_context"
+        };
+
+        if (!string.Equals(year, "unknown", StringComparison.OrdinalIgnoreCase) &&
+            !KnowledgeCollectionNaming.IsHistoricalEncyclopediaSource(domain, domain))
+        {
+            roles.Add("stable_reference");
+        }
+
+        return string.Join(",", roles);
     }
 
     private static string DetectYear(string title, string content)

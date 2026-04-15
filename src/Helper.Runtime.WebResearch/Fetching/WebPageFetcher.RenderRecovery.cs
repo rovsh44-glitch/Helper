@@ -69,6 +69,11 @@ public sealed partial class WebPageFetcher
                 UsedBrowserRenderFallback: true,
                 Diagnostics: diagnostics);
         }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        {
+            trace.Add($"web_page_fetch.render_recovery_failed target={currentUri} outcome=timeout");
+            return null;
+        }
         catch (Exception renderEx) when (renderEx is not OperationCanceledException)
         {
             trace.Add($"web_page_fetch.render_recovery_failed target={currentUri} outcome=error type={renderEx.GetType().Name} message={SanitizeTraceValue(renderEx.Message)}");

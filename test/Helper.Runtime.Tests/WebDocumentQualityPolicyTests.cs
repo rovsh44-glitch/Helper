@@ -228,5 +228,172 @@ public sealed class WebDocumentQualityPolicyTests
 
         Assert.True(decision.Allowed);
     }
+
+    [Fact]
+    public void Evaluate_RejectsGoogleMapsSupport_ForVisaRegulationQuery()
+    {
+        var policy = new WebDocumentQualityPolicy();
+
+        var decision = policy.Evaluate(
+            new WebSearchDocument(
+                "https://support.google.com/maps/answer/144339?co=GENIE.Platform%3DDesktop&hl=en",
+                "Use navigation in Google Maps",
+                "Get directions and use Google Maps navigation on desktop and Android."),
+            "provider",
+            "Сравни актуальные визовые пути для software engineer, который хочет переехать в Германию в 2026 году.");
+
+        Assert.False(decision.Allowed);
+        Assert.Contains(decision.Signals, signal => signal.Contains("low_query_overlap", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void Evaluate_RejectsJingyanNoise_ForSparseTechnicalComparisonQuery()
+    {
+        var policy = new WebDocumentQualityPolicy();
+
+        var decision = policy.Evaluate(
+            new WebSearchDocument(
+                "https://jingyan.baidu.com/article/2a13832857c2cc464a134f9f.html",
+                "Vector Magic怎么用，图片转CAD图操作教程-百度经验",
+                "Step by step how-to article on converting images into CAD diagrams."),
+            "provider",
+            "Сравни vector databases и классический search для маленькой команды, если большая часть benchmark-ов vendor-shaped.");
+
+        Assert.False(decision.Allowed);
+        Assert.Contains(decision.Signals, signal => signal.Contains("interactive_or_ugc_for_evidence_query", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void Evaluate_AllowsUzbekistanOfficialTaxSource_ForFilingChecklistQuery()
+    {
+        var policy = new WebDocumentQualityPolicy();
+
+        var decision = policy.Evaluate(
+            new WebSearchDocument(
+                "https://soliq.uz/page/foreign-income-reporting",
+                "Отчетность и налоговые требования для физлиц и ИП",
+                "Налоговая отчетность, сроки подачи, требования к инвойсам и правила работы с иностранными клиентами."),
+            "provider",
+            "Составь актуальный filing checklist для remote worker, который выставляет инвойсы иностранным клиентам из Узбекистана в 2026 году.");
+
+        Assert.True(decision.Allowed);
+    }
+
+    [Fact]
+    public void Evaluate_AllowsTrustedUzbekistanTaxReference_ForFilingChecklistQuery()
+    {
+        var policy = new WebDocumentQualityPolicy();
+
+        var decision = policy.Evaluate(
+            new WebSearchDocument(
+                "https://buxgalter.uz/publish/doc/text211019_remote-worker-invoices-foreign-clients",
+                "Налогообложение инвойсов иностранным клиентам в Узбекистане",
+                "Checklist по отчетности, инвойсам, срокам подачи и требованиям для работы с иностранными клиентами."),
+            "provider",
+            "Составь актуальный filing checklist для remote worker, который выставляет инвойсы иностранным клиентам из Узбекистана в 2026 году.");
+
+        Assert.True(decision.Allowed);
+    }
+
+    [Fact]
+    public void Evaluate_AllowsTrustedTaxAlertReference_ForUzbekistanFilingChecklistQuery()
+    {
+        var policy = new WebDocumentQualityPolicy();
+
+        var decision = policy.Evaluate(
+            new WebSearchDocument(
+                "https://www.ey.com/en_uz/technical/tax-alerts/2026/01/uzbekistan-tax-updates-2026",
+                "Uzbekistan tax updates 2026",
+                "Technical tax alert covering filing, reporting deadlines, invoicing obligations and foreign-client tax treatment in Uzbekistan."),
+            "provider",
+            "Составь актуальный filing checklist для remote worker, который выставляет инвойсы иностранным клиентам из Узбекистана в 2026 году.");
+
+        Assert.True(decision.Allowed);
+    }
+
+    [Fact]
+    public void Evaluate_AllowsGovUzAdviceDocument_ForUzbekistanFilingChecklistQuery()
+    {
+        var policy = new WebDocumentQualityPolicy();
+
+        var decision = policy.Evaluate(
+            new WebSearchDocument(
+                "https://gov.uz/ru/advice/75/document/1812",
+                "Разъяснение по документу",
+                "Официальный advisory-документ для иностранных доходов, сервисов и административных требований."),
+            "provider",
+            "Составь актуальный filing checklist для remote worker, который выставляет инвойсы иностранным клиентам из Узбекистана в 2026 году.");
+
+        Assert.True(decision.Allowed);
+        Assert.DoesNotContain(decision.Signals, signal => signal.Contains("regulatory_source_mismatch", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void Evaluate_AllowsOfficialGermanyImmigrationPortal_ForVisaComparisonQuery()
+    {
+        var policy = new WebDocumentQualityPolicy();
+
+        var decision = policy.Evaluate(
+            new WebSearchDocument(
+                "https://deutschland.de/en/topic/work/germany-blue-card-skilled-workers",
+                "Working in Germany: EU Blue Card and skilled workers",
+                "Official Germany portal overview of Blue Card, skilled worker visa routes, residence permits and work authorization."),
+            "provider",
+            "Сравни актуальные визовые пути для software engineer, который хочет переехать в Германию в 2026 году.");
+
+        Assert.True(decision.Allowed);
+    }
+
+    [Fact]
+    public void Evaluate_AllowsOfficialEuAiActSource_ForFreshRegulationQuery()
+    {
+        var policy = new WebDocumentQualityPolicy();
+
+        var decision = policy.Evaluate(
+            new WebSearchDocument(
+                "https://digital-strategy.ec.europa.eu/en/policies/regulatory-framework-ai",
+                "EU AI Act: regulatory framework and provider obligations",
+                "European Commission guidance on the AI Act, provider obligations, implementation guidance and AI Office updates."),
+            "provider",
+            "Объясни, что последние изменения в регулировании ИИ в ЕС означают сегодня для маленького software vendor.");
+
+        Assert.True(decision.Allowed);
+        Assert.DoesNotContain(decision.Signals, signal => signal.Contains("regulatory_source_mismatch", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void Evaluate_AllowsOfficialEuCustomsDroneSource_ForFreshRegulationQuery()
+    {
+        var policy = new WebDocumentQualityPolicy();
+
+        var decision = policy.Evaluate(
+            new WebSearchDocument(
+                "https://easa.europa.eu/en/the-agency/faqs/drones",
+                "Drones | Frequently Asked Questions",
+                "Official EASA guidance on drone import, customs, batteries, VAT, CE marking and travel within the EU."),
+            "provider",
+            "Проверь, актуальны ли import restrictions и customs rules для ввоза дрона в ЕС на сегодня.");
+
+        Assert.True(decision.Allowed);
+        Assert.DoesNotContain(decision.Signals, signal => signal.Contains("regulatory_source_mismatch", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void Evaluate_RejectsCommentCaMarcheNoise_ForDroneCustomsQuery()
+    {
+        var policy = new WebDocumentQualityPolicy();
+
+        var decision = policy.Evaluate(
+            new WebSearchDocument(
+                "https://forums.commentcamarche.net/forum/affich-35995097-desabonnement-wetransfer",
+                "Désabonnement wetransfer - Consommation & Internet",
+                "Forum thread unrelated to customs rules, imports, drones or EU guidance."),
+            "provider",
+            "Проверь, актуальны ли import restrictions и customs rules для ввоза дрона в ЕС на сегодня.");
+
+        Assert.False(decision.Allowed);
+        Assert.Contains(decision.Signals, signal => signal.Contains("low_trust", StringComparison.OrdinalIgnoreCase) ||
+                                                   signal.Contains("interactive_or_ugc", StringComparison.OrdinalIgnoreCase));
+    }
 }
 
