@@ -1,0 +1,44 @@
+﻿[
+    {
+        "id":  "medical_conflict",
+        "title":  "Medical Conflict",
+        "description":  "Conflict-heavy health-and-medicine cases where source reconciliation quality is the main risk.",
+        "caseCount":  4,
+        "path":  "C:\\GEMINI\\HELPER\\eval\\web_research_parity\\local_first_librarian_slices\\medical_conflict.jsonl"
+    },
+    {
+        "id":  "regulation_freshness",
+        "title":  "Regulation Freshness",
+        "description":  "Current rules, thresholds, filing, visa, customs, policy, and compliance cases where freshness is mandatory.",
+        "caseCount":  11,
+        "path":  "C:\\GEMINI\\HELPER\\eval\\web_research_parity\\local_first_librarian_slices\\regulation_freshness.jsonl"
+    },
+    {
+        "id":  "paper_analysis",
+        "title":  "Paper Analysis",
+        "description":  "Research-paper, article-status, literature-review, and evidence-evaluation cases.",
+        "caseCount":  20,
+        "path":  "C:\\GEMINI\\HELPER\\eval\\web_research_parity\\local_first_librarian_slices\\paper_analysis.jsonl"
+    },
+    {
+        "id":  "multilingual_local_first",
+        "title":  "Multilingual Local-First",
+        "description":  "Non-English local-first benchmark cases; current frozen corpus is Russian-first.",
+        "caseCount":  300,
+        "path":  "C:\\GEMINI\\HELPER\\eval\\web_research_parity\\local_first_librarian_slices\\multilingual_local_first.jsonl"
+    },
+    {
+        "id":  "sparse_evidence",
+        "title":  "Sparse Evidence",
+        "description":  "Cases where uncertainty handling and evidence limits matter more than decisive resolution.",
+        "caseCount":  60,
+        "path":  "C:\\GEMINI\\HELPER\\eval\\web_research_parity\\local_first_librarian_slices\\sparse_evidence.jsonl"
+    },
+    {
+        "id":  "local_only_strength",
+        "title":  "Local-Only Strength",
+        "description":  "Local-sufficient cases used to measure whether the local library can answer strongly before web escalation.",
+        "caseCount":  60,
+        "path":  "C:\\GEMINI\\HELPER\\eval\\web_research_parity\\local_first_librarian_slices\\local_only_strength.jsonl"
+    }
+]
