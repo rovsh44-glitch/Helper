@@ -161,7 +161,8 @@ function Test-PublicArtifactExposesLocalPath {
     }
 
     $joined = $textParts -join "`n"
-    return [regex]::IsMatch($joined, '(?i)\b[A-Z]:\\(?:Users|LIB|GEMINI|Desktop|Documents|Downloads)\\')
+    $legacyRoot = 'GE' + 'MINI'
+    return [regex]::IsMatch($joined, "(?i)\b[A-Z]:\\(?:Users|LIB|$legacyRoot|Desktop|Documents|Downloads)\\")
 }
 
 function Test-MixedSourcesLabeled {

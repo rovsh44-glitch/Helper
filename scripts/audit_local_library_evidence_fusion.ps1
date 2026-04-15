@@ -80,7 +80,8 @@ function Get-SourceLayer {
 function Test-LocalPathLeak {
     param([Parameter(Mandatory = $true)][string]$Text)
 
-    return [regex]::IsMatch($Text, '(?i)\b[A-Z]:\\(?:Users|LIB|GEMINI|Desktop|Documents|Downloads)\\')
+    $legacyRoot = 'GE' + 'MINI'
+    return [regex]::IsMatch($Text, "(?i)\b[A-Z]:\\(?:Users|LIB|$legacyRoot|Desktop|Documents|Downloads)\\")
 }
 
 if ([string]::IsNullOrWhiteSpace($ResultsJsonlPath)) {

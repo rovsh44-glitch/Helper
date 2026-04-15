@@ -2,27 +2,26 @@ namespace Helper.Runtime.WebResearch;
 
 public sealed class WebSearchSessionCoordinator : IWebSearchSessionCoordinator
 {
+    private static readonly IAuthoritativeSourceFamilyPolicy AuthoritativeSourceFamilies = new AuthoritativeSourceFamilyPolicy();
+
     private readonly IWebSearchProviderClient _providerClient;
     private readonly IWebQueryPlanner _queryPlanner;
     private readonly ISearchIterationPolicy _iterationPolicy;
     private readonly ISearchEvidenceSufficiencyPolicy _evidenceSufficiencyPolicy;
     private readonly IWebSearchDocumentPipeline _documentPipeline;
-    private readonly IAuthoritativeSourceFamilyPolicy _authoritativeSourceFamilyPolicy;
 
     internal WebSearchSessionCoordinator(
         IWebSearchProviderClient providerClient,
         IWebQueryPlanner queryPlanner,
         ISearchIterationPolicy iterationPolicy,
         ISearchEvidenceSufficiencyPolicy evidenceSufficiencyPolicy,
-        IWebSearchDocumentPipeline documentPipeline,
-        IAuthoritativeSourceFamilyPolicy? authoritativeSourceFamilyPolicy = null)
+        IWebSearchDocumentPipeline documentPipeline)
     {
         _providerClient = providerClient;
         _queryPlanner = queryPlanner;
         _iterationPolicy = iterationPolicy;
         _evidenceSufficiencyPolicy = evidenceSufficiencyPolicy;
         _documentPipeline = documentPipeline;
-        _authoritativeSourceFamilyPolicy = authoritativeSourceFamilyPolicy ?? new AuthoritativeSourceFamilyPolicy();
     }
 
     public async Task<WebSearchSession> ExecuteAsync(WebSearchRequest request, CancellationToken ct = default)
@@ -68,7 +67,7 @@ public sealed class WebSearchSessionCoordinator : IWebSearchSessionCoordinator
                 failureReason ??= ex.Message;
             }
 
-            var authoritativeFamily = _authoritativeSourceFamilyPolicy.Augment(request, plan, documents);
+            var authoritativeFamily = AuthoritativeSourceFamilies.Augment(request, plan, documents);
             documents = authoritativeFamily.Documents;
             if (authoritativeFamily.Trace.Count > 0)
             {

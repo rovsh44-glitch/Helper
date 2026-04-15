@@ -3,10 +3,7 @@ using Helper.Api.Conversation.Epistemic;
 
 namespace Helper.Api.Conversation;
 
-public interface IResponseComposerService
-{
-    string Compose(ChatTurnContext context, string preparedOutput);
-}
+public interface IResponseComposerService { string Compose(ChatTurnContext context, string preparedOutput); }
 
 public sealed class ResponseComposerService : IResponseComposerService
 {
@@ -217,11 +214,6 @@ public sealed class ResponseComposerService : IResponseComposerService
             localization.OperatorSummaryHeaders);
     }
 
-    private static string? NormalizeOptional(string? value)
-    {
-        return string.IsNullOrWhiteSpace(value)
-            ? null
-            : value.Trim();
-    }
+    private static string? NormalizeOptional(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }
-

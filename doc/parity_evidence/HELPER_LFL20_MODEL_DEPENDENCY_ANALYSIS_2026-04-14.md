@@ -14,10 +14,10 @@ Date: `2026-04-14`
 
 ## Why The Rerun Depends On The Model
 
-- [`run_local_first_librarian_corpus.ps1`](C:/GEMINI/HELPER/scripts/run_local_first_librarian_corpus.ps1:471) отправляет кейсы в `POST /api/chat`.
-- Research и factual turns идут через [`ConversationModelSelectionPolicy`](C:/GEMINI/HELPER/src/Helper.Api/Conversation/ConversationModelSelectionPolicy.cs:1), который для `research` и high-risk route выбирает reasoning path.
-- Ответ генерируется через [`HelperModelGateway`](C:/GEMINI/HELPER/src/Helper.Api/Backend/ModelGateway/HelperModelGateway.cs:1) и [`AILink.AskAsync`](C:/GEMINI/HELPER/src/Helper.Runtime/AILink.Chat.cs:1).
-- Даже local-baseline stage модельный, а не rule-based: [`LocalBaselineAnswerService`](C:/GEMINI/HELPER/src/Helper.Runtime/LocalBaselineAnswerService.cs:1).
+- `scripts/run_local_first_librarian_corpus.ps1` отправляет кейсы в `POST /api/chat`.
+- Research и factual turns идут через `src/Helper.Api/Conversation/ConversationModelSelectionPolicy.cs`, который для `research` и high-risk route выбирает reasoning path.
+- Ответ генерируется через `src/Helper.Api/Backend/ModelGateway/HelperModelGateway.cs` и `src/Helper.Runtime/AILink.Chat.cs`.
+- Даже local-baseline stage модельный, а не rule-based: `src/Helper.Runtime/LocalBaselineAnswerService.cs`.
 
 Итого: retrieval, ranking и quality-gates в `Helper` частично кодовые, но итоговый answer shape, abstention behavior, section discipline и часть local-first behavior зависят от модели.
 
@@ -29,7 +29,7 @@ Date: `2026-04-14`
 
 Это видно в логе старта:
 
-- [`api_ready_stdout.log`](C:/GEMINI/HELPER/temp/api-ready-lfl20-timeoutfix-2026-04-14/api_ready_stdout.log:14)
+- `temp/api-ready-lfl20-timeoutfix-2026-04-14/api_ready_stdout.log`
 
 ## Gemma 4 26B Review
 
@@ -68,7 +68,7 @@ Date: `2026-04-14`
 - `temperature=0.6`
 - `num_ctx=8192` почти для всех моделей
 
-См. [`AILink.Chat.cs`](C:/GEMINI/HELPER/src/Helper.Runtime/AILink.Chat.cs:277).
+См. `src/Helper.Runtime/AILink.Chat.cs`.
 
 Это значит:
 

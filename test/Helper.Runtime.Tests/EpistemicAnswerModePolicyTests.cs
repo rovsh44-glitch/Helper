@@ -87,7 +87,7 @@ public sealed class EpistemicAnswerModePolicyTests
         var context = CreateContext(isFactualPrompt: true);
         context.ForceBestEffort = true;
         context.ResolvedLiveWebRequirement = "web_required";
-        context.Sources.Add(@"D:\GEMINI\HELPER_DATA\library\docs\history\Всемирная история. Энциклопедия. Т.9. - 2007.pdf");
+        context.Sources.Add(@"D:\local_library\docs\history\Всемирная история. Энциклопедия. Т.9. - 2007.pdf");
         context.UncertaintyFlags.Add("live_web_required_route_override");
         context.UncertaintyFlags.Add("uncertainty.source_url_only_evidence");
         var snapshot = new EpistemicRiskSnapshot(

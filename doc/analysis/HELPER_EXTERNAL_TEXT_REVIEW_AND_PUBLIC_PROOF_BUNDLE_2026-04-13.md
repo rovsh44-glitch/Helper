@@ -4,10 +4,10 @@ Date: `2026-04-13`
 Scope:
 
 - review of:
-  - `C:\Users\rovsh\Desktop\New folder (8)\Claude.txt`
-  - `C:\Users\rovsh\Desktop\New folder (8)\DeepSeek.txt`
-  - `C:\Users\rovsh\Desktop\New folder (8)\Gemini.txt`
-  - `C:\Users\rovsh\Desktop\New folder (8)\GPT.txt`
+  - `external-review-text-a.txt`
+  - `external-review-text-b.txt`
+  - `external-review-text-c.txt`
+  - `external-review-text-d.txt`
 - reconciliation against the current `Helper` repository state
 - recommendation for one narrow, reproducible public proof bundle
 
@@ -43,7 +43,7 @@ This means the main problem is no longer "there is no code". The main problem is
 
 ## Decision On The Four Texts
 
-### 1. `Claude.txt`
+### 1. `external-review-text-a.txt`
 
 Keep:
 
@@ -62,7 +62,7 @@ These points no longer match the current repository. The repo now contains runna
 
 Action:
 
-- keep `Claude.txt` only as a historical perception stress-test
+- keep `external-review-text-a.txt` only as a historical perception stress-test
 - do not use it as a current technical assessment
 
 ### 2. `DeepSeek.txt`
@@ -87,7 +87,7 @@ Action:
 - archive `DeepSeek.txt` as obsolete
 - do not use it for positioning, diligence, or product decisions
 
-### 3. `Gemini.txt`
+### 3. `external-review-text-c.txt`
 
 Keep:
 
@@ -106,7 +106,7 @@ The text reads more like an architectural interpretation than a repo-grounded as
 
 Action:
 
-- keep `Gemini.txt` only as a soft architectural reflection
+- keep `external-review-text-c.txt` only as a soft architectural reflection
 - do not use it as a factual repo review
 
 ### 4. `GPT.txt`
@@ -137,9 +137,9 @@ Use the four texts as follows:
 
 | File | Use status | What to keep |
 | --- | --- | --- |
-| `Claude.txt` | `partial / archive-only` | investor-perception stress-test |
+| `external-review-text-a.txt` | `partial / archive-only` | investor-perception stress-test |
 | `DeepSeek.txt` | `discard as current input` | none |
-| `Gemini.txt` | `soft reflection only` | privacy/local-first and operator-safety themes |
+| `external-review-text-c.txt` | `soft reflection only` | privacy/local-first and operator-safety themes |
 | `GPT.txt` | `primary strategic source after factual rewrite` | trust-surface vs value-surface diagnosis; narrow proof-bundle recommendation |
 
 ## Rewritten Positioning For The Current Stage
