@@ -15,13 +15,17 @@ Implementation baseline: `doc/archive/top_level_history/HELPER_EXECUTION_BOARD_2
 
 ## 2026-04-15 Current Addendum
 
-- Repository identity: local `main` and `origin/main` are aligned at `c2f38df`.
+- Repository identity: local `main` and `origin/main` are aligned at `8cc34c2`.
+- Private-core baseline tag: `helper-private-core-2026-04-15-green`.
 - Repository visibility: `Private`.
 - Public visibility policy: private-core repo stays Private; public publication must use a separate curated showcase/proof-bundle repo.
-- Latest deterministic local gate before the security/posture branch: `npm run ci:gate` passed end-to-end.
+- Public proof-bundle repository: `https://github.com/rovsh44-glitch/helper-proof-bundle-lfl20`.
+- Latest deterministic local gate on the security/posture branch: `npm run ci:gate` passed end-to-end before merge.
+- Hosted checks on updated `main`: `repo_gate=success`, `connected_nuget_audit=success`, Dependabot jobs `success`.
+- Dependency security status: `npm audit --json` returns `0` vulnerabilities; strict-online NuGet audit passed after Magick.NET isolation.
 - LFL20 proof-bundle status: implemented and green on the final local acceptance run described in `doc/analysis/HELPER_CURRENT_STATUS_AND_REPO_ALIGNMENT_REPORT_2026-04-15.md`.
 - Local-library evidence fusion: implemented and audited with zero public path leaks in the final local acceptance artifact.
-- Active follow-up: push the security/posture remediation branch, run hosted `repo-gate` and `nuget-security-audit`, then merge after both pass.
+- Active follow-up: start the separate model A/B stage against this fixed baseline; do not mix model-change work into the already-published LFL20 baseline.
 - Code scanning status: not an active control for the private-core repo on the current GitHub tier; use repo-owned gates and Dependabot unless the security tier changes.
 
 ## Additional Truth Layers
