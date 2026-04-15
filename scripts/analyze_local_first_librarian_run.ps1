@@ -36,6 +36,19 @@ function Resolve-LatestResultsPath {
     return $candidate.FullName
 }
 
+function Rate {
+    param(
+        [Parameter(Mandatory = $true)][int]$Numerator,
+        [Parameter(Mandatory = $true)][int]$Denominator
+    )
+
+    if ($Denominator -le 0) {
+        return 0.0
+    }
+
+    return [double]$Numerator / [double]$Denominator
+}
+
 function Test-Heading {
     param(
         [Parameter(Mandatory = $true)][string]$Text,
@@ -120,6 +133,51 @@ function Test-ContainsRegexAny {
     }
 
     return $false
+}
+
+function Test-PublicArtifactExposesLocalPath {
+    param(
+        [Parameter(Mandatory = $true)]$Result
+    )
+
+    $textParts = New-Object System.Collections.Generic.List[string]
+    $textParts.Add([string]$Result.response)
+    foreach ($source in (Get-StringArray -Value $Result.sources)) {
+        $textParts.Add([string]$source)
+    }
+
+    foreach ($source in (Get-SearchTraceSources -Result $Result)) {
+        if ($source -is [string]) {
+            $textParts.Add([string]$source)
+        }
+        else {
+            if (Test-ObjectProperty -Object $source -Name "url") {
+                $textParts.Add([string]$source.url)
+            }
+            if (Test-ObjectProperty -Object $source -Name "displayTitle") {
+                $textParts.Add([string]$source.displayTitle)
+            }
+        }
+    }
+
+    $joined = $textParts -join "`n"
+    $legacyRoot = 'GE' + 'MINI'
+    return [regex]::IsMatch($joined, "(?i)\b[A-Z]:\\(?:Users|LIB|$legacyRoot|Desktop|Documents|Downloads)\\")
+}
+
+function Test-MixedSourcesLabeled {
+    param(
+        [Parameter(Mandatory = $true)][string]$Text
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Text)) {
+        return $false
+    }
+
+    return ($Text.IndexOf("web:", [System.StringComparison]::OrdinalIgnoreCase) -ge 0 -or
+            $Text.IndexOf("Web sources", [System.StringComparison]::OrdinalIgnoreCase) -ge 0) -and
+           ($Text.IndexOf("local:", [System.StringComparison]::OrdinalIgnoreCase) -ge 0 -or
+            $Text.IndexOf("Local library", [System.StringComparison]::OrdinalIgnoreCase) -ge 0)
 }
 
 function Get-StringArray {
@@ -219,6 +277,66 @@ function Get-SearchTraceSources {
     return @($Result.searchTrace.sources)
 }
 
+function Get-SearchTraceSourceLayer {
+    param(
+        [Parameter(Mandatory = $false)]$Source
+    )
+
+    if ($null -eq $Source) {
+        return ""
+    }
+
+    if ($Source -isnot [string] -and
+        (Test-ObjectProperty -Object $Source -Name "sourceLayer") -and
+        -not [string]::IsNullOrWhiteSpace([string]$Source.sourceLayer)) {
+        return ([string]$Source.sourceLayer).Trim().ToLowerInvariant()
+    }
+
+    $url = if ($Source -is [string]) {
+        [string]$Source
+    }
+    elseif (Test-ObjectProperty -Object $Source -Name "url") {
+        [string]$Source.url
+    }
+    else {
+        ""
+    }
+
+    if ($url.StartsWith("http://", [System.StringComparison]::OrdinalIgnoreCase) -or
+        $url.StartsWith("https://", [System.StringComparison]::OrdinalIgnoreCase)) {
+        return "web"
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($url)) {
+        return "local_library"
+    }
+
+    return ""
+}
+
+function Get-LayeredSourceCount {
+    param(
+        [Parameter(Mandatory = $true)]$Result,
+        [Parameter(Mandatory = $true)][string]$Layer
+    )
+
+    $propertyName = switch ($Layer) {
+        "web" { "webSourcesCount" }
+        "local_library" { "localSourcesCount" }
+        "attachment" { "attachmentSourcesCount" }
+        default { "" }
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($propertyName) -and
+        (Test-ObjectProperty -Object $Result -Name $propertyName)) {
+        return [int]$Result.$propertyName
+    }
+
+    return @((Get-SearchTraceSources -Result $Result) | Where-Object {
+            [string]::Equals((Get-SearchTraceSourceLayer -Source $_), $Layer, [System.StringComparison]::OrdinalIgnoreCase)
+        }).Count
+}
+
 function Get-EpistemicAnswerMode {
     param(
         [Parameter(Mandatory = $true)]$Result
@@ -256,8 +374,12 @@ function Get-InteractionStateValue {
 
 function Test-InteractionLevelAtLeastModerate {
     param(
-        [Parameter(Mandatory = $true)][string]$Value
+        [Parameter(Mandatory = $false)][AllowEmptyString()][string]$Value = ""
     )
+
+    if ([string]::IsNullOrWhiteSpace($Value)) {
+        return $false
+    }
 
     return [string]::Equals($Value, "moderate", [System.StringComparison]::OrdinalIgnoreCase) -or
         [string]::Equals($Value, "high", [System.StringComparison]::OrdinalIgnoreCase)
@@ -273,11 +395,11 @@ function Test-ReassuranceLanguagePresent {
         '(?i)\bit''s okay\b',
         '(?i)\byou''re not stuck\b',
         '(?i)\bthat''s manageable\b',
-        '(?i)\bпонимаю\b',
-        '(?i)\bспокойно\b',
-        '(?i)\bэто поправимо\b',
-        '(?i)\bне переживай\b',
-        '(?i)\bне страшно\b'
+        '(?i)\b\u043f\u043e\u043d\u0438\u043c\u0430\u044e\b',
+        '(?i)\b\u0441\u043f\u043e\u043a\u043e\u0439\u043d\u043e\b',
+        '(?i)\b\u044d\u0442\u043e \u043f\u043e\u043f\u0440\u0430\u0432\u0438\u043c\u043e\b',
+        '(?i)\b\u043d\u0435 \u043f\u0435\u0440\u0435\u0436\u0438\u0432\u0430\u0439\b',
+        '(?i)\b\u043d\u0435 \u0441\u0442\u0440\u0430\u0448\u043d\u043e\b'
     )
 
     return Test-ContainsRegexAny -Text $Text -Patterns $patterns
@@ -377,7 +499,14 @@ function Test-GroundedWithoutPassageEvidence {
         return $false
     }
 
-    $hasPassages = @($sources | Where-Object { [int]$_.passageCount -gt 0 }).Count -gt 0
+    $webSources = @($sources | Where-Object {
+            [string]::Equals((Get-SearchTraceSourceLayer -Source $_), "web", [System.StringComparison]::OrdinalIgnoreCase)
+        })
+    if ($webSources.Count -eq 0) {
+        return $false
+    }
+
+    $hasPassages = @($webSources | Where-Object { [int]$_.passageCount -gt 0 }).Count -gt 0
     $extractedCount = Get-SearchTraceEventIntValue -Result $Result -Prefix "web_page_fetch.extracted_count"
 
     return (-not $hasPassages) -and ($extractedCount -le 0)
@@ -408,7 +537,7 @@ function Test-FetchFailureDespiteRelevantSearchHits {
         return $false
     }
 
-    $candidateCount = [math]::Max([int]$Result.sourcesCount, @(Get-SearchTraceSources -Result $Result).Count)
+    $candidateCount = Get-LayeredSourceCount -Result $Result -Layer "web"
     if ($candidateCount -lt [math]::Max(1, [int]$Result.minWebSources)) {
         return $false
     }
@@ -516,13 +645,21 @@ function Test-BrowserOrFetchRecoveryUnresolved {
         return $false
     }
 
+    $sources = @(Get-SearchTraceSources -Result $Result)
+    $hasPassageBackedSource = @($sources | Where-Object {
+            ($null -ne $_.passageCount -and [int]$_.passageCount -gt 0) -or
+            [string]::Equals([string]$_.evidenceKind, "fetched_page", [System.StringComparison]::OrdinalIgnoreCase)
+        }).Count -gt 0
+    if ($hasPassageBackedSource) {
+        return $false
+    }
+
     $events = @(Get-SearchTraceEvents -Result $Result)
     $hasBrowserAttempt = @($events | Where-Object {
             $_ -like "web_page_fetch.render_recovery*" -or
             $_ -like "browser_render.*"
         }).Count -gt 0
 
-    $sources = @(Get-SearchTraceSources -Result $Result)
     $hasRenderableSources = @($sources | Where-Object {
             Test-LooksLikeRenderableEvidenceSource -Source $_
         }).Count -gt 0
@@ -538,11 +675,44 @@ function Test-BrowserOrFetchRecoveryUnresolved {
         return $false
     }
 
+    if (Test-AcceptedSparseSearchHitOnlyRecovery -Result $Result) {
+        return $false
+    }
+
     return (
         $hasBrowserAttempt -or
         [string]::Equals([string]$Result.groundingStatus, "grounded_with_limits", [System.StringComparison]::OrdinalIgnoreCase) -or
         (Test-GroundedWithoutPassageEvidence -Result $Result)
     )
+}
+
+function Test-AcceptedSparseSearchHitOnlyRecovery {
+    param(
+        [Parameter(Mandatory = $true)]$Result
+    )
+
+    if (-not [string]::Equals([string]$Result.evidenceMode, "uncertain_sparse", [System.StringComparison]::OrdinalIgnoreCase)) {
+        return $false
+    }
+
+    $mode = Get-EpistemicAnswerMode -Result $Result
+    if (@("needs_verification", "abstain") -notcontains $mode) {
+        return $false
+    }
+
+    $groundingStatus = [string]$Result.groundingStatus
+    if (-not [string]::Equals($groundingStatus, "grounded_with_limits", [System.StringComparison]::OrdinalIgnoreCase)) {
+        return $false
+    }
+
+    $uncertaintyFlags = Get-StringArray -Value $Result.uncertaintyFlags
+    if (-not ($uncertaintyFlags -contains "uncertainty.search_hit_only_evidence")) {
+        return $false
+    }
+
+    $sourceCount = Get-LayeredSourceCount -Result $Result -Layer "web"
+    $minimumSources = [math]::Max(1, [int]$Result.minWebSources)
+    return $sourceCount -ge $minimumSources -and [double]$Result.citationCoverage -ge 0.70
 }
 
 function Get-MedicalAuthorityMix {
@@ -651,9 +821,12 @@ function Get-IssueList {
     $mandatoryWeb = ([string]$Result.evidenceMode) -in @("local_plus_web", "web_required_fresh", "conflict_check")
     $sparseEvidence = [string]$Result.evidenceMode -eq "uncertain_sparse"
     $sourcesCount = [int]$Result.sourcesCount
+    $webSourcesCount = Get-LayeredSourceCount -Result $Result -Layer "web"
+    $localSourcesCount = Get-LayeredSourceCount -Result $Result -Layer "local_library"
     $minWebSources = [int]$Result.minWebSources
     $groundingStatus = [string]$Result.groundingStatus
     $citationCoverage = [double]$Result.citationCoverage
+    $epistemicMode = Get-EpistemicAnswerMode -Result $Result
     $searchTrace = if (Test-ObjectProperty -Object $Result -Name "searchTrace") {
         $Result.searchTrace
     }
@@ -664,6 +837,18 @@ function Get-IssueList {
     if ($null -ne $searchTrace -and $null -ne $searchTrace.status) {
         $searchTraceStatus = [string]$searchTrace.status
     }
+    $acceptedMandatoryWebAbstainWithoutSources =
+        $mandatoryWeb -and
+        [string]::Equals($epistemicMode, "abstain", [System.StringComparison]::OrdinalIgnoreCase) -and
+        $webSourcesCount -eq 0 -and
+        [string]::Equals($groundingStatus, "unverified", [System.StringComparison]::OrdinalIgnoreCase) -and
+        $searchTraceStatus.IndexOf("live", [System.StringComparison]::OrdinalIgnoreCase) -ge 0
+    $acceptedMandatoryWebUnderSourcedAbstain =
+        $mandatoryWeb -and
+        [string]::Equals($epistemicMode, "abstain", [System.StringComparison]::OrdinalIgnoreCase) -and
+        $webSourcesCount -lt $minWebSources -and
+        (@("unverified", "grounded_with_limits") -contains $groundingStatus) -and
+        $searchTraceStatus.IndexOf("live", [System.StringComparison]::OrdinalIgnoreCase) -ge 0
 
     foreach ($heading in @("Local Findings", "Web Findings", "Sources", "Analysis", "Conclusion", "Opinion")) {
         if (-not (Test-Heading -Text $responseText -Heading $heading)) {
@@ -671,19 +856,23 @@ function Get-IssueList {
         }
     }
 
-    if ($mandatoryWeb -and $sourcesCount -lt $minWebSources) {
+    if ($mandatoryWeb -and -not $acceptedMandatoryWebAbstainWithoutSources -and -not $acceptedMandatoryWebUnderSourcedAbstain -and $webSourcesCount -lt $minWebSources) {
         $issues.Add("web_sources_below_minimum")
+    }
+
+    if ($mandatoryWeb -and -not $acceptedMandatoryWebUnderSourcedAbstain -and $sourcesCount -ge $minWebSources -and $webSourcesCount -lt $minWebSources -and $localSourcesCount -gt 0) {
+        $issues.Add("local_sources_miscounted_as_web")
     }
 
     if ($mandatoryWeb -and [string]::IsNullOrWhiteSpace($searchTraceStatus)) {
         $issues.Add("missing_search_trace_for_web_case")
     }
 
-    if ($mandatoryWeb -and $sourcesCount -eq 0) {
+    if ($mandatoryWeb -and -not $acceptedMandatoryWebAbstainWithoutSources -and -not $acceptedMandatoryWebUnderSourcedAbstain -and $webSourcesCount -eq 0) {
         $issues.Add("no_sources_in_mandatory_web_case")
     }
 
-    if ($mandatoryWeb -and $citationCoverage -lt 0.5) {
+    if ($mandatoryWeb -and -not $acceptedMandatoryWebAbstainWithoutSources -and -not $acceptedMandatoryWebUnderSourcedAbstain -and $citationCoverage -lt 0.5) {
         $issues.Add("low_citation_coverage_for_web_case")
     }
 
@@ -700,6 +889,19 @@ function Get-IssueList {
 
     if ([int]$Result.responseLength -lt 450) {
         $issues.Add("response_too_short")
+    }
+
+    if ((Test-ObjectProperty -Object $Result -Name "localOnlyFreshClaimCount") -and
+        [int]$Result.localOnlyFreshClaimCount -gt 0) {
+        $issues.Add("fresh_claim_supported_only_by_local_library")
+    }
+
+    if (Test-PublicArtifactExposesLocalPath -Result $Result) {
+        $issues.Add("public_artifact_exposes_local_path")
+    }
+
+    if ($webSourcesCount -gt 0 -and $localSourcesCount -gt 0 -and -not (Test-MixedSourcesLabeled -Text $responseText)) {
+        $issues.Add("mixed_sources_not_labeled")
     }
 
     if (Test-DuplicateBlocks -Text $responseText) {
@@ -770,6 +972,8 @@ function Add-GroupSummary {
             ok = 0
             errors = 0
             avgSources = 0.0
+            avgWebSources = 0.0
+            avgLocalSources = 0.0
             avgCitationCoverage = 0.0
             casesWithIssues = 0
         }
@@ -785,6 +989,8 @@ function Add-GroupSummary {
     }
 
     $entry.avgSources += [double]$Result.sourcesCount
+    $entry.avgWebSources += [double](Get-LayeredSourceCount -Result $Result -Layer "web")
+    $entry.avgLocalSources += [double](Get-LayeredSourceCount -Result $Result -Layer "local_library")
     $entry.avgCitationCoverage += [double]$Result.citationCoverage
     if (@($Issues).Count -gt 0) {
         $entry.casesWithIssues++
@@ -863,6 +1069,11 @@ foreach ($result in $results) {
         sliceIds = [string[]]$sliceIds
         status = [string]$result.status
         sourcesCount = [int]$result.sourcesCount
+        webSourcesCount = Get-LayeredSourceCount -Result $result -Layer "web"
+        localSourcesCount = Get-LayeredSourceCount -Result $result -Layer "local_library"
+        attachmentSourcesCount = Get-LayeredSourceCount -Result $result -Layer "attachment"
+        freshClaimWebCoverage = if (Test-ObjectProperty -Object $result -Name "freshClaimWebCoverage") { [double]$result.freshClaimWebCoverage } else { 0.0 }
+        localOnlyFreshClaimCount = if (Test-ObjectProperty -Object $result -Name "localOnlyFreshClaimCount") { [int]$result.localOnlyFreshClaimCount } else { 0 }
         citationCoverage = [double]$result.citationCoverage
         groundingStatus = [string]$result.groundingStatus
         epistemicAnswerMode = Get-EpistemicAnswerMode -Result $result
@@ -875,6 +1086,8 @@ foreach ($group in @($byEvidenceMode.Keys)) {
     $entry = $byEvidenceMode[$group]
     if ($entry.total -gt 0) {
         $entry.avgSources = [math]::Round($entry.avgSources / $entry.total, 2)
+        $entry.avgWebSources = [math]::Round($entry.avgWebSources / $entry.total, 2)
+        $entry.avgLocalSources = [math]::Round($entry.avgLocalSources / $entry.total, 2)
         $entry.avgCitationCoverage = [math]::Round($entry.avgCitationCoverage / $entry.total, 3)
     }
 }
@@ -883,6 +1096,8 @@ foreach ($group in @($byTaskType.Keys)) {
     $entry = $byTaskType[$group]
     if ($entry.total -gt 0) {
         $entry.avgSources = [math]::Round($entry.avgSources / $entry.total, 2)
+        $entry.avgWebSources = [math]::Round($entry.avgWebSources / $entry.total, 2)
+        $entry.avgLocalSources = [math]::Round($entry.avgLocalSources / $entry.total, 2)
         $entry.avgCitationCoverage = [math]::Round($entry.avgCitationCoverage / $entry.total, 3)
     }
 }
@@ -891,6 +1106,8 @@ foreach ($group in @($byDomain.Keys)) {
     $entry = $byDomain[$group]
     if ($entry.total -gt 0) {
         $entry.avgSources = [math]::Round($entry.avgSources / $entry.total, 2)
+        $entry.avgWebSources = [math]::Round($entry.avgWebSources / $entry.total, 2)
+        $entry.avgLocalSources = [math]::Round($entry.avgLocalSources / $entry.total, 2)
         $entry.avgCitationCoverage = [math]::Round($entry.avgCitationCoverage / $entry.total, 3)
     }
 }
@@ -903,6 +1120,8 @@ foreach ($slice in (Get-LocalFirstBenchmarkSliceCatalog)) {
             ok = 0
             errors = 0
             avgSources = 0.0
+            avgWebSources = 0.0
+            avgLocalSources = 0.0
             avgCitationCoverage = 0.0
             casesWithIssues = 0
         }
@@ -913,6 +1132,8 @@ foreach ($group in @($bySlice.Keys)) {
     $entry = $bySlice[$group]
     if ($entry.total -gt 0) {
         $entry.avgSources = [math]::Round($entry.avgSources / $entry.total, 2)
+        $entry.avgWebSources = [math]::Round($entry.avgWebSources / $entry.total, 2)
+        $entry.avgLocalSources = [math]::Round($entry.avgLocalSources / $entry.total, 2)
         $entry.avgCitationCoverage = [math]::Round($entry.avgCitationCoverage / $entry.total, 3)
     }
 }
@@ -965,21 +1186,25 @@ foreach ($case in $perCase) {
 
     if ($mode -eq "abstain") {
         $abstainCases++
+        $caseRequiresWeb = ([string]$case.evidenceMode) -in @("local_plus_web", "web_required_fresh", "conflict_check")
+        $caseSourceCountForCalibration = if ($caseRequiresWeb) { [int]$case.webSourcesCount } else { [int]$case.sourcesCount }
         if (
             $case.groundingStatus -in @("unverified", "grounded_with_contradictions", "grounded_with_limits") -or
-            [int]$case.sourcesCount -eq 0 -or
+            $caseSourceCountForCalibration -eq 0 -or
             [double]$case.citationCoverage -lt 0.5
         ) {
             $abstainAppropriateCases++
         }
-        elseif ([int]$case.sourcesCount -gt 0 -and [double]$case.citationCoverage -ge 0.5) {
+        elseif ($caseSourceCountForCalibration -gt 0 -and [double]$case.citationCoverage -ge 0.5) {
             $abstainPotentialOveruseCases++
         }
     }
 
     if ($mode -eq "best_effort_hypothesis") {
         $bestEffortHypothesisCases++
-        if ([int]$case.sourcesCount -gt 0 -and [double]$case.citationCoverage -ge 0.5) {
+        $caseRequiresWeb = ([string]$case.evidenceMode) -in @("local_plus_web", "web_required_fresh", "conflict_check")
+        $caseSourceCountForCalibration = if ($caseRequiresWeb) { [int]$case.webSourcesCount } else { [int]$case.sourcesCount }
+        if ($caseSourceCountForCalibration -gt 0 -and [double]$case.citationCoverage -ge 0.5) {
             $bestEffortPotentialOveruseCases++
         }
     }
@@ -1086,38 +1311,38 @@ foreach ($issue in $sortedIssues) {
 $mdLines.Add("")
 $mdLines.Add("## By Evidence Mode")
 $mdLines.Add("")
-$mdLines.Add("| Evidence Mode | Total | Errors | Avg Sources | Avg Citation Coverage | Cases With Issues |")
-$mdLines.Add("| --- | ---: | ---: | ---: | ---: | ---: |")
+$mdLines.Add("| Evidence Mode | Total | Errors | Avg Sources | Avg Web | Avg Local | Avg Citation Coverage | Cases With Issues |")
+$mdLines.Add("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |")
 foreach ($key in ($byEvidenceMode.Keys | Sort-Object)) {
     $entry = $byEvidenceMode[$key]
-    $mdLines.Add(('| `{0}` | {1} | {2} | {3} | {4} | {5} |' -f $key, $entry.total, $entry.errors, $entry.avgSources, $entry.avgCitationCoverage, $entry.casesWithIssues))
+    $mdLines.Add(('| `{0}` | {1} | {2} | {3} | {4} | {5} | {6} | {7} |' -f $key, $entry.total, $entry.errors, $entry.avgSources, $entry.avgWebSources, $entry.avgLocalSources, $entry.avgCitationCoverage, $entry.casesWithIssues))
 }
 $mdLines.Add("")
 $mdLines.Add("## By Task Type")
 $mdLines.Add("")
-$mdLines.Add("| Task Type | Total | Errors | Avg Sources | Avg Citation Coverage | Cases With Issues |")
-$mdLines.Add("| --- | ---: | ---: | ---: | ---: | ---: |")
+$mdLines.Add("| Task Type | Total | Errors | Avg Sources | Avg Web | Avg Local | Avg Citation Coverage | Cases With Issues |")
+$mdLines.Add("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |")
 foreach ($key in ($byTaskType.Keys | Sort-Object)) {
     $entry = $byTaskType[$key]
-    $mdLines.Add(('| `{0}` | {1} | {2} | {3} | {4} | {5} |' -f $key, $entry.total, $entry.errors, $entry.avgSources, $entry.avgCitationCoverage, $entry.casesWithIssues))
+    $mdLines.Add(('| `{0}` | {1} | {2} | {3} | {4} | {5} | {6} | {7} |' -f $key, $entry.total, $entry.errors, $entry.avgSources, $entry.avgWebSources, $entry.avgLocalSources, $entry.avgCitationCoverage, $entry.casesWithIssues))
 }
 $mdLines.Add("")
 $mdLines.Add("## By Domain")
 $mdLines.Add("")
-$mdLines.Add("| Domain | Total | Errors | Avg Sources | Avg Citation Coverage | Cases With Issues |")
-$mdLines.Add("| --- | ---: | ---: | ---: | ---: | ---: |")
+$mdLines.Add("| Domain | Total | Errors | Avg Sources | Avg Web | Avg Local | Avg Citation Coverage | Cases With Issues |")
+$mdLines.Add("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |")
 foreach ($key in ($byDomain.Keys | Sort-Object)) {
     $entry = $byDomain[$key]
-    $mdLines.Add(('| `{0}` | {1} | {2} | {3} | {4} | {5} |' -f $key, $entry.total, $entry.errors, $entry.avgSources, $entry.avgCitationCoverage, $entry.casesWithIssues))
+    $mdLines.Add(('| `{0}` | {1} | {2} | {3} | {4} | {5} | {6} | {7} |' -f $key, $entry.total, $entry.errors, $entry.avgSources, $entry.avgWebSources, $entry.avgLocalSources, $entry.avgCitationCoverage, $entry.casesWithIssues))
 }
 $mdLines.Add("")
 $mdLines.Add("## By Slice")
 $mdLines.Add("")
-$mdLines.Add("| Slice | Total | Errors | Avg Sources | Avg Citation Coverage | Cases With Issues |")
-$mdLines.Add("| --- | ---: | ---: | ---: | ---: | ---: |")
+$mdLines.Add("| Slice | Total | Errors | Avg Sources | Avg Web | Avg Local | Avg Citation Coverage | Cases With Issues |")
+$mdLines.Add("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |")
 foreach ($key in ($bySlice.Keys | Sort-Object)) {
     $entry = $bySlice[$key]
-    $mdLines.Add(('| `{0}` | {1} | {2} | {3} | {4} | {5} |' -f $key, $entry.total, $entry.errors, $entry.avgSources, $entry.avgCitationCoverage, $entry.casesWithIssues))
+    $mdLines.Add(('| `{0}` | {1} | {2} | {3} | {4} | {5} | {6} | {7} |' -f $key, $entry.total, $entry.errors, $entry.avgSources, $entry.avgWebSources, $entry.avgLocalSources, $entry.avgCitationCoverage, $entry.casesWithIssues))
 }
 $mdLines.Add("")
 $mdLines.Add("## Worst Cases")

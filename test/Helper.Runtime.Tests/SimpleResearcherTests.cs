@@ -144,12 +144,76 @@ public sealed class SimpleResearcherTests
             "Объясни простыми словами, чем отличаются аэробные и анаэробные нагрузки.",
             ct: CancellationToken.None);
 
-        Assert.Contains(@"C:\LIB\Training Basics.pdf", result.Sources);
+        Assert.Contains(result.Sources, source => source.Contains("Training Basics.pdf", StringComparison.Ordinal));
+        Assert.DoesNotContain(result.Sources, source => source.Contains(@"C:\LIB\", StringComparison.OrdinalIgnoreCase));
         Assert.NotNull(result.SearchTrace);
         Assert.Contains(result.SearchTrace!, line => line.Contains("local_retrieval.mode=hybrid_rrf", StringComparison.Ordinal));
         Assert.NotNull(result.EvidenceItems);
         Assert.Single(result.EvidenceItems!);
         Assert.Equal("local_library_chunk", result.EvidenceItems[0].EvidenceKind);
+        Assert.Equal("local_library", result.EvidenceItems[0].SourceLayer);
+    }
+
+    [Fact]
+    public async Task ResearchAsync_SkipsLocalBaselineFallback_ForStrictLiveEvidenceQuery_WhenWebEvidenceIsMissing()
+    {
+        var researcher = new SimpleResearcher(
+            new BlankAiLink(),
+            new NoopCodeExecutor(),
+            new NoopVectorStore(),
+            new StubSearchSessionCoordinator(new WebSearchSession(
+                new WebSearchRequest("Сравни актуальные визовые пути для software engineer, который хочет переехать в Германию в 2026 году."),
+                new WebSearchPlan("Сравни актуальные визовые пути для software engineer, который хочет переехать в Германию в 2026 году.", 5, 1, "research", "standard", true),
+                new WebSearchResultBundle(
+                    "Сравни актуальные визовые пути для software engineer, который хочет переехать в Германию в 2026 году.",
+                    Array.Empty<WebSearchDocument>(),
+                    Array.Empty<string>(),
+                    UsedDeterministicFallback: false,
+                    Outcome: "empty"),
+                DateTimeOffset.UtcNow.AddSeconds(-1),
+                DateTimeOffset.UtcNow)),
+            new DetailedLocalBaselineStub());
+
+        var result = await researcher.ResearchAsync(
+            "Сравни актуальные визовые пути для software engineer, который хочет переехать в Германию в 2026 году.",
+            ct: CancellationToken.None);
+
+        Assert.DoesNotContain(@"C:\LIB\Training Basics.pdf", result.Sources);
+        Assert.Contains("No verifiable sources were retrieved", result.FullReport, StringComparison.OrdinalIgnoreCase);
+        Assert.NotNull(result.SearchTrace);
+        Assert.Contains(result.SearchTrace!, line => line.Contains("research.local_fallback.skipped reason=strict_live_evidence_required", StringComparison.Ordinal));
+        Assert.True(result.EvidenceItems is null || result.EvidenceItems.Count == 0);
+    }
+
+    [Fact]
+    public async Task ResearchAsync_SkipsLocalBaselineFallback_ForRewrittenTaxThresholdDeadlineQuery_WhenWebEvidenceIsMissing()
+    {
+        var researcher = new SimpleResearcher(
+            new BlankAiLink(),
+            new NoopCodeExecutor(),
+            new NoopVectorStore(),
+            new StubSearchSessionCoordinator(new WebSearchSession(
+                new WebSearchRequest("налоговые пороги лимиты сроки отчетности официальные требования"),
+                new WebSearchPlan("налоговые пороги лимиты сроки отчетности официальные требования", 5, 1, "research", "standard", true),
+                new WebSearchResultBundle(
+                    "налоговые пороги лимиты сроки отчетности официальные требования",
+                    Array.Empty<WebSearchDocument>(),
+                    Array.Empty<string>(),
+                    UsedDeterministicFallback: false,
+                    Outcome: "empty"),
+                DateTimeOffset.UtcNow.AddSeconds(-1),
+                DateTimeOffset.UtcNow)),
+            new DetailedLocalBaselineStub());
+
+        var result = await researcher.ResearchAsync(
+            "налоговые пороги лимиты сроки отчетности официальные требования",
+            ct: CancellationToken.None);
+
+        Assert.DoesNotContain(@"C:\LIB\Training Basics.pdf", result.Sources);
+        Assert.Contains("No verifiable sources were retrieved", result.FullReport, StringComparison.OrdinalIgnoreCase);
+        Assert.NotNull(result.SearchTrace);
+        Assert.Contains(result.SearchTrace!, line => line.Contains("research.local_fallback.skipped reason=strict_live_evidence_required", StringComparison.Ordinal));
+        Assert.True(result.EvidenceItems is null || result.EvidenceItems.Count == 0);
     }
 
     [Fact]
@@ -585,17 +649,23 @@ public sealed class SimpleResearcherTests
         {
             return Task.FromResult(new LocalBaselineAnswerResult(
                 "Локальная библиотека показывает, что аэробные нагрузки связаны с более длительной умеренной работой, а анаэробные — с короткими интенсивными усилиями [1]. Моё мнение: для базового объяснения этого локального материала достаточно.",
-                new[] { @"C:\LIB\Training Basics.pdf" },
+                new[] { "Training Basics.pdf (pdf) | page:1 | id=training-basics" },
                 new[] { "local_retrieval.mode=hybrid_rrf", "local_retrieval.chunk_count=1" },
                 new[]
                 {
                     new ResearchEvidenceItem(
                         1,
-                        @"C:\LIB\Training Basics.pdf",
+                        "Training Basics.pdf (pdf) | page:1 | id=training-basics",
                         "Training Basics.pdf",
                         "Аэробные нагрузки связаны с более длительной умеренной работой, а анаэробные — с короткими интенсивными усилиями.",
                         TrustLevel: "local_library",
-                        EvidenceKind: "local_library_chunk")
+                        EvidenceKind: "local_library_chunk",
+                        SourceLayer: "local_library",
+                        SourceFormat: "pdf",
+                        SourceId: "training-basics",
+                        DisplayTitle: "Training Basics.pdf",
+                        Locator: "page:1",
+                        SourcePath: @"C:\LIB\Training Basics.pdf")
                 }));
         }
     }

@@ -81,6 +81,35 @@ public sealed class EpistemicAnswerModePolicyTests
     }
 
     [Fact]
+    public void Resolve_DoesNotUseBestEffort_ForMandatoryFreshWebFactCheck_WithOnlyLocalEvidence()
+    {
+        var policy = new EpistemicAnswerModePolicy();
+        var context = CreateContext(isFactualPrompt: true);
+        context.ForceBestEffort = true;
+        context.ResolvedLiveWebRequirement = "web_required";
+        context.Sources.Add(@"D:\local_library\docs\history\Всемирная история. Энциклопедия. Т.9. - 2007.pdf");
+        context.UncertaintyFlags.Add("live_web_required_route_override");
+        context.UncertaintyFlags.Add("uncertainty.source_url_only_evidence");
+        var snapshot = new EpistemicRiskSnapshot(
+            GroundingStatus: "grounded_with_limits",
+            CitationCoverage: 1.0,
+            VerifiedClaimRatio: 1.0,
+            HasContradictions: false,
+            HasWeakEvidence: true,
+            HighRiskDomain: true,
+            FreshnessSensitive: true,
+            CurrentConfidence: 0.50,
+            ConfidenceCeiling: 0.50,
+            CalibrationThreshold: 0.78,
+            AbstentionRecommended: false,
+            Trace: Array.Empty<string>());
+
+        var mode = policy.Resolve(context, snapshot);
+
+        Assert.Equal(EpistemicAnswerMode.Abstain, mode);
+    }
+
+    [Fact]
     public void Resolve_Returns_NeedsVerification_For_Clarification_Or_Weak_Evidence()
     {
         var policy = new EpistemicAnswerModePolicy();
@@ -103,6 +132,33 @@ public sealed class EpistemicAnswerModePolicyTests
         var mode = policy.Resolve(context, snapshot);
 
         Assert.Equal(EpistemicAnswerMode.NeedsVerification, mode);
+    }
+
+    [Fact]
+    public void Resolve_DoesNotAbstain_ForGroundedFreshnessTurn_WithStrongCoverageAndOneWeakBridge()
+    {
+        var policy = new EpistemicAnswerModePolicy();
+        var context = CreateContext(isFactualPrompt: true);
+        context.Sources.Add("https://ai-act-service-desk.ec.europa.eu/en");
+        context.Sources.Add("https://digital-strategy.ec.europa.eu/en/policies/guidelines-gpai-providers");
+        context.Sources.Add("https://digital-strategy.ec.europa.eu/en/policies/regulatory-framework-ai");
+        var snapshot = new EpistemicRiskSnapshot(
+            GroundingStatus: "grounded",
+            CitationCoverage: 1.0,
+            VerifiedClaimRatio: 1.0,
+            HasContradictions: false,
+            HasWeakEvidence: true,
+            HighRiskDomain: false,
+            FreshnessSensitive: true,
+            CurrentConfidence: 0.58,
+            ConfidenceCeiling: 0.58,
+            CalibrationThreshold: 0.78,
+            AbstentionRecommended: false,
+            Trace: Array.Empty<string>());
+
+        var mode = policy.Resolve(context, snapshot);
+
+        Assert.Equal(EpistemicAnswerMode.Grounded, mode);
     }
 
     private static ChatTurnContext CreateContext(bool isFactualPrompt)

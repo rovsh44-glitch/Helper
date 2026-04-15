@@ -46,7 +46,22 @@ namespace Helper.Runtime.Core
         IReadOnlyList<string>? SafetyFlags = null,
         string EvidenceKind = "search_hit",
         string? PublishedAt = null,
-        IReadOnlyList<EvidencePassage>? Passages = null);
+        IReadOnlyList<EvidencePassage>? Passages = null,
+        string? SourceLayer = null,
+        string? SourceFormat = null,
+        string? SourceId = null,
+        string? DisplayTitle = null,
+        string? Locator = null,
+        string? FreshnessEligibility = null,
+        IReadOnlyList<string>? AllowedClaimRoles = null,
+        string? SourcePath = null,
+        string? Collection = null,
+        string? IndexedAtUtc = null,
+        string? ContentHash = null,
+        string? ParserName = null,
+        string? ParserVersion = null,
+        double? RetrievalScore = null,
+        double? TopicalFitScore = null);
 
     public record ExpertConsultationResult(string Answer, string Domain, List<string> Sources);
 

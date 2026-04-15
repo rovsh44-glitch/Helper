@@ -74,6 +74,7 @@ public sealed class ChatTurnContext
     public string? ResolvedTonePreset { get; set; }
     public EpistemicRiskSnapshot? EpistemicRiskSnapshot { get; set; }
     public EpistemicAnswerMode EpistemicAnswerMode { get; set; } = EpistemicAnswerMode.Direct;
+    public EvidenceFusionSnapshot? EvidenceFusionSnapshot { get; set; }
     public InteractionStateSnapshot? InteractionState { get; set; }
     public InteractionPolicyProjection? InteractionPolicy { get; set; }
     public string? ReasoningEffort { get; set; }

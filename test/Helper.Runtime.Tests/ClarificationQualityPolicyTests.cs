@@ -73,4 +73,14 @@ public sealed class ClarificationQualityPolicyTests
         Assert.Equal(ClarificationBoundary.Constraints, decision.Boundary);
         Assert.Contains("огранич", decision.Question, StringComparison.OrdinalIgnoreCase);
     }
+
+    [Fact]
+    public void HybridAmbiguityDetector_DoesNotTreat_ProductivityOutputClaim_AsFormatAmbiguity()
+    {
+        var detector = new HybridAmbiguityDetector();
+
+        var decision = detector.Analyze("Объясни, насколько надёжны claims о том, что четырёхдневная рабочая неделя улучшает output практически в любой отрасли.");
+
+        Assert.NotEqual(AmbiguityType.Format, decision.Type);
+    }
 }

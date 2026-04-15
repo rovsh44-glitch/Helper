@@ -31,6 +31,194 @@ public sealed class WebQueryPlannerTests
     }
 
     [Fact]
+    public void Resolve_AllowsThreeIterations_ForRetractionStatusPrompt()
+    {
+        var policy = new SearchIterationPolicy();
+
+        var budget = policy.Resolve(new WebSearchRequest("Проверь, была ли статья отозвана, исправлена или оспорена по состоянию на сегодня."));
+
+        Assert.Equal(3, budget.MaxIterations);
+    }
+
+    [Fact]
+    public void BuildPlans_AddsOfficialAndFreshnessBranches_ForRetractionStatusPrompt()
+    {
+        var planner = new WebQueryPlanner();
+
+        var plans = planner.BuildPlans(
+            new WebSearchRequest("Проверь, была ли статья отозвана, исправлена или оспорена по состоянию на сегодня."),
+            new SearchIterationBudget(3, "retraction_status_multibranch"));
+
+        Assert.Equal(3, plans.Count);
+        Assert.Equal("primary", plans[0].QueryKind);
+        Assert.Equal("official", plans[1].QueryKind);
+        Assert.Equal("freshness", plans[2].QueryKind);
+        Assert.Contains("crossref", plans[1].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("pubmed", plans[2].Query, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void BuildPlans_PrefersOfficialBranch_ForFreshOfficialVisaComparisonPrompt()
+    {
+        var planner = new WebQueryPlanner();
+
+        var plans = planner.BuildPlans(
+            new WebSearchRequest("Сравни актуальные визовые пути для software engineer, который хочет переехать в Германию в 2026 году.", Depth: 1),
+            new SearchIterationBudget(3, "comparative_prompt+freshness_sensitive"));
+
+        Assert.Equal(3, plans.Count);
+        Assert.Equal("primary", plans[0].QueryKind);
+        Assert.Equal("official", plans[1].QueryKind);
+        Assert.Equal("freshness", plans[2].QueryKind);
+        Assert.Contains("bamf", plans[1].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("make it in germany", plans[1].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("opportunity card", plans[1].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("auswaertiges amt", plans[1].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(" eu ", $" {plans[1].Query} ", StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Resolve_AllowsThreeIterations_ForUzbekistanFilingChecklistPrompt()
+    {
+        var policy = new SearchIterationPolicy();
+
+        var budget = policy.Resolve(new WebSearchRequest("Составь актуальный filing checklist для remote worker, который выставляет инвойсы иностранным клиентам из Узбекистана в 2026 году."));
+
+        Assert.Equal(3, budget.MaxIterations);
+        Assert.Contains("strict_live_evidence", budget.Reason, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void BuildPlans_RewritesUzbekistanFilingPrompt_ToRegulatoryTopicCore_AndOfficialBranch()
+    {
+        var planner = new WebQueryPlanner();
+
+        var plans = planner.BuildPlans(
+            new WebSearchRequest("Составь актуальный filing checklist для remote worker, который выставляет инвойсы иностранным клиентам из Узбекистана в 2026 году.", Depth: 1),
+            new SearchIterationBudget(3, "regulation_freshness_multibranch"));
+
+        Assert.Equal(3, plans.Count);
+        Assert.Equal("primary", plans[0].QueryKind);
+        Assert.Contains("узбекистан", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("инвойсы", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("отчетность", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("составь", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("official", plans[1].QueryKind);
+        Assert.Contains("soliq", plans[1].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("lex", plans[1].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("ey", plans[1].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("site:", plans[1].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("freshness", plans[2].QueryKind);
+    }
+
+    [Fact]
+    public void BuildPlans_RewritesClimateSensitivityPrompt_ToScientificCore()
+    {
+        var planner = new WebQueryPlanner();
+
+        var plans = planner.BuildPlans(
+            new WebSearchRequest("Разбери, почему источники расходятся по оценкам climate sensitivity и какой вывод при этом остаётся безопасным.", Depth: 1),
+            new SearchIterationBudget(3, "comparative_prompt"));
+
+        Assert.Equal("primary", plans[0].QueryKind);
+        Assert.Contains("equilibrium climate sensitivity", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("transient climate response", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("earth system sensitivity", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(plans, plan => string.Equals(plan.QueryKind, "evidence", StringComparison.OrdinalIgnoreCase) &&
+                                       plan.Query.Contains("aerosol forcing", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(plans, plan => string.Equals(plan.QueryKind, "contradiction", StringComparison.OrdinalIgnoreCase) &&
+                                       plan.Query.Contains("ipcc", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void BuildPlans_RewritesEuAiRegulationPrompt_ToOfficialCore()
+    {
+        var planner = new WebQueryPlanner();
+
+        var plans = planner.BuildPlans(
+            new WebSearchRequest("Объясни, что последние изменения в регулировании ИИ в ЕС означают сегодня для маленького software vendor.", Depth: 1),
+            new SearchIterationBudget(3, "strict_live_evidence"));
+
+        Assert.Equal("primary", plans[0].QueryKind);
+        Assert.Contains("european union", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("artificial intelligence act", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("ai office", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.All(plans, plan => Assert.DoesNotContain(" eu ", $" {plan.Query} ", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(plans, plan => string.Equals(plan.QueryKind, "official", StringComparison.OrdinalIgnoreCase) &&
+                                       plan.Query.Contains("service desk", StringComparison.OrdinalIgnoreCase) &&
+                                       plan.Query.Contains("faq", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(plans, plan => string.Equals(plan.QueryKind, "freshness", StringComparison.OrdinalIgnoreCase) &&
+                                       plan.Query.Contains("regulatory framework", StringComparison.OrdinalIgnoreCase) &&
+                                       plan.Query.Contains("digital strategy", StringComparison.OrdinalIgnoreCase) &&
+                                       plan.Query.Contains("provider obligations", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void BuildPlans_RewritesArxivPublisherPolicyPrompt_ToFocusedPolicyQueries()
+    {
+        var planner = new WebQueryPlanner();
+
+        var plans = planner.BuildPlans(
+            new WebSearchRequest("Сравни arXiv preprints и peer-reviewed journal papers, а затем проверь текущие практики издателей и репозиториев.", Depth: 1),
+            new SearchIterationBudget(3, "publisher_policy_multibranch"));
+
+        Assert.Equal(3, plans.Count);
+        Assert.Equal("primary", plans[0].QueryKind);
+        Assert.Contains("arxiv", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("sherpa", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("open access", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(plans, plan => string.Equals(plan.QueryKind, "publisher_policy", StringComparison.OrdinalIgnoreCase) &&
+                                       plan.Query.Contains("doaj", StringComparison.OrdinalIgnoreCase) &&
+                                       plan.Query.Contains("embargo", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(plans, plan => string.Equals(plan.QueryKind, "paper_focus", StringComparison.OrdinalIgnoreCase) &&
+                                       plan.Query.Contains("accepted manuscript", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void Resolve_AllowsThreeIterations_ForEuDroneCustomsPrompt()
+    {
+        var policy = new SearchIterationPolicy();
+
+        var budget = policy.Resolve(new WebSearchRequest("Проверь, актуальны ли import restrictions и customs rules для ввоза дрона в ЕС на сегодня."));
+
+        Assert.Equal(3, budget.MaxIterations);
+        Assert.Contains("strict_live_evidence", budget.Reason, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void BuildPlans_RewritesEuDroneCustomsPrompt_ToOfficialFreshnessBranches()
+    {
+        var planner = new WebQueryPlanner();
+
+        var plans = planner.BuildPlans(
+            new WebSearchRequest("Проверь, актуальны ли import restrictions и customs rules для ввоза дрона в ЕС на сегодня.", Depth: 1),
+            new SearchIterationBudget(3, "strict_live_evidence"));
+
+        Assert.Equal("primary", plans[0].QueryKind);
+        Assert.Contains("drone", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("customs", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("easa", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("european union", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.All(plans, plan => Assert.DoesNotContain(" eu ", $" {plan.Query} ", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(plans, plan => string.Equals(plan.QueryKind, "official", StringComparison.OrdinalIgnoreCase) &&
+                                       plan.Query.Contains("drones uas faq", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(plans, plan => string.Equals(plan.QueryKind, "freshness", StringComparison.OrdinalIgnoreCase) &&
+                                       plan.Query.Contains("your europe", StringComparison.OrdinalIgnoreCase) &&
+                                       plan.Query.Contains("customs procedures", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void Resolve_AllowsThreeIterations_ForEuAiRegulationPrompt()
+    {
+        var policy = new SearchIterationPolicy();
+
+        var budget = policy.Resolve(new WebSearchRequest("Объясни, что последние изменения в регулировании ИИ в ЕС означают сегодня для маленького software vendor."));
+
+        Assert.Equal(3, budget.MaxIterations);
+        Assert.Contains("strict_live_evidence", budget.Reason, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public void BuildPlans_AddsNarrowQuery_ForLongPromptWithoutFreshnessSignals()
     {
         var planner = new WebQueryPlanner();
@@ -41,7 +229,7 @@ public sealed class WebQueryPlannerTests
 
         Assert.Equal(2, plans.Count);
         Assert.Equal("primary", plans[0].QueryKind);
-        Assert.Equal("narrow", plans[1].QueryKind);
+        Assert.Equal("official", plans[1].QueryKind);
         Assert.NotEqual(plans[0].Query, plans[1].Query);
     }
 
@@ -143,6 +331,51 @@ public sealed class WebQueryPlannerTests
     }
 
     [Fact]
+    public void BuildPlans_RewritesSparseVectorComparisonPrompt_ToFocusedCore()
+    {
+        var planner = new WebQueryPlanner();
+
+        var plans = planner.BuildPlans(
+            new WebSearchRequest("Сравни vector databases и классический search для маленькой команды, если большая часть benchmark-ов vendor-shaped.", Depth: 1),
+            new SearchIterationBudget(3, "comparative_prompt"));
+
+        Assert.Equal("primary", plans[0].QueryKind);
+        Assert.Contains("vector database", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("independent comparison", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("vendor-shaped", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void BuildPlans_RewritesRegulatedCodingAssistantPrompt_ToFocusedCore()
+    {
+        var planner = new WebQueryPlanner();
+
+        var plans = planner.BuildPlans(
+            new WebSearchRequest("Составь осторожный план внедрения AI coding assistants в регулируемой компании, где claims о продуктивности пока спорные.", Depth: 1),
+            new SearchIterationBudget(2, "broad_prompt"));
+
+        Assert.Equal("primary", plans[0].QueryKind);
+        Assert.Contains("ai coding assistants", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("governance", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("осторожный", plans[0].Query, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void BuildPlans_UsesFocusedStepBack_ForFourDayWeekReliabilityPrompt()
+    {
+        var planner = new WebQueryPlanner();
+
+        var plans = planner.BuildPlans(
+            new WebSearchRequest("Объясни, насколько надёжны claims о том, что четырёхдневная рабочая неделя улучшает output практически в любой отрасли.", Depth: 1),
+            new SearchIterationBudget(2, "broad_prompt"));
+
+        Assert.Equal(2, plans.Count);
+        Assert.Equal("step_back", plans[1].QueryKind);
+        Assert.Contains("четырехдневная", plans[1].Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("обзор", plans[1].Query, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public void BuildPlans_AddsStepBackBranch_ForBroadHumanPrompt()
     {
         var planner = new WebQueryPlanner();
@@ -163,8 +396,8 @@ public sealed class WebQueryPlannerTests
 
         var budget = policy.Resolve(new WebSearchRequest("Проверь свежие требования к отчетности для ИП"));
 
-        Assert.Equal(2, budget.MaxIterations);
-        Assert.Contains("freshness_sensitive", budget.Reason, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(3, budget.MaxIterations);
+        Assert.Contains("strict_live_evidence", budget.Reason, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

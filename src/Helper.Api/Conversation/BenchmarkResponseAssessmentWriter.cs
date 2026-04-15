@@ -27,6 +27,8 @@ internal sealed class BenchmarkResponseAssessmentWriter : IBenchmarkResponseAsse
     {
         var answerModeLead = BuildAnswerModeLead(context);
         var evidenceLevel = BenchmarkEvidenceFallbackSummaryBuilder.GetPassageEvidenceSupportLevel(context);
+        var hasWebSources = ConversationSourceClassifier.HasWebSource(context);
+        var hasLocalSources = ConversationSourceClassifier.HasLocalSource(context);
         if (isFallback && !string.IsNullOrWhiteSpace(topicalBody))
         {
             var builder = new StringBuilder();
@@ -37,7 +39,7 @@ internal sealed class BenchmarkResponseAssessmentWriter : IBenchmarkResponseAsse
             }
             builder.Append("Базовый локальный каркас по теме выглядит так: ");
             builder.Append(topicalBody.Trim());
-            if (context.Sources.Count > 0)
+            if (hasWebSources)
             {
                 if (evidenceLevel == BenchmarkPassageEvidenceSupportLevel.Strong)
                 {
@@ -56,7 +58,9 @@ internal sealed class BenchmarkResponseAssessmentWriter : IBenchmarkResponseAsse
             }
             else
             {
-                builder.Append(" При этом внешняя проверка не состоялась, поэтому свежие, спорные или точные фактические детали нельзя считать подтверждёнными.");
+                builder.Append(hasLocalSources
+                    ? " При этом локальные библиотечные источники могут служить только дополнительным контекстом; внешняя проверка не состоялась, поэтому свежие, спорные или точные фактические детали нельзя считать подтверждёнными."
+                    : " При этом внешняя проверка не состоялась, поэтому свежие, спорные или точные фактические детали нельзя считать подтверждёнными.");
             }
 
             if (context.RequireExplicitBenchmarkUncertainty ||
@@ -88,7 +92,7 @@ internal sealed class BenchmarkResponseAssessmentWriter : IBenchmarkResponseAsse
                     builder.Append(' ');
                 }
                 builder.Append("Черновой ответ был сгенерирован, но содержит заметный смешанный языковой шум и поэтому не годится как финальная формулировка без нормализации.");
-                if (context.Sources.Count == 0)
+                if (!hasWebSources)
                 {
                     builder.Append(" Это особенно заметно в local-first режиме без внешней сверки, где ошибка формулировки не была исправлена источниками.");
                 }
@@ -103,6 +107,7 @@ internal sealed class BenchmarkResponseAssessmentWriter : IBenchmarkResponseAsse
 
             if (!string.IsNullOrWhiteSpace(normalized))
             {
+                normalized = EnsureExplicitBenchmarkUncertainty(normalized, context);
                 return normalized;
             }
         }
@@ -142,12 +147,22 @@ internal sealed class BenchmarkResponseAssessmentWriter : IBenchmarkResponseAsse
     {
         var answerModeLead = BuildAnswerModeLead(context);
         var evidenceLevel = BenchmarkEvidenceFallbackSummaryBuilder.GetPassageEvidenceSupportLevel(context);
+        var hasWebSources = ConversationSourceClassifier.HasWebSource(context);
+        var hasLocalSources = ConversationSourceClassifier.HasLocalSource(context);
         if (!isFallback)
         {
-            if (context.Sources.Count > 0)
+            if (hasWebSources)
             {
                 var result = "Итог: ответ нужно читать как сочетание локального базового понимания и внешней сверки; ссылки выше показывают, что веб-проверка действительно участвовала в результате.";
                 return string.IsNullOrWhiteSpace(answerModeLead) ? result : $"{answerModeLead} {result}";
+            }
+
+            if (hasLocalSources)
+            {
+                var localOnly = context.IsFactualPrompt
+                    ? "Итог: локальные библиотечные источники могут быть полезным фоном, но не подтверждают свежие или регуляторные факты без live web-источников."
+                    : "Итог: локальные библиотечные источники дают дополнительный контекст, но не заменяют внешнюю сверку там, где она нужна.";
+                return string.IsNullOrWhiteSpace(answerModeLead) ? localOnly : $"{answerModeLead} {localOnly}";
             }
 
             var fallback = context.IsFactualPrompt
@@ -158,7 +173,7 @@ internal sealed class BenchmarkResponseAssessmentWriter : IBenchmarkResponseAsse
 
         if (!string.IsNullOrWhiteSpace(topicalBody))
         {
-            if (context.Sources.Count > 0)
+            if (hasWebSources)
             {
                 var baseConclusion = evidenceLevel == BenchmarkPassageEvidenceSupportLevel.Strong
                     ? context.IsFactualPrompt
@@ -186,6 +201,13 @@ internal sealed class BenchmarkResponseAssessmentWriter : IBenchmarkResponseAsse
                 return baseConclusion;
             }
 
+            if (hasLocalSources)
+            {
+                return context.IsFactualPrompt
+                    ? "Сейчас корректный вывод такой: локальные библиотечные источники можно использовать как вспомогательный фон, но в этом ходе нет usable live web evidence, поэтому свежий фактический вывод остаётся неподтверждённым."
+                    : "Сейчас корректный вывод такой: локальная evidence-опора полезна для ориентира, но не заменяет внешнюю проверку там, где она требуется.";
+            }
+
             return context.IsFactualPrompt
                 ? "Сейчас корректный вывод такой: локально можно удержать только базовый ориентир по теме, но подтверждённого source-backed вывода в этом ходе нет; уровень неопределённости остаётся высоким."
                 : "Сейчас корректный вывод такой: базовый локальный каркас полезен как старт, но без внешней сверки этот разбор нельзя считать подтверждённым, а уровень неопределённости остаётся высоким.";
@@ -200,17 +222,21 @@ internal sealed class BenchmarkResponseAssessmentWriter : IBenchmarkResponseAsse
     {
         var answerModeLead = BuildAnswerModeLead(context);
         var evidenceLevel = BenchmarkEvidenceFallbackSummaryBuilder.GetPassageEvidenceSupportLevel(context);
+        var hasWebSources = ConversationSourceClassifier.HasWebSource(context);
+        var hasLocalSources = ConversationSourceClassifier.HasLocalSource(context);
         if (!isFallback)
         {
-            var opinion = context.Sources.Count > 0
+            var opinion = hasWebSources
                 ? "Моё мнение: такой формат полезен, потому что видно, где локальная база была дополнена реальными источниками, а не подменена ими."
+                : hasLocalSources
+                    ? "Моё мнение: локальные библиотечные источники стоит использовать как вспомогательную память и контекст, но не как замену fresh web evidence."
                 : "Моё мнение: для учебного или базового объяснения local-first ответ допустим, но финальную уверенность я бы давал только после внешней проверки там, где цена ошибки выше.";
             return string.IsNullOrWhiteSpace(answerModeLead) ? opinion : $"{answerModeLead} {opinion}";
         }
 
         if (!string.IsNullOrWhiteSpace(topicalBody))
         {
-            if (context.Sources.Count > 0)
+            if (hasWebSources)
             {
                 var baseOpinion = evidenceLevel == BenchmarkPassageEvidenceSupportLevel.Strong
                     ? context.IsFactualPrompt
@@ -238,6 +264,13 @@ internal sealed class BenchmarkResponseAssessmentWriter : IBenchmarkResponseAsse
                 return baseOpinion;
             }
 
+            if (hasLocalSources)
+            {
+                return context.IsFactualPrompt
+                    ? "Моё мнение: локальные библиотечные источники можно включать в отчёт как secondary context, но для свежих налоговых, правовых или регуляторных выводов нужна отдельная live web-опора."
+                    : "Моё мнение: локальные библиотечные источники полезны как вторичный слой evidence, если явно подписать их локальный статус и не смешивать с web-источниками.";
+            }
+
             return context.IsFactualPrompt
                 ? "Моё мнение: в таком режиме лучше сохранить полезный локальный ориентир, но явно отделить его от подтверждённого factual вывода."
                 : "Моё мнение: даже неполный локальный каркас лучше, чем пустой boilerplate, если честно помечены пределы проверки.";
@@ -257,6 +290,39 @@ internal sealed class BenchmarkResponseAssessmentWriter : IBenchmarkResponseAsse
             Epistemic.EpistemicAnswerMode.Abstain => "Эпистемический режим: система сознательно воздерживается от сильного фактического вывода.",
             _ => null
         };
+    }
+
+    private static string EnsureExplicitBenchmarkUncertainty(string normalized, ChatTurnContext context)
+    {
+        if (string.IsNullOrWhiteSpace(normalized) ||
+            !context.RequireExplicitBenchmarkUncertainty ||
+            ContainsExplicitBenchmarkUncertainty(normalized))
+        {
+            return normalized;
+        }
+
+        var hasWebSources = ConversationSourceClassifier.HasWebSource(context);
+        var suffix = string.Equals(context.ResolvedTurnLanguage, "ru", StringComparison.OrdinalIgnoreCase)
+            ? hasWebSources
+                ? " Уровень неопределённости здесь всё ещё высокий: источники дают полезный ориентир, но доказательная база ограничена и не поддерживает сильный вывод."
+                : " Уровень неопределённости здесь высокий: внешняя evidence-опора отсутствует или слишком слаба для сильного вывода."
+            : hasWebSources
+                ? " Uncertainty remains materially high here: the sources provide a useful signal, but the evidence base is still too limited for a strong claim."
+                : " Uncertainty remains high here: there is no external evidence base strong enough to support a strong claim.";
+
+        return $"{normalized.TrimEnd()}{suffix}";
+    }
+
+    private static bool ContainsExplicitBenchmarkUncertainty(string text)
+    {
+        return text.Contains("неопредел", StringComparison.OrdinalIgnoreCase) ||
+               text.Contains("огранич", StringComparison.OrdinalIgnoreCase) ||
+               text.Contains("неподтверж", StringComparison.OrdinalIgnoreCase) ||
+               text.Contains("непровер", StringComparison.OrdinalIgnoreCase) ||
+               text.Contains("limited evidence", StringComparison.OrdinalIgnoreCase) ||
+               text.Contains("uncertainty", StringComparison.OrdinalIgnoreCase) ||
+               text.Contains("not verified", StringComparison.OrdinalIgnoreCase) ||
+               text.Contains("not confirmed", StringComparison.OrdinalIgnoreCase);
     }
 }
 

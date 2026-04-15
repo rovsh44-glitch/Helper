@@ -21,6 +21,7 @@ public sealed class BehavioralCalibrationPolicy : IBehavioralCalibrationPolicy
         ArgumentNullException.ThrowIfNull(context);
 
         var trace = new List<string>();
+        var fusion = context.EvidenceFusionSnapshot ??= EvidenceFusionService.Build(context);
         var message = context.Request.Message ?? string.Empty;
         var highRiskDomain = ContainsAny(message, HighRiskTokens);
         var freshnessSensitive = ContainsAny(message, FreshnessTokens) ||
@@ -37,12 +38,15 @@ public sealed class BehavioralCalibrationPolicy : IBehavioralCalibrationPolicy
                               context.UncertaintyFlags.Contains("uncertainty.search_hit_only_evidence") ||
                               context.UncertaintyFlags.Contains("uncertainty.source_url_only_evidence") ||
                               context.UncertaintyFlags.Contains("factual_without_sources") ||
+                              fusion.UnsupportedFreshClaimCount > 0 ||
+                              fusion.LocalOnlyFreshClaimCount > 0 ||
                               context.CitationCoverage < 0.70;
 
         var calibrationThreshold = ResolveThreshold(context.IsFactualPrompt, highRiskDomain, freshnessSensitive, hasWeakEvidence, hasContradictions);
         var confidenceCeiling = ResolveConfidenceCeiling(context, highRiskDomain, freshnessSensitive, hasWeakEvidence, hasContradictions);
         var abstentionRecommended = context.IsFactualPrompt &&
                                     ((context.VerifiedClaims == 0 && (highRiskDomain || freshnessSensitive)) ||
+                                     (freshnessSensitive && fusion.UnsupportedFreshClaimCount > 0) ||
                                      (hasContradictions && highRiskDomain) ||
                                      (context.VerifiedClaims == 0 && string.Equals(groundingStatus, "unverified", StringComparison.OrdinalIgnoreCase)));
 
@@ -50,6 +54,7 @@ public sealed class BehavioralCalibrationPolicy : IBehavioralCalibrationPolicy
         trace.Add($"epistemic.freshness_sensitive={freshnessSensitive}");
         trace.Add($"epistemic.grounding_status={groundingStatus}");
         trace.Add($"epistemic.verified_claim_ratio={verifiedClaimRatio:0.00}");
+        trace.AddRange(fusion.Trace);
         trace.Add($"epistemic.calibration_threshold={calibrationThreshold:0.00}");
         trace.Add($"epistemic.confidence_ceiling={confidenceCeiling:0.00}");
         if (abstentionRecommended)

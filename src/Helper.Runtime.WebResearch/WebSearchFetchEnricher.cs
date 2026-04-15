@@ -220,12 +220,15 @@ internal sealed class WebSearchFetchEnricher : IWebSearchFetchEnricher
         }
 
         var queryProfile = Ranking.SourceAuthorityScorer.BuildQueryProfile(request.Query, null);
+        var requestProfile = ResearchRequestProfileResolver.From(request.Query);
         var projectionSensitive =
             queryProfile.EvidenceHeavy ||
             queryProfile.MedicalEvidenceHeavy ||
             queryProfile.CurrentnessHeavy ||
-            queryProfile.OfficialBias;
-        if (!projectionSensitive || !LooksLikeProjectableSearchHit(document))
+            queryProfile.OfficialBias ||
+            queryProfile.ComparisonHeavy ||
+            requestProfile.StrictLiveEvidenceRequired;
+        if (!projectionSensitive || !LooksLikeProjectableSearchHit(document, request.Query))
         {
             return false;
         }
@@ -289,43 +292,103 @@ internal sealed class WebSearchFetchEnricher : IWebSearchFetchEnricher
             TrustLevel: "search_hit_projection");
     }
 
-    private static bool LooksLikeProjectableSearchHit(WebSearchDocument document)
+    private static bool LooksLikeProjectableSearchHit(WebSearchDocument document, string? query)
     {
-        if (string.IsNullOrWhiteSpace(document.Snippet) || document.Snippet.Trim().Length < 80)
-        {
-            return false;
-        }
-
         if (!Uri.TryCreate(document.Url, UriKind.Absolute, out var uri))
         {
             return false;
         }
 
+        var queryProfile = Ranking.SourceAuthorityScorer.BuildQueryProfile(query, null);
+        var requestProfile = ResearchRequestProfileResolver.From(query);
+        var trustProfile = Ranking.LowTrustDomainRegistry.Resolve(uri.Host);
+        if (trustProfile.IsLowTrust)
+        {
+            return false;
+        }
+
+        var snippetLength = document.Snippet?.Trim().Length ?? 0;
         var descriptor = $"{uri.Host} {uri.AbsolutePath} {document.Title} {document.Snippet}";
-        return uri.Host.EndsWith(".gov", StringComparison.OrdinalIgnoreCase) ||
-               uri.Host.EndsWith(".int", StringComparison.OrdinalIgnoreCase) ||
-               uri.Host.Contains("who.int", StringComparison.OrdinalIgnoreCase) ||
-               uri.Host.Contains("nih.gov", StringComparison.OrdinalIgnoreCase) ||
-               uri.Host.Contains("cdc.gov", StringComparison.OrdinalIgnoreCase) ||
-               uri.Host.Contains("pubmed.ncbi.nlm.nih.gov", StringComparison.OrdinalIgnoreCase) ||
-               uri.Host.Contains("pmc.ncbi.nlm.nih.gov", StringComparison.OrdinalIgnoreCase) ||
-               uri.Host.Contains("medelement.com", StringComparison.OrdinalIgnoreCase) ||
-               uri.Host.Contains("consultant.ru", StringComparison.OrdinalIgnoreCase) ||
-               uri.Host.Contains("garant.ru", StringComparison.OrdinalIgnoreCase) ||
-               uri.Host.Contains("cyberleninka.ru", StringComparison.OrdinalIgnoreCase) ||
-               descriptor.Contains("/article/", StringComparison.OrdinalIgnoreCase) ||
-               descriptor.Contains("/articles/", StringComparison.OrdinalIgnoreCase) ||
-               descriptor.Contains("/guideline", StringComparison.OrdinalIgnoreCase) ||
-               descriptor.Contains("/recommendation", StringComparison.OrdinalIgnoreCase) ||
-               descriptor.Contains("systematic review", StringComparison.OrdinalIgnoreCase) ||
-               descriptor.Contains("meta-analysis", StringComparison.OrdinalIgnoreCase) ||
-               descriptor.Contains("clinical", StringComparison.OrdinalIgnoreCase) ||
-               descriptor.Contains("guideline", StringComparison.OrdinalIgnoreCase) ||
-               descriptor.Contains("recommendation", StringComparison.OrdinalIgnoreCase) ||
-               descriptor.Contains("клиничес", StringComparison.OrdinalIgnoreCase) ||
-               descriptor.Contains("рекомендац", StringComparison.OrdinalIgnoreCase) ||
-               descriptor.Contains("обзор", StringComparison.OrdinalIgnoreCase) ||
-               descriptor.Contains("исследован", StringComparison.OrdinalIgnoreCase);
+        var titleAndUrlOverlap = Ranking.SourceAuthorityScorer.ComputeQueryOverlapRatio(query, $"{document.Title} {uri.Host} {uri.AbsolutePath}");
+        var trustedProjectionHost =
+            trustProfile.IsAuthoritative ||
+            trustProfile.Label is "technical_media" or
+                "technical_vendor_blog" or
+                "specialized_security_media" or
+                "academic" or
+                "academic_index" or
+                "academic_publisher_article" or
+                "major_business_news" or
+                "major_newswire" or
+                "major_news" or
+                "specialized_news" or
+                "trusted_legal_reference" or
+                "legal_document_host" or
+                "clinical_reference" or
+                "clinical_reference_society";
+        var descriptorLooksDocumentLike =
+            descriptor.Contains(".pdf", StringComparison.OrdinalIgnoreCase) ||
+            descriptor.Contains("/article/", StringComparison.OrdinalIgnoreCase) ||
+            descriptor.Contains("/articles/", StringComparison.OrdinalIgnoreCase) ||
+            descriptor.Contains("/guideline", StringComparison.OrdinalIgnoreCase) ||
+            descriptor.Contains("/recommendation", StringComparison.OrdinalIgnoreCase) ||
+            descriptor.Contains("/review", StringComparison.OrdinalIgnoreCase) ||
+            descriptor.Contains("/blog/", StringComparison.OrdinalIgnoreCase) ||
+            descriptor.Contains("preprint", StringComparison.OrdinalIgnoreCase) ||
+            descriptor.Contains("publisher", StringComparison.OrdinalIgnoreCase) ||
+            descriptor.Contains("repository", StringComparison.OrdinalIgnoreCase) ||
+            descriptor.Contains("visa", StringComparison.OrdinalIgnoreCase) ||
+            descriptor.Contains("blue card", StringComparison.OrdinalIgnoreCase) ||
+            descriptor.Contains("residence permit", StringComparison.OrdinalIgnoreCase) ||
+            descriptor.Contains("work permit", StringComparison.OrdinalIgnoreCase) ||
+            descriptor.Contains("filing", StringComparison.OrdinalIgnoreCase) ||
+            descriptor.Contains("reporting", StringComparison.OrdinalIgnoreCase) ||
+            descriptor.Contains("checklist", StringComparison.OrdinalIgnoreCase) ||
+            descriptor.Contains("systematic review", StringComparison.OrdinalIgnoreCase) ||
+            descriptor.Contains("meta-analysis", StringComparison.OrdinalIgnoreCase) ||
+            descriptor.Contains("clinical", StringComparison.OrdinalIgnoreCase) ||
+            descriptor.Contains("guideline", StringComparison.OrdinalIgnoreCase) ||
+            descriptor.Contains("recommendation", StringComparison.OrdinalIgnoreCase) ||
+            descriptor.Contains("клиничес", StringComparison.OrdinalIgnoreCase) ||
+            descriptor.Contains("рекомендац", StringComparison.OrdinalIgnoreCase) ||
+            descriptor.Contains("обзор", StringComparison.OrdinalIgnoreCase) ||
+            descriptor.Contains("исследован", StringComparison.OrdinalIgnoreCase) ||
+            descriptor.Contains("налог", StringComparison.OrdinalIgnoreCase) ||
+            descriptor.Contains("отчет", StringComparison.OrdinalIgnoreCase) ||
+            descriptor.Contains("отчёт", StringComparison.OrdinalIgnoreCase) ||
+            descriptor.Contains("инвойс", StringComparison.OrdinalIgnoreCase) ||
+            descriptor.Contains("climate sensitivity", StringComparison.OrdinalIgnoreCase) ||
+            descriptor.Contains("equilibrium climate sensitivity", StringComparison.OrdinalIgnoreCase) ||
+            descriptor.Contains("transient climate response", StringComparison.OrdinalIgnoreCase) ||
+            descriptor.Contains("retraction", StringComparison.OrdinalIgnoreCase) ||
+            descriptor.Contains("ретрак", StringComparison.OrdinalIgnoreCase);
+        if (snippetLength >= 80)
+        {
+            return trustedProjectionHost || descriptorLooksDocumentLike;
+        }
+
+        var minimumOverlap = 0.18d;
+        if (queryProfile.RegulationFreshnessHeavy || requestProfile.StrictLiveEvidenceRequired)
+        {
+            minimumOverlap = 0.10d;
+        }
+        else if (trustedProjectionHost &&
+                 (queryProfile.ComparisonHeavy || queryProfile.CurrentnessHeavy || queryProfile.EvidenceHeavy))
+        {
+            minimumOverlap = 0.08d;
+        }
+
+        if (trustedProjectionHost && descriptorLooksDocumentLike)
+        {
+            minimumOverlap = Math.Min(minimumOverlap, 0.05d);
+        }
+
+        if (titleAndUrlOverlap < minimumOverlap)
+        {
+            return false;
+        }
+
+        return trustedProjectionHost || descriptorLooksDocumentLike;
     }
 
     private static string? TryBuildDecodedUrlCorpus(string? url)

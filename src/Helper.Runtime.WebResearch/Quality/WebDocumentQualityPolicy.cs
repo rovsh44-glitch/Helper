@@ -33,7 +33,7 @@ public sealed class WebDocumentQualityPolicy : IWebDocumentQualityPolicy
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     private static readonly Regex LowSignalInteractiveRegex = new(
-        "(играть онлайн|яндекс игры|яндекс маркет|словарь|перевод|translate|dictionary|spelling|spell|как пишется|правописани|challenge|челлендж|question|q&a|ответы mail|ответы на вопросы|discussion|comments?|reddit|stackexchange|forum|community|otvet\\.mail\\.ru)",
+        "(играть онлайн|яндекс игры|яндекс маркет|словарь|перевод|translate|dictionary|spelling|spell|как пишется|правописани|challenge|челлендж|question|q&a|ответы mail|ответы на вопросы|discussion|comments?|reddit|stackexchange|forum|community|otvet\\.mail\\.ru|jingyan|baidu experience|telegram|t\\.me|teletype|mediasetinfinity)",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     private static readonly Regex AntiBotInterstitialRegex = new(
@@ -49,9 +49,15 @@ public sealed class WebDocumentQualityPolicy : IWebDocumentQualityPolicy
         var trustProfile = ResolveTrustProfile(document.Url);
         var evidenceSensitive = queryProfile.EvidenceHeavy || queryProfile.MedicalEvidenceHeavy;
         var freshnessOrOfficialSensitive = queryProfile.CurrentnessHeavy && queryProfile.OfficialBias;
-        var regulationFreshnessSensitive = freshnessOrOfficialSensitive && LooksLikeRegulationFreshnessQuery(query);
+        var qualitySensitive =
+            evidenceSensitive ||
+            queryProfile.ComparisonHeavy ||
+            queryProfile.RegulationFreshnessHeavy ||
+            requestProfile.StrictLiveEvidenceRequired;
+        var regulationFreshnessSensitive = queryProfile.RegulationFreshnessHeavy || (freshnessOrOfficialSensitive && LooksLikeRegulationFreshnessQuery(query));
         var strongMedicalEvidenceSource = queryProfile.MedicalEvidenceHeavy && LooksLikeStrongMedicalEvidenceSource(document, corpus);
         var strongFreshnessOrOfficialSource = freshnessOrOfficialSensitive && LooksLikeStrongFreshnessOrOfficialSource(document, corpus, trustProfile);
+        var reasonableAnalyticalSource = LooksLikeReasonablyOnTopicAnalyticalSource(document, corpus, trustProfile, query);
 
         if (string.IsNullOrWhiteSpace(corpus))
         {
@@ -83,7 +89,9 @@ public sealed class WebDocumentQualityPolicy : IWebDocumentQualityPolicy
             signals.Add("low_query_overlap");
         }
 
-        if (evidenceSensitive && LowSignalInteractiveRegex.IsMatch($"{document.Url} {corpus}"))
+        if (qualitySensitive &&
+            LowSignalInteractiveRegex.IsMatch($"{document.Url} {corpus}") &&
+            !(trustProfile.IsAuthoritative && (strongFreshnessOrOfficialSource || strongMedicalEvidenceSource)))
         {
             signals.Add("interactive_or_ugc_for_evidence_query");
         }
@@ -106,6 +114,14 @@ public sealed class WebDocumentQualityPolicy : IWebDocumentQualityPolicy
             signals.Add("regulatory_source_mismatch");
         }
 
+        if ((queryProfile.ComparisonHeavy || requestProfile.StrictLiveEvidenceRequired) &&
+            signals.Contains("low_query_overlap", StringComparer.Ordinal) &&
+            !reasonableAnalyticalSource &&
+            !strongFreshnessOrOfficialSource)
+        {
+            signals.Add("analytical_source_mismatch");
+        }
+
         if (requestProfile.IsDocumentAnalysis &&
             signals.Contains("site_chrome_markers", StringComparer.Ordinal) &&
             !LooksLikeSubstantiveDocument(document))
@@ -124,6 +140,7 @@ public sealed class WebDocumentQualityPolicy : IWebDocumentQualityPolicy
                      (freshnessOrOfficialSensitive &&
                       signals.Contains("low_query_overlap", StringComparer.Ordinal) &&
                       !strongFreshnessOrOfficialSource) ||
+                     signals.Contains("analytical_source_mismatch", StringComparer.Ordinal) ||
                      signals.Contains("low_trust_for_freshness_or_official_query", StringComparer.Ordinal) ||
                      signals.Contains("regulatory_source_mismatch", StringComparer.Ordinal) ||
                      signals.Contains("anti_bot_interstitial", StringComparer.Ordinal) ||
@@ -230,6 +247,17 @@ public sealed class WebDocumentQualityPolicy : IWebDocumentQualityPolicy
             host.EndsWith(".int", StringComparison.OrdinalIgnoreCase) ||
             host.Contains("irs.gov", StringComparison.OrdinalIgnoreCase) ||
             host.Contains("sec.gov", StringComparison.OrdinalIgnoreCase) ||
+            host.Contains("gov.uz", StringComparison.OrdinalIgnoreCase) ||
+            host.Contains("lex.uz", StringComparison.OrdinalIgnoreCase) ||
+            host.Contains("soliq.uz", StringComparison.OrdinalIgnoreCase) ||
+            host.Contains("my.gov.uz", StringComparison.OrdinalIgnoreCase) ||
+            host.Contains("mehnat.uz", StringComparison.OrdinalIgnoreCase) ||
+            host.Contains("europa.eu", StringComparison.OrdinalIgnoreCase) ||
+            host.Contains("easa.europa.eu", StringComparison.OrdinalIgnoreCase) ||
+            host.Contains("make-it-in-germany.com", StringComparison.OrdinalIgnoreCase) ||
+            host.Contains("bamf.de", StringComparison.OrdinalIgnoreCase) ||
+            host.Contains("arbeitsagentur.de", StringComparison.OrdinalIgnoreCase) ||
+            host.Contains("auswaertiges-amt.de", StringComparison.OrdinalIgnoreCase) ||
             host.Contains("minzdrav", StringComparison.OrdinalIgnoreCase) ||
             host.Contains("medelement.com", StringComparison.OrdinalIgnoreCase) ||
             host.Contains("consultant.ru", StringComparison.OrdinalIgnoreCase) ||
@@ -242,6 +270,11 @@ public sealed class WebDocumentQualityPolicy : IWebDocumentQualityPolicy
         return corpus.Contains("official", StringComparison.OrdinalIgnoreCase) ||
                corpus.Contains("guideline", StringComparison.OrdinalIgnoreCase) ||
                corpus.Contains("recommendation", StringComparison.OrdinalIgnoreCase) ||
+               corpus.Contains("ai act", StringComparison.OrdinalIgnoreCase) ||
+               corpus.Contains("ai office", StringComparison.OrdinalIgnoreCase) ||
+               corpus.Contains("customs", StringComparison.OrdinalIgnoreCase) ||
+               corpus.Contains("drone", StringComparison.OrdinalIgnoreCase) ||
+               corpus.Contains("easa", StringComparison.OrdinalIgnoreCase) ||
                corpus.Contains("регламент", StringComparison.OrdinalIgnoreCase) ||
                corpus.Contains("рекомендац", StringComparison.OrdinalIgnoreCase) ||
                corpus.Contains("налог", StringComparison.OrdinalIgnoreCase) ||
@@ -262,13 +295,101 @@ public sealed class WebDocumentQualityPolicy : IWebDocumentQualityPolicy
         if (trustProfile.IsAuthoritative ||
             trustProfile.Label is "trusted_legal_reference" or "legal_document_host" or "major_business_news" or "major_newswire" or "government_primary")
         {
+            if (LooksLikeRelevantOfficialUzbekistanAdministrativeSource(uri, corpus) ||
+                LooksLikeRelevantOfficialEuPolicySource(uri, corpus))
+            {
+                return true;
+            }
+
             return ContainsAny(
                 $"{uri.Host} {uri.AbsolutePath} {corpus}",
                 "tax", "threshold", "deadline", "reporting", "filing", "irs", "sec",
-                "налог", "порог", "лимит", "срок", "отчетност", "отчётност");
+                "ai act", "artificial intelligence act", "provider obligations", "ai office", "eur-lex",
+                "customs", "import", "drone", "battery", "batteries", "vat", "duty", "easa", "ce marking",
+                "visa", "work permit", "residence permit", "blue card", "skilled worker",
+                "налог", "порог", "лимит", "срок", "отчетност", "отчётност", "виза", "разрешение на работу", "вид на жительство", "голубая карта",
+                "тамож", "ввоз", "дрон", "батаре", "ндс", "пошлин", "маркировк");
         }
 
         return false;
+    }
+
+    private static bool LooksLikeRelevantOfficialUzbekistanAdministrativeSource(Uri uri, string corpus)
+    {
+        var host = uri.Host;
+        if (!(host.Contains("gov.uz", StringComparison.OrdinalIgnoreCase) ||
+              host.Contains("lex.uz", StringComparison.OrdinalIgnoreCase) ||
+              host.Contains("soliq.uz", StringComparison.OrdinalIgnoreCase) ||
+              host.Contains("my.gov.uz", StringComparison.OrdinalIgnoreCase) ||
+              host.Contains("mehnat.uz", StringComparison.OrdinalIgnoreCase)))
+        {
+            return false;
+        }
+
+        return ContainsAny(
+            $"{uri.AbsolutePath} {corpus}",
+            "advice", "advisory", "document", "administrative", "service", "services", "foreign", "foreign client", "foreign clients", "income", "invoice", "tax", "reporting", "filing", "checklist", "remote worker", "remote work", "service export", "self employed", "freelance", "entrepreneur", "resident",
+            "совет", "разъясн", "документ", "административ", "услуг", "иностран", "клиент", "доход", "инвойс", "налог", "отчет", "отчёт", "checklist", "удален", "удалён", "экспорт услуг", "самозанят", "предприним", "резидент");
+    }
+
+    private static bool LooksLikeRelevantOfficialEuPolicySource(Uri uri, string corpus)
+    {
+        var host = uri.Host;
+        if (!(host.Contains("europa.eu", StringComparison.OrdinalIgnoreCase) ||
+              host.Contains("eur-lex.europa.eu", StringComparison.OrdinalIgnoreCase) ||
+              host.Contains("digital-strategy.ec.europa.eu", StringComparison.OrdinalIgnoreCase) ||
+              host.Contains("easa.europa.eu", StringComparison.OrdinalIgnoreCase) ||
+              host.Contains("taxation-customs.ec.europa.eu", StringComparison.OrdinalIgnoreCase)))
+        {
+            return false;
+        }
+
+        return ContainsAny(
+            $"{uri.AbsolutePath} {corpus}",
+            "ai", "artificial intelligence", "ai act", "provider", "obligations", "ai office", "european commission", "commission", "guidance", "faq", "policy", "compliance", "customs", "taxation", "import", "travel", "drone", "battery", "vat", "duty", "ce marking", "aviation",
+            "ии", "искусствен", "обязательства", "комисси", "руковод", "faq", "политик", "тамож", "налого", "ввоз", "поезд", "дрон", "батаре", "ндс", "пошлин", "маркировк", "авиац");
+    }
+
+    private static bool LooksLikeReasonablyOnTopicAnalyticalSource(
+        WebSearchDocument document,
+        string corpus,
+        DomainTrustProfile trustProfile,
+        string? query)
+    {
+        if (trustProfile.IsLowTrust)
+        {
+            return false;
+        }
+
+        if (trustProfile.IsAuthoritative &&
+            ContainsAny(
+                $"{document.Url} {corpus}",
+                "ai act", "artificial intelligence", "provider obligations", "ai office", "eur-lex",
+                "customs", "import", "drone", "battery", "batteries", "vat", "duty", "easa", "ce marking",
+                "visa", "blue card", "skilled worker", "residence permit", "work permit"))
+        {
+            return true;
+        }
+
+        if (!Uri.TryCreate(document.Url, UriKind.Absolute, out var uri))
+        {
+            return false;
+        }
+
+        var overlapRatio = SourceAuthorityScorer.ComputeQueryOverlapRatio(query, $"{document.Title} {document.Snippet} {uri.Host} {uri.AbsolutePath}");
+        if (overlapRatio < 0.18d)
+        {
+            return false;
+        }
+
+        return trustProfile.Label is "technical_media" or "technical_vendor_blog" or "specialized_security_media" or "official_reference_docs" or "official_vendor_docs" or "official_reference" ||
+               ContainsAny(
+                   $"{uri.Host} {uri.AbsolutePath} {corpus}",
+                   "vector", "database", "search", "retrieval", "coding assistant", "assistant", "productivity",
+                   "arxiv", "preprint", "publisher policy", "repository", "self-archiving", "open access", "accepted manuscript", "sherpa", "romeo",
+                   "rust", "security", "benchmark", "four-day", "4-day", "week", "rag", "developer", "engineering",
+                   "вектор", "поиск", "код", "ассистент", "продуктив", "rust", "безопас", "бенчмарк", "четырехднев", "четырёхднев",
+                   "издател", "репозитор", "самоархив", "открыт", "доступ");
     }
 
     private static DomainTrustProfile ResolveTrustProfile(string? url)
@@ -286,7 +407,11 @@ public sealed class WebDocumentQualityPolicy : IWebDocumentQualityPolicy
         return ContainsAny(
             query ?? string.Empty,
             "tax", "threshold", "deadline", "reporting", "filing", "regulation",
-            "налог", "порог", "лимит", "срок", "отчетност", "отчётност", "регуляц");
+            "ai act", "artificial intelligence act", "provider obligations", "ai office",
+            "customs", "import", "drone", "battery", "batteries", "vat", "duty", "easa", "ce marking",
+            "visa", "visas", "immigration", "migration", "relocation", "residence permit", "work permit", "blue card", "bluecard", "skilled worker",
+            "налог", "порог", "лимит", "срок", "отчетност", "отчётност", "регуляц", "виза", "визовые", "миграц", "внж", "вид на жительство", "разрешение на работу", "голубая карта",
+            "тамож", "ввоз", "дрон", "батаре", "ндс", "пошлин", "маркировк");
     }
 
     private static bool ContainsAny(string text, params string[] markers)

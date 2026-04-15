@@ -2,6 +2,8 @@ namespace Helper.Runtime.WebResearch;
 
 public sealed class WebSearchSessionCoordinator : IWebSearchSessionCoordinator
 {
+    private static readonly IAuthoritativeSourceFamilyPolicy AuthoritativeSourceFamilies = new AuthoritativeSourceFamilyPolicy();
+
     private readonly IWebSearchProviderClient _providerClient;
     private readonly IWebQueryPlanner _queryPlanner;
     private readonly ISearchIterationPolicy _iterationPolicy;
@@ -63,6 +65,13 @@ public sealed class WebSearchSessionCoordinator : IWebSearchSessionCoordinator
             {
                 documents = Array.Empty<WebSearchDocument>();
                 failureReason ??= ex.Message;
+            }
+
+            var authoritativeFamily = AuthoritativeSourceFamilies.Augment(request, plan, documents);
+            documents = authoritativeFamily.Documents;
+            if (authoritativeFamily.Trace.Count > 0)
+            {
+                providerTrace.AddRange(authoritativeFamily.Trace.Select(trace => $"{trace} query_kind={plan.QueryKind}"));
             }
 
             var rankingTrace = new List<string>();

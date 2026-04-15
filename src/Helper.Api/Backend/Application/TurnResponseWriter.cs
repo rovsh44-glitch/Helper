@@ -101,6 +101,7 @@ public sealed class TurnResponseWriter : ITurnResponseWriter
         var searchTrace = _webSearchTraceProjector.Build(context);
         var answerMode = ToApiValue(context.EpistemicAnswerMode);
         var epistemicRisk = ToDto(context.EpistemicRiskSnapshot, answerMode);
+        var evidenceFusion = ToDto(context.EvidenceFusionSnapshot);
         var interactionState = ToDto(context.InteractionState);
         context.StyleTelemetry = styleTelemetry;
         _sharedUnderstandingService.CaptureTurnOutcome(state, context, DateTimeOffset.UtcNow);
@@ -140,6 +141,7 @@ public sealed class TurnResponseWriter : ITurnResponseWriter
             RepairDriver: context.RepairDriver,
             StyleTelemetry: ToDto(styleTelemetry),
             SearchTrace: searchTrace,
+            EvidenceFusion: evidenceFusion,
             InputMode: ConversationInputMode.Normalize(context.Request.InputMode),
             EpistemicAnswerMode: answerMode,
             EpistemicRisk: epistemicRisk,
@@ -161,6 +163,7 @@ public sealed class TurnResponseWriter : ITurnResponseWriter
             AuditStatus = auditStatus,
             StyleTelemetry = ToDto(styleTelemetry),
             SearchTrace = searchTrace,
+            EvidenceFusion = evidenceFusion,
             EpistemicAnswerMode = answerMode,
             EpistemicRisk = epistemicRisk,
             InteractionState = interactionState
@@ -312,6 +315,26 @@ public sealed class TurnResponseWriter : ITurnResponseWriter
             ClarificationToleranceShift: snapshot.ClarificationToleranceShift,
             AssistantPressureRisk: ToApiValue(snapshot.AssistantPressureRisk),
             Signals: snapshot.Signals);
+    }
+
+    private static EvidenceFusionSnapshotDto? ToDto(EvidenceFusionSnapshot? snapshot)
+    {
+        if (snapshot is null)
+        {
+            return null;
+        }
+
+        return new EvidenceFusionSnapshotDto(
+            WebSourceCount: snapshot.WebSourceCount,
+            LocalSourceCount: snapshot.LocalSourceCount,
+            AttachmentSourceCount: snapshot.AttachmentSourceCount,
+            WebCitationCoverage: snapshot.WebCitationCoverage,
+            LocalCitationCoverage: snapshot.LocalCitationCoverage,
+            FreshClaimWebCoverage: snapshot.FreshClaimWebCoverage,
+            BackgroundClaimCoverage: snapshot.BackgroundClaimCoverage,
+            UnsupportedFreshClaimCount: snapshot.UnsupportedFreshClaimCount,
+            LocalOnlyFreshClaimCount: snapshot.LocalOnlyFreshClaimCount,
+            Trace: snapshot.Trace);
     }
 
     private static string ToApiValue(EpistemicAnswerMode answerMode)

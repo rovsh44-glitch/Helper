@@ -168,7 +168,15 @@ public sealed class FileConversationPersistence : IConversationPersistenceEngine
 
                 if (_journalEntriesSinceSnapshot >= _journalCompactionThreshold)
                 {
-                    WriteSnapshot(allStates);
+                    try
+                    {
+                        WriteSnapshot(allStates);
+                    }
+                    catch (Exception ex) when (CanDeferSnapshotCompaction(ex))
+                    {
+                        _alerts.Add($"Conversation persistence snapshot compaction deferred: {ex.Message}");
+                        TrimAlerts();
+                    }
                 }
 
                 _lastFlushSucceeded = true;
@@ -237,13 +245,47 @@ public sealed class FileConversationPersistence : IConversationPersistenceEngine
         };
 
         var json = JsonSerializer.Serialize(envelope);
-        var tempPath = _snapshotPath + ".tmp";
+        var tempPath = CreateSnapshotTempPath();
+        var legacyTempPath = _snapshotPath + ".tmp";
         File.WriteAllText(tempPath, json);
-        File.Copy(tempPath, _snapshotPath!, overwrite: true);
-        File.Delete(tempPath);
+
+        if (File.Exists(_snapshotPath!))
+        {
+            File.Replace(tempPath, _snapshotPath!, destinationBackupFileName: null, ignoreMetadataErrors: true);
+        }
+        else
+        {
+            File.Move(tempPath, _snapshotPath!);
+        }
+
         File.WriteAllText(_journalPath!, string.Empty);
         _journalEntriesSinceSnapshot = 0;
         _lastSnapshotAtUtc = DateTimeOffset.UtcNow;
+        if (!string.Equals(tempPath, legacyTempPath, StringComparison.OrdinalIgnoreCase))
+        {
+            TryDeleteFile(legacyTempPath);
+        }
+    }
+
+    private string CreateSnapshotTempPath()
+    {
+        var directory = Path.GetDirectoryName(_snapshotPath!) ?? HelperWorkspacePathResolver.ResolveLogsRoot();
+        Directory.CreateDirectory(directory);
+        return Path.Combine(directory, $"{Path.GetFileName(_snapshotPath!)}.{Guid.NewGuid():N}.tmp");
+    }
+
+    private static void TryDeleteFile(string path)
+    {
+        try
+        {
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+            }
+        }
+        catch
+        {
+        }
     }
 
     private static int ReadCompactionThreshold()
@@ -252,6 +294,11 @@ public sealed class FileConversationPersistence : IConversationPersistenceEngine
         return int.TryParse(raw, out var parsed)
             ? Math.Clamp(parsed, 5, 500)
             : 25;
+    }
+
+    private static bool CanDeferSnapshotCompaction(Exception ex)
+    {
+        return ex is IOException or UnauthorizedAccessException;
     }
 
     private void TrimAlerts()

@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using System.Text;
 using Helper.Runtime.Core;
 using Helper.Runtime.WebResearch;
@@ -20,7 +21,13 @@ internal static partial class ResearchSynthesisSupport
                 Snippet: NormalizeSnippet(result.Content),
                 IsFallback: result.IsDeepScan,
                 TrustLevel: UntrustedWebContentTrustLevel,
-                EvidenceKind: "search_hit"))
+                EvidenceKind: "search_hit",
+                SourceLayer: "web",
+                SourceFormat: ResolveWebSourceFormat(result.Url, contentType: null),
+                SourceId: BuildStableWebSourceId(result.Url),
+                DisplayTitle: string.IsNullOrWhiteSpace(result.Title) ? $"Source {index + 1}" : result.Title.Trim(),
+                FreshnessEligibility: "current_external",
+                AllowedClaimRoles: new[] { "background", "current_external_fact", "regulatory_current_fact" }))
             .ToArray();
     }
 
@@ -42,7 +49,13 @@ internal static partial class ResearchSynthesisSupport
                 SafetyFlags: document.ExtractedPage?.SafetyFlags ?? Array.Empty<string>(),
                 EvidenceKind: ResolveEvidenceKind(document),
                 PublishedAt: document.ExtractedPage?.PublishedAt,
-                Passages: BuildEvidencePassages(document, index + 1)))
+                Passages: BuildEvidencePassages(document, index + 1),
+                SourceLayer: "web",
+                SourceFormat: ResolveWebSourceFormat(document.ExtractedPage?.CanonicalUrl ?? document.Url, document.ExtractedPage?.ContentType),
+                SourceId: BuildStableWebSourceId(document.ExtractedPage?.CanonicalUrl ?? document.Url),
+                DisplayTitle: ResolveTitle(document, index + 1),
+                FreshnessEligibility: "current_external",
+                AllowedClaimRoles: new[] { "background", "current_external_fact", "regulatory_current_fact" }))
             .ToArray();
     }
 
@@ -159,6 +172,35 @@ internal static partial class ResearchSynthesisSupport
                 WasSanitized: passage.WasSanitized,
                 SafetyFlags: passage.SafetyFlags ?? Array.Empty<string>()))
             .ToArray();
+    }
+
+    private static string ResolveWebSourceFormat(string? url, string? contentType)
+    {
+        if (!string.IsNullOrWhiteSpace(contentType) &&
+            contentType.Contains("pdf", StringComparison.OrdinalIgnoreCase))
+        {
+            return "pdf";
+        }
+
+        if (!string.IsNullOrWhiteSpace(url) &&
+            Uri.TryCreate(url, UriKind.Absolute, out var uri))
+        {
+            var extension = Path.GetExtension(uri.AbsolutePath).TrimStart('.').Trim().ToLowerInvariant();
+            if (!string.IsNullOrWhiteSpace(extension))
+            {
+                return extension is "htm" ? "html" : extension;
+            }
+        }
+
+        return "html";
+    }
+
+    private static string BuildStableWebSourceId(string? url)
+    {
+        var value = string.IsNullOrWhiteSpace(url) ? Guid.Empty.ToString("N") : url.Trim().ToLowerInvariant();
+        using var sha = SHA256.Create();
+        var hash = sha.ComputeHash(Encoding.UTF8.GetBytes(value));
+        return Convert.ToHexString(hash).ToLowerInvariant()[..16];
     }
 
     private static void AppendEvidenceBody(StringBuilder builder, ResearchEvidenceItem item)

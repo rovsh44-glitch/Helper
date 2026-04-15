@@ -118,6 +118,66 @@ public sealed class SourceAuthorityScorerTests
     }
 
     [Fact]
+    public void Evaluate_DemotesRotterForum_ForSparseEvidencePrompt()
+    {
+        var scorer = new SourceAuthorityScorer();
+        var policy = new SpamAndSeoDemotionPolicy();
+        var plan = new WebSearchPlan(
+            Query: "четырехдневная рабочая неделя productivity evidence across industries обзор",
+            MaxResults: 5,
+            Depth: 1,
+            Purpose: "research",
+            SearchMode: "standard",
+            AllowDeterministicFallback: false);
+
+        var reference = new WebSearchDocument(
+            "https://trends.rbc.ru/trends/social/648986c79a7947744b1ef62f",
+            "Четырёхдневная рабочая неделя: обзор практического опыта",
+            "Аналитический обзор по влиянию четырёхдневной недели на output и ограничения выводов.");
+        var forum = new WebSearchDocument(
+            "https://rotter.net/forum/scoops1/936510.shtml",
+            "Forum thread",
+            "User discussion unrelated to four-day workweek evidence.");
+
+        var referenceScore = scorer.Evaluate(plan, reference).Score - policy.Evaluate(plan, reference).Penalty;
+        var forumAssessment = policy.Evaluate(plan, forum);
+        var forumScore = scorer.Evaluate(plan, forum).Score - forumAssessment.Penalty;
+
+        Assert.True(forumAssessment.LowTrust);
+        Assert.True(referenceScore > forumScore);
+    }
+
+    [Fact]
+    public void Evaluate_DemotesCommentCaMarcheForum_ForDroneCustomsRegulationQuery()
+    {
+        var scorer = new SourceAuthorityScorer();
+        var policy = new SpamAndSeoDemotionPolicy();
+        var plan = new WebSearchPlan(
+            Query: "eu drone import customs batteries vat ce marking easa official guidance",
+            MaxResults: 5,
+            Depth: 1,
+            Purpose: "research",
+            SearchMode: "standard",
+            AllowDeterministicFallback: false);
+
+        var official = new WebSearchDocument(
+            "https://easa.europa.eu/en/the-agency/faqs/drones",
+            "Drones | Frequently Asked Questions",
+            "Official EASA guidance on drones, batteries, travel and EU compliance obligations.");
+        var forum = new WebSearchDocument(
+            "https://forums.commentcamarche.net/forum/affich-35995097-desabonnement-wetransfer",
+            "Désabonnement wetransfer - Consommation & Internet",
+            "Forum thread unrelated to customs rules or drones.");
+
+        var officialScore = scorer.Evaluate(plan, official).Score - policy.Evaluate(plan, official).Penalty;
+        var forumAssessment = policy.Evaluate(plan, forum);
+        var forumScore = scorer.Evaluate(plan, forum).Score - forumAssessment.Penalty;
+
+        Assert.True(forumAssessment.LowTrust);
+        Assert.True(officialScore > forumScore);
+    }
+
+    [Fact]
     public void ComputeQueryOverlapRatio_RecognizesRussianMorphology_ForClinicalSources()
     {
         var ratio = SourceAuthorityScorer.ComputeQueryOverlapRatio(
@@ -293,6 +353,28 @@ public sealed class SourceAuthorityScorerTests
         var aggregatorScore = scorer.Evaluate(plan, aggregator).Score - policy.Evaluate(plan, aggregator).Penalty;
 
         Assert.True(publisherScore > aggregatorScore);
+    }
+
+    [Fact]
+    public void BuildQueryProfile_TreatsVisaRelocationQuery_AsCurrentAndOfficial()
+    {
+        var profile = SourceAuthorityScorer.BuildQueryProfile(
+            "Сравни актуальные визовые пути для software engineer, который хочет переехать в Германию в 2026 году.",
+            null);
+
+        Assert.True(profile.CurrentnessHeavy);
+        Assert.True(profile.OfficialBias);
+    }
+
+    [Fact]
+    public void BuildQueryProfile_TreatsRetractionStatusQuery_AsEvidenceAndOfficial()
+    {
+        var profile = SourceAuthorityScorer.BuildQueryProfile(
+            "Проверь, была ли статья отозвана, исправлена или сильно оспорена по состоянию на сегодня.",
+            null);
+
+        Assert.True(profile.EvidenceHeavy);
+        Assert.True(profile.OfficialBias);
     }
 }
 

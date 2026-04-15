@@ -3,6 +3,7 @@ using Helper.Api.Conversation.InteractionState;
 using Helper.Api.Hosting;
 using Helper.Runtime.Core;
 using Helper.Runtime.Infrastructure;
+using Helper.Runtime.WebResearch.Rendering;
 using Helper.Testing;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -94,6 +95,36 @@ public sealed class RuntimeServiceProfileTests
 
         var planner = provider.GetRequiredService<IChatTurnPlanner>();
         Assert.IsType<ChatTurnPlanner>(planner);
+    }
+
+    [Fact]
+    public void AddHelperApplicationServices_UsesActiveBrowserRenderFallback_WhenEnabled()
+    {
+        using var env = new EnvironmentVariableScope(new Dictionary<string, string?>
+        {
+            ["HELPER_WEB_RENDER_ENABLED"] = "true"
+        });
+        using var temp = new TempDirectoryScope("helper-runtime-profile-");
+        using var provider = BuildServices(temp.Path).BuildServiceProvider();
+
+        var renderService = provider.GetRequiredService<IBrowserRenderFallbackService>();
+
+        Assert.IsType<BrowserRenderFallbackService>(renderService);
+    }
+
+    [Fact]
+    public void AddHelperApplicationServices_UsesDisabledBrowserRenderFallback_WhenExplicitlyDisabled()
+    {
+        using var env = new EnvironmentVariableScope(new Dictionary<string, string?>
+        {
+            ["HELPER_WEB_RENDER_ENABLED"] = "false"
+        });
+        using var temp = new TempDirectoryScope("helper-runtime-profile-");
+        using var provider = BuildServices(temp.Path).BuildServiceProvider();
+
+        var renderService = provider.GetRequiredService<IBrowserRenderFallbackService>();
+
+        Assert.IsType<DisabledBrowserRenderFallbackService>(renderService);
     }
 
     private static IServiceCollection BuildServices(string root)

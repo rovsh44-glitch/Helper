@@ -26,8 +26,10 @@ public sealed class SearchEvidenceSufficiencyPolicy : ISearchEvidenceSufficiency
         var text = request.Query ?? string.Empty;
         var queryProfile = SourceAuthorityScorer.BuildQueryProfile(text, null);
         var intentProfile = SearchQueryIntentProfileClassifier.Classify(text, queryProfile);
+        var requestProfile = ResearchRequestProfileResolver.From(text);
         var paperAnalysisLike = intentProfile.PaperAnalysisLike ||
                                 SearchQuerySignalLexicon.ContainsAny(text, SearchQuerySignalLexicon.PaperTokens);
+        var retractionStatusLike = LooksLikeRetractionStatusQuery(text);
         var evidenceSensitive = queryProfile.EvidenceHeavy || queryProfile.MedicalEvidenceHeavy;
         var hasFreshnessNeed = intentProfile.FreshnessSensitive;
         var hasComparisonNeed = intentProfile.ComparisonSensitive;
@@ -38,16 +40,18 @@ public sealed class SearchEvidenceSufficiencyPolicy : ISearchEvidenceSufficiency
         var hasEvidenceIteration = executedPlans.Any(static plan => plan.QueryKind.Equals("evidence", StringComparison.OrdinalIgnoreCase));
         var hasStepBackIteration = executedPlans.Any(static plan => plan.QueryKind.Equals("step_back", StringComparison.OrdinalIgnoreCase));
         var hasOfficialIteration = executedPlans.Any(static plan => plan.QueryKind.Equals("official", StringComparison.OrdinalIgnoreCase));
+        var hasPublisherPolicyIteration = executedPlans.Any(static plan => plan.QueryKind.Equals("publisher_policy", StringComparison.OrdinalIgnoreCase));
         var hasPaperIteration = executedPlans.Any(static plan => plan.QueryKind.Equals("paper_focus", StringComparison.OrdinalIgnoreCase));
         var tokenCount = CountTokens(text);
-        var minimumSourceFloor = ResolveMinimumSourceFloor(intentProfile, queryProfile, paperAnalysisLike);
+        var minimumSourceFloor = ResolveMinimumSourceFloor(intentProfile, queryProfile, requestProfile, paperAnalysisLike, retractionStatusLike);
         var meetsSourceFloor = liveResultCount >= minimumSourceFloor;
 
         if (paperAnalysisLike)
         {
-            var enough = liveResultCount >= 2 &&
+            var requiredSources = retractionStatusLike ? Math.Max(3, minimumSourceFloor) : 2;
+            var enough = liveResultCount >= requiredSources &&
                          distinctDomainCount >= 1 &&
-                         (hasPaperIteration || hasOfficialIteration || extractedLiveCount >= 1);
+                         (hasPaperIteration || hasOfficialIteration || hasPublisherPolicyIteration || extractedLiveCount >= 1);
             return new WebEvidenceSufficiencyDecision(
                 enough,
                 enough ? "paper_focus_covered" : "need_paper_focus_query",
@@ -57,12 +61,17 @@ public sealed class SearchEvidenceSufficiencyPolicy : ISearchEvidenceSufficiency
 
         if (hasComparisonNeed || hasContradictionNeed)
         {
+            var strictLiveEvidence = requestProfile.StrictLiveEvidenceRequired;
             var requiresMedicalVerification = hasContradictionNeed && queryProfile.MedicalEvidenceHeavy;
             var enough = requiresMedicalVerification
                 ? liveResultCount >= 3 &&
                   distinctDomainCount >= 2 &&
                   executedPlans.Count >= 3 &&
                   (hasEvidenceIteration || hasContradictionIteration)
+                : strictLiveEvidence
+                    ? liveResultCount >= 3 &&
+                      distinctDomainCount >= 2 &&
+                      (hasOfficialIteration || hasFreshnessIteration || hasContradictionIteration || executedPlans.Count >= 3)
                 : liveResultCount >= 2 &&
                   distinctDomainCount >= 2 &&
                   (!hasContradictionNeed || hasContradictionIteration || executedPlans.Count >= 2);
@@ -71,6 +80,18 @@ public sealed class SearchEvidenceSufficiencyPolicy : ISearchEvidenceSufficiency
                 enough
                     ? requiresMedicalVerification ? "comparative_evidence_coverage" : "comparative_coverage"
                     : requiresMedicalVerification ? "need_medical_evidence_reconciliation" : "need_cross_source_comparison",
+                distinctDomainCount,
+                liveResultCount);
+        }
+
+        if (requestProfile.StrictLiveEvidenceRequired || queryProfile.RegulationFreshnessHeavy)
+        {
+            var enough = meetsSourceFloor &&
+                         distinctDomainCount >= 2 &&
+                         (hasOfficialIteration || hasFreshnessIteration || executedPlans.Count >= 3);
+            return new WebEvidenceSufficiencyDecision(
+                enough,
+                enough ? "freshness_covered" : "need_freshness_query",
                 distinctDomainCount,
                 liveResultCount);
         }
@@ -103,7 +124,7 @@ public sealed class SearchEvidenceSufficiencyPolicy : ISearchEvidenceSufficiency
             var hasStructuredFollowUp = queryProfile.MedicalEvidenceHeavy || evidenceSensitive
                 ? hasEvidenceIteration || hasOfficialIteration
                 : paperAnalysisLike
-                    ? hasPaperIteration || hasOfficialIteration
+                    ? hasPaperIteration || hasOfficialIteration || hasPublisherPolicyIteration
                     : hasFreshnessIteration || hasOfficialIteration;
             var enough = requiresStructuredFollowUp
                 ? meetsSourceFloor && hasStructuredFollowUp
@@ -155,8 +176,25 @@ public sealed class SearchEvidenceSufficiencyPolicy : ISearchEvidenceSufficiency
     private static int ResolveMinimumSourceFloor(
         SearchQueryIntentProfile intentProfile,
         SearchRankingQueryProfile queryProfile,
-        bool paperAnalysisLike)
+        ResearchRequestProfile requestProfile,
+        bool paperAnalysisLike,
+        bool retractionStatusLike)
     {
+        if (requestProfile.StrictLiveEvidenceRequired)
+        {
+            return 3;
+        }
+
+        if (retractionStatusLike)
+        {
+            return 3;
+        }
+
+        if (queryProfile.RegulationFreshnessHeavy)
+        {
+            return 3;
+        }
+
         if (queryProfile.MedicalEvidenceHeavy &&
             (intentProfile.ComparisonSensitive || intentProfile.ContradictionSensitive))
         {
@@ -179,6 +217,21 @@ public sealed class SearchEvidenceSufficiencyPolicy : ISearchEvidenceSufficiency
     private static string? TryGetHost(string url)
     {
         return Uri.TryCreate(url, UriKind.Absolute, out var uri) ? uri.Host : null;
+    }
+
+    private static bool LooksLikeRetractionStatusQuery(string text)
+    {
+        return text.Contains("retraction", StringComparison.OrdinalIgnoreCase) ||
+               text.Contains("retracted", StringComparison.OrdinalIgnoreCase) ||
+               text.Contains("withdrawn", StringComparison.OrdinalIgnoreCase) ||
+               text.Contains("erratum", StringComparison.OrdinalIgnoreCase) ||
+               text.Contains("correction", StringComparison.OrdinalIgnoreCase) ||
+               text.Contains("expression of concern", StringComparison.OrdinalIgnoreCase) ||
+               text.Contains("crossmark", StringComparison.OrdinalIgnoreCase) ||
+               text.Contains("отозван", StringComparison.OrdinalIgnoreCase) ||
+               text.Contains("ретракц", StringComparison.OrdinalIgnoreCase) ||
+               text.Contains("исправлен", StringComparison.OrdinalIgnoreCase) ||
+               text.Contains("оспор", StringComparison.OrdinalIgnoreCase);
     }
 }
 

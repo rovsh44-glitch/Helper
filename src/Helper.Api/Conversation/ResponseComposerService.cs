@@ -3,10 +3,7 @@ using Helper.Api.Conversation.Epistemic;
 
 namespace Helper.Api.Conversation;
 
-public interface IResponseComposerService
-{
-    string Compose(ChatTurnContext context, string preparedOutput);
-}
+public interface IResponseComposerService { string Compose(ChatTurnContext context, string preparedOutput); }
 
 public sealed class ResponseComposerService : IResponseComposerService
 {
@@ -86,7 +83,7 @@ public sealed class ResponseComposerService : IResponseComposerService
     {
         var builder = new StringBuilder();
         builder.Append(solution);
-        AppendSourcesSection(builder, localization, context.Sources, solution);
+        AppendSourcesSection(builder, localization, context, solution);
         AppendNextStepSection(builder, localization, context.NextStep, context, plan);
         return builder.ToString().TrimEnd();
     }
@@ -139,16 +136,36 @@ public sealed class ResponseComposerService : IResponseComposerService
         return builder.ToString().TrimEnd();
     }
 
-    private static void AppendSourcesSection(StringBuilder builder, ComposerLocalization localization, IReadOnlyList<string> sources, string solution)
+    private static void AppendSourcesSection(StringBuilder builder, ComposerLocalization localization, ChatTurnContext context, string solution)
     {
-        if (sources.Count == 0 || ResponseComposerSupport.ContainsSourcesSection(solution))
+        if ((context.Sources.Count == 0 && context.ResearchEvidenceItems.Count == 0) ||
+            ResponseComposerSupport.ContainsSourcesSection(solution))
         {
             return;
         }
 
         builder.AppendLine();
         builder.AppendLine(localization.SourcesHeader);
-        foreach (var source in sources.Distinct().Take(8))
+        var webSources = ConversationSourceClassifier.GetWebSources(context);
+        var localSources = ConversationSourceClassifier.GetLocalSources(context);
+        if (webSources.Count > 0 || localSources.Count > 0)
+        {
+            foreach (var source in webSources.Take(8))
+            {
+                builder.Append("- web: ");
+                builder.AppendLine(source);
+            }
+
+            foreach (var source in localSources.Take(Math.Max(0, 8 - webSources.Count)))
+            {
+                builder.Append("- local: ");
+                builder.AppendLine(source);
+            }
+
+            return;
+        }
+
+        foreach (var source in context.Sources.Distinct().Take(8))
         {
             builder.Append("- ");
             builder.AppendLine(source);
@@ -197,11 +214,6 @@ public sealed class ResponseComposerService : IResponseComposerService
             localization.OperatorSummaryHeaders);
     }
 
-    private static string? NormalizeOptional(string? value)
-    {
-        return string.IsNullOrWhiteSpace(value)
-            ? null
-            : value.Trim();
-    }
+    private static string? NormalizeOptional(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }
-

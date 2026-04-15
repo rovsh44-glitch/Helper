@@ -104,7 +104,7 @@ internal static partial class SearchQueryIntentProfileClassifier
             : text.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Length;
     }
 
-    [GeneratedRegex(@"^(?:please\s+)?(?:explain|describe|analyze|review|compare|check|verify|summarize|evaluate|assess|critique|tell\s+me|show\s+me)\b|^(?:пожалуйста\s+)?(?:объясни|расскажи|опиши|разбери|проанализируй|сравни|проверь|уточни|покажи|оцени|критически\s+разбери)\b", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+    [GeneratedRegex(@"^(?:please\s+)?(?:explain|describe|analyze|review|compare|check|verify|summarize|evaluate|assess|critique|tell\s+me|show\s+me|prepare|draft|make)\b|^(?:пожалуйста\s+)?(?:объясни|расскажи|опиши|разбери|проанализируй|сравни|проверь|уточни|покажи|оцени|составь|подготовь|сделай|критически\s+разбери)\b", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
     private static partial Regex HumanPromptRegex();
 
     [GeneratedRegex(@"^(?:what|how|why|when|where|which|does|do|is|are|can|should)\b", RegexOptions.IgnoreCase | RegexOptions.Compiled)]

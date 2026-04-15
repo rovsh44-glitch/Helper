@@ -142,8 +142,12 @@ internal static class DomainAuthorityProfileResolver
     {
         "law", "laws", "legal", "regulation", "regulations", "regulatory", "rule", "rules", "compliance",
         "tax", "taxes", "act", "acts", "statute", "statutes", "gdpr", "privacy policy",
+        "visa", "visas", "immigration", "migration", "relocation", "residence permit", "work permit", "blue card", "bluecard", "skilled worker",
+        "filing", "reporting", "deadline", "deadlines", "invoice", "invoices", "foreign clients", "remote worker", "remote work",
         "закон", "законы", "право", "правовой", "регуляц", "регулирован", "правила", "норматив",
-        "комплаенс", "налог", "налоги", "налого", "акт", "постановлен", "указ"
+        "комплаенс", "налог", "налоги", "налого", "налогов", "отчетност", "отчётност", "срок", "сроки", "инвойс", "иностранн",
+        "виза", "визы", "визовые", "миграц", "релокац", "внж", "вид на жительство", "разрешение на работу", "голубая карта",
+        "удален", "удалён", "акт", "постановлен", "указ"
     };
 
     private static readonly string[] FinanceTokens =

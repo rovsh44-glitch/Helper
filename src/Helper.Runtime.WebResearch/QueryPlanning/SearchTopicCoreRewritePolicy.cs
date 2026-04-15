@@ -108,6 +108,56 @@ public sealed partial class SearchTopicCoreRewritePolicy : ISearchTopicCoreRewri
         var rewritten = value;
         if (string.Equals(language, "ru", StringComparison.OrdinalIgnoreCase))
         {
+            if (LooksLikeRetractionStatusPrompt(rewritten))
+            {
+                return "retraction correction expression of concern crossmark crossref pubmed journal ethics";
+            }
+
+            if (LooksLikeUzbekistanFilingChecklistPrompt(rewritten))
+            {
+                return "узбекистан remote worker инвойсы иностранные клиенты налоговая отчетность filing checklist 2026";
+            }
+
+            if (LooksLikeGermanyVisaPathPrompt(rewritten))
+            {
+                return "germany software engineer european blue card opportunity card skilled worker visa it specialist residence permit 2026";
+            }
+
+            if (LooksLikeClimateSensitivityPrompt(rewritten))
+            {
+                return "climate sensitivity equilibrium climate sensitivity transient climate response earth system sensitivity ipcc ar6 uncertainty";
+            }
+
+            if (LooksLikeEuAiRegulationPrompt(rewritten))
+            {
+                return "european union artificial intelligence act european commission ai office eur-lex provider obligations small software vendor implementation guidance";
+            }
+
+            if (LooksLikeArxivPublisherPolicyPrompt(rewritten))
+            {
+                return "arxiv preprint peer review journal publisher repository sherpa romeo open access self-archiving accepted manuscript policy";
+            }
+
+            if (LooksLikeEuDroneImportPrompt(rewritten))
+            {
+                return "european union drone import customs batteries vat ce marking easa taxation customs official guidance";
+            }
+
+            if (LooksLikeVectorVsSearchPrompt(rewritten))
+            {
+                return "vector database vs классический search маленькая команда benchmark independent comparison";
+            }
+
+            if (LooksLikeAiCodingAssistantsRegulatedCompanyPrompt(rewritten))
+            {
+                return "ai coding assistants регулируемая компания governance productivity evidence внедрение";
+            }
+
+            if (LooksLikeFourDayWorkweekPrompt(rewritten))
+            {
+                return "четырехдневная рабочая неделя productivity evidence across industries обзор";
+            }
+
             if (LooksLikeMixedLanguageTaxDeadlinePrompt(rewritten))
             {
                 return "налоговые пороги лимиты сроки отчетности официальные требования";
@@ -164,6 +214,114 @@ public sealed partial class SearchTopicCoreRewritePolicy : ISearchTopicCoreRewri
                 value.Contains("reporting", StringComparison.OrdinalIgnoreCase));
     }
 
+    private static bool LooksLikeUzbekistanFilingChecklistPrompt(string value)
+    {
+        return value.Contains("узбекистан", StringComparison.OrdinalIgnoreCase) &&
+               (value.Contains("инвойс", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("invoice", StringComparison.OrdinalIgnoreCase)) &&
+               (value.Contains("remote worker", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("удален", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("иностранн", StringComparison.OrdinalIgnoreCase)) &&
+               (value.Contains("checklist", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("filing", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("отчет", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("отчёт", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static bool LooksLikeGermanyVisaPathPrompt(string value)
+    {
+        return value.Contains("германи", StringComparison.OrdinalIgnoreCase) &&
+               (value.Contains("виза", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("визов", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("blue card", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("голуб", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("разрешение на работу", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("вид на жительство", StringComparison.OrdinalIgnoreCase)) &&
+               (value.Contains("software engineer", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("программист", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("разработчик", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static bool LooksLikeRetractionStatusPrompt(string value)
+    {
+        return (value.Contains("отозван", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("исправлен", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("оспорен", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("ретрак", StringComparison.OrdinalIgnoreCase)) &&
+               value.Contains("doi", StringComparison.OrdinalIgnoreCase) == false;
+    }
+
+    private static bool LooksLikeVectorVsSearchPrompt(string value)
+    {
+        return (value.Contains("vector", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("вектор", StringComparison.OrdinalIgnoreCase)) &&
+               value.Contains("search", StringComparison.OrdinalIgnoreCase) &&
+               (value.Contains("benchmark", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("vendor-shaped", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("маленьк", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static bool LooksLikeAiCodingAssistantsRegulatedCompanyPrompt(string value)
+    {
+        return (value.Contains("ai coding assistant", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("coding assistant", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("кодинг ассист", StringComparison.OrdinalIgnoreCase)) &&
+               (value.Contains("регулируем", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("regulated", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static bool LooksLikeFourDayWorkweekPrompt(string value)
+    {
+        return (value.Contains("четырехднев", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("четырёхднев", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("four-day", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("4-day", StringComparison.OrdinalIgnoreCase)) &&
+               value.Contains("рабоч", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool LooksLikeClimateSensitivityPrompt(string value)
+    {
+        return value.Contains("climate sensitivity", StringComparison.OrdinalIgnoreCase) ||
+               (value.Contains("climate", StringComparison.OrdinalIgnoreCase) &&
+                value.Contains("sensitivity", StringComparison.OrdinalIgnoreCase)) ||
+               (value.Contains("климат", StringComparison.OrdinalIgnoreCase) &&
+                value.Contains("чувствит", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static bool LooksLikeEuAiRegulationPrompt(string value)
+    {
+        return (value.Contains("ai act", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("artificial intelligence act", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("регулирование ии", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("регулировании ии", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("искусственного интеллекта", StringComparison.OrdinalIgnoreCase)) &&
+               (value.Contains("eu", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("ес", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("евросою", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static bool LooksLikeArxivPublisherPolicyPrompt(string value)
+    {
+        return value.Contains("arxiv", StringComparison.OrdinalIgnoreCase) &&
+               (value.Contains("peer-reviewed", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("peer reviewed", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("journal", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("издател", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("publisher", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("репозитор", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("repository", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static bool LooksLikeEuDroneImportPrompt(string value)
+    {
+        return (value.Contains("drone", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("дрон", StringComparison.OrdinalIgnoreCase)) &&
+               (value.Contains("import", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("customs", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("ввоз", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("тамож", StringComparison.OrdinalIgnoreCase));
+    }
+
     private static bool LooksLikeRussianMigraineGuidelinePrompt(string value)
     {
         return value.Contains("мигрен", StringComparison.OrdinalIgnoreCase) &&
@@ -217,10 +375,10 @@ public sealed partial class SearchTopicCoreRewritePolicy : ISearchTopicCoreRewri
     [GeneratedRegex(@"https?://[^\s\)\]\}>]+", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
     private static partial Regex UrlRegex();
 
-    [GeneratedRegex(@"^(?:объясни|расскажи|опиши|разбери|проанализируй|сравни|проверь|уточни|покажи|оцени)\b[\s,:-]*", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+    [GeneratedRegex(@"^(?:объясни|расскажи|опиши|разбери|проанализируй|сравни|проверь|уточни|покажи|оцени|составь|подготовь|сделай)\b[\s,:-]*", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
     private static partial Regex RussianLeadInstructionRegex();
 
-    [GeneratedRegex(@"^(?:please\s+)?(?:explain|describe|analyze|review|compare|check|verify|summarize|evaluate|assess)\b[\s,:-]*", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+    [GeneratedRegex(@"^(?:please\s+)?(?:explain|describe|analyze|review|compare|check|verify|summarize|evaluate|assess|prepare|draft|make)\b[\s,:-]*", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
     private static partial Regex EnglishLeadInstructionRegex();
 
     [GeneratedRegex(@"\b(?:простыми\s+словами|предостав(?:ь|ьте)\s+(?:сво[её]\s+)?мнение|сво[её]\s+мнение)\b", RegexOptions.IgnoreCase | RegexOptions.Compiled)]

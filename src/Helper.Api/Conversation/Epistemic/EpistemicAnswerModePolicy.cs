@@ -24,7 +24,7 @@ public sealed class EpistemicAnswerModePolicy : IEpistemicAnswerModePolicy
             return EpistemicAnswerMode.Abstain;
         }
 
-        if (context.ForceBestEffort)
+        if (context.ForceBestEffort && !ShouldSuppressBestEffortForMandatoryLiveWeb(context, snapshot))
         {
             return EpistemicAnswerMode.BestEffortHypothesis;
         }
@@ -34,6 +34,11 @@ public sealed class EpistemicAnswerModePolicy : IEpistemicAnswerModePolicy
             return snapshot.HighRiskDomain
                 ? EpistemicAnswerMode.Abstain
                 : EpistemicAnswerMode.NeedsVerification;
+        }
+
+        if (HasStrongGroundedCoverage(context, snapshot))
+        {
+            return EpistemicAnswerMode.Grounded;
         }
 
         if (string.Equals(snapshot.GroundingStatus, "grounded", StringComparison.OrdinalIgnoreCase) &&
@@ -57,5 +62,26 @@ public sealed class EpistemicAnswerModePolicy : IEpistemicAnswerModePolicy
         return context.Sources.Count > 0
             ? EpistemicAnswerMode.Grounded
             : EpistemicAnswerMode.Direct;
+    }
+
+    private static bool HasStrongGroundedCoverage(ChatTurnContext context, EpistemicRiskSnapshot snapshot)
+    {
+        if (snapshot.AbstentionRecommended || snapshot.HasContradictions)
+        {
+            return false;
+        }
+
+        var hasSources = context.Sources.Count > 0 || context.ResearchEvidenceItems.Count > 0;
+        return hasSources &&
+               string.Equals(snapshot.GroundingStatus, "grounded", StringComparison.OrdinalIgnoreCase) &&
+               snapshot.CitationCoverage >= 0.70 &&
+               snapshot.VerifiedClaimRatio >= 0.85;
+    }
+
+    private static bool ShouldSuppressBestEffortForMandatoryLiveWeb(ChatTurnContext context, EpistemicRiskSnapshot snapshot)
+    {
+        return context.IsFactualPrompt &&
+               string.Equals(context.ResolvedLiveWebRequirement, "web_required", StringComparison.OrdinalIgnoreCase) &&
+               (snapshot.HighRiskDomain || snapshot.FreshnessSensitive);
     }
 }

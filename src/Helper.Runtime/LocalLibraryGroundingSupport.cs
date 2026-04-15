@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using System.Text;
 using Helper.Runtime.Core;
 
@@ -8,7 +9,7 @@ internal static class LocalLibraryGroundingSupport
     public static IReadOnlyList<string> BuildSources(IReadOnlyList<KnowledgeChunk> chunks)
     {
         return chunks
-            .Select(ResolveSourceReference)
+            .Select(FormatSourceReferenceForOutput)
             .Where(static source => !string.IsNullOrWhiteSpace(source))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Take(6)
@@ -52,6 +53,8 @@ internal static class LocalLibraryGroundingSupport
             {
                 var exemplar = group[0];
                 var sourceReference = ResolveSourceReference(exemplar);
+                var sourceFormat = ResolveSourceFormat(exemplar);
+                var locator = ResolveLocator(exemplar);
                 var snippet = string.Join(
                     " ",
                     group.Select(static chunk => TrimExcerpt(chunk.Content))
@@ -59,13 +62,28 @@ internal static class LocalLibraryGroundingSupport
                         .Take(2));
                 return new ResearchEvidenceItem(
                     Ordinal: index + 1,
-                    Url: sourceReference,
+                    Url: FormatSourceReferenceForOutput(exemplar),
                     Title: ResolveTitle(exemplar, index + 1),
                     Snippet: string.IsNullOrWhiteSpace(snippet)
                         ? "Local library evidence was retrieved but no clean excerpt was preserved."
                         : snippet,
                     TrustLevel: "local_library",
-                    EvidenceKind: "local_library_chunk");
+                    EvidenceKind: "local_library_chunk",
+                    SourceLayer: "local_library",
+                    SourceFormat: sourceFormat,
+                    SourceId: ResolveSourceId(exemplar, sourceReference),
+                    DisplayTitle: ResolveDisplayTitle(exemplar, index + 1),
+                    Locator: locator,
+                    FreshnessEligibility: ResolveFreshnessEligibility(exemplar),
+                    AllowedClaimRoles: ResolveAllowedClaimRoles(exemplar),
+                    SourcePath: sourceReference,
+                    Collection: ResolveMetadata(exemplar, "collection", exemplar.Collection),
+                    IndexedAtUtc: ResolveMetadata(exemplar, "indexed_at_utc"),
+                    ContentHash: ResolveMetadata(exemplar, "content_hash", ResolveMetadata(exemplar, "file_hash")),
+                    ParserName: ResolveMetadata(exemplar, "parser_name"),
+                    ParserVersion: ResolveMetadata(exemplar, "parser_version"),
+                    RetrievalScore: ResolveScore(exemplar, "vector_score"),
+                    TopicalFitScore: ResolveScore(exemplar, "topical_fit_score"));
             })
             .ToArray();
     }
@@ -194,6 +212,33 @@ internal static class LocalLibraryGroundingSupport
         return source?.Trim() ?? chunk.Collection;
     }
 
+    private static string FormatSourceReferenceForOutput(KnowledgeChunk chunk)
+    {
+        if (ShowLocalPaths())
+        {
+            return ResolveSourceReference(chunk);
+        }
+
+        var title = ResolveDisplayTitle(chunk, ordinal: 0);
+        var format = ResolveSourceFormat(chunk);
+        var locator = ResolveLocator(chunk);
+        var sourceId = ResolveSourceId(chunk, ResolveSourceReference(chunk));
+        var builder = new StringBuilder();
+        builder.Append(title);
+        if (!string.IsNullOrWhiteSpace(format))
+        {
+            builder.Append(" (").Append(format).Append(')');
+        }
+
+        if (!string.IsNullOrWhiteSpace(locator))
+        {
+            builder.Append(" | ").Append(locator);
+        }
+
+        builder.Append(" | id=").Append(sourceId);
+        return builder.ToString();
+    }
+
     private static string BuildSourceKey(KnowledgeChunk chunk)
     {
         return ResolveSourceReference(chunk);
@@ -218,6 +263,118 @@ internal static class LocalLibraryGroundingSupport
         }
 
         return $"Local Source {ordinal}";
+    }
+
+    private static string ResolveDisplayTitle(KnowledgeChunk chunk, int ordinal)
+    {
+        return ResolveMetadata(chunk, "display_title") ??
+               ResolveMetadata(chunk, "title") ??
+               ResolveTitle(chunk, ordinal <= 0 ? 1 : ordinal);
+    }
+
+    private static string ResolveSourceFormat(KnowledgeChunk chunk)
+    {
+        var format = ResolveMetadata(chunk, "source_format") ??
+                     ResolveMetadata(chunk, "format") ??
+                     Path.GetExtension(ResolveSourceReference(chunk));
+        format = (format ?? string.Empty).Trim().TrimStart('.').ToLowerInvariant();
+        return string.IsNullOrWhiteSpace(format) ? "unknown" : format;
+    }
+
+    private static string ResolveSourceId(KnowledgeChunk chunk, string sourceReference)
+    {
+        var id = ResolveMetadata(chunk, "source_id") ?? ResolveMetadata(chunk, "document_id");
+        if (!string.IsNullOrWhiteSpace(id))
+        {
+            return id.Trim();
+        }
+
+        using var sha = SHA256.Create();
+        var hash = sha.ComputeHash(Encoding.UTF8.GetBytes(sourceReference.Trim().ToLowerInvariant()));
+        return Convert.ToHexString(hash).ToLowerInvariant()[..16];
+    }
+
+    private static string ResolveLocator(KnowledgeChunk chunk)
+    {
+        var existing = ResolveMetadata(chunk, "locator");
+        if (!string.IsNullOrWhiteSpace(existing))
+        {
+            return existing.Trim();
+        }
+
+        var parts = new List<string>();
+        var pageStart = ResolveMetadata(chunk, "page_start");
+        var pageEnd = ResolveMetadata(chunk, "page_end");
+        if (!string.IsNullOrWhiteSpace(pageStart))
+        {
+            parts.Add(!string.IsNullOrWhiteSpace(pageEnd) && !string.Equals(pageEnd, pageStart, StringComparison.OrdinalIgnoreCase)
+                ? $"pages:{pageStart}-{pageEnd}"
+                : $"page:{pageStart}");
+        }
+
+        var section = ResolveMetadata(chunk, "section_path");
+        if (!string.IsNullOrWhiteSpace(section))
+        {
+            parts.Add($"section:{section}");
+        }
+
+        var chunkIndex = ResolveMetadata(chunk, "chunk_index");
+        if (!string.IsNullOrWhiteSpace(chunkIndex))
+        {
+            parts.Add($"chunk:{chunkIndex}");
+        }
+
+        return string.Join(" | ", parts);
+    }
+
+    private static string ResolveFreshnessEligibility(KnowledgeChunk chunk)
+    {
+        return ResolveMetadata(chunk, "source_freshness_class") ??
+               (string.IsNullOrWhiteSpace(ResolveMetadata(chunk, "published_year"))
+                   ? "unknown_date"
+                   : "stable_reference");
+    }
+
+    private static IReadOnlyList<string> ResolveAllowedClaimRoles(KnowledgeChunk chunk)
+    {
+        var raw = ResolveMetadata(chunk, "allowed_claim_roles");
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return new[] { "background", "definition", "methodology", "historical_context", "user_context" };
+        }
+
+        return raw
+            .Split(new[] { ',', ';', '|' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(static role => !string.IsNullOrWhiteSpace(role))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    private static string? ResolveMetadata(KnowledgeChunk chunk, string key, string? fallback = null)
+    {
+        return chunk.Metadata.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value)
+            ? value.Trim()
+            : fallback;
+    }
+
+    private static double? ResolveScore(KnowledgeChunk chunk, string key)
+    {
+        var raw = ResolveMetadata(chunk, key);
+        return double.TryParse(raw, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var value)
+            ? value
+            : null;
+    }
+
+    private static bool ShowLocalPaths()
+    {
+        var explicitPathMode = Environment.GetEnvironmentVariable("HELPER_RESPONSE_SHOW_LOCAL_PATHS");
+        if (bool.TryParse(explicitPathMode, out var showPaths) && showPaths)
+        {
+            return true;
+        }
+
+        var publicSourceMode = Environment.GetEnvironmentVariable("HELPER_LOCAL_LIBRARY_PUBLIC_SOURCE_MODE");
+        return string.Equals(publicSourceMode, "developer", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string TrimExcerpt(string? content)
