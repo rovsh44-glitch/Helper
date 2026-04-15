@@ -63,3 +63,24 @@ The repository admin for this posture is `rovsh44-glitch`.
 1. GitHub-native dependency risk signals are active.
 2. Secret scanning and code scanning for this private repository require a different GitHub security tier or a repository visibility change before they can be treated as enabled controls.
 3. Until that tier changes, repo-owned security gates remain mandatory and are not optional hygiene extras.
+
+## 2026-04-15 Revalidation
+
+Status: `still current with caveats`
+
+The repository has been returned to `Private`, so this document again matches the actual repository visibility.
+
+Current platform limitation remains:
+
+1. Code scanning alerts are disabled for this user-owned private repository.
+2. Advanced Security is not available on the current account/tier.
+3. Code scanning should not be represented as an active security control for the private-core repository.
+
+Do not solve that limitation by making the full private-core `Helper` repository public. Direct publication of this source tree conflicts with the active public-showcase boundary policy.
+
+Correct publication/security split:
+
+1. Keep `rovsh44-glitch/Helper` as the private-core repository.
+2. Keep Dependabot alerts, automated security fixes, `repo_gate`, `connected_nuget_audit`, and repo-owned scans as the private-core controls.
+3. Create a separate public showcase/proof-bundle repository for reviewed public-safe material, especially the reproducible LFL20 proof bundle and narrative docs.
+4. If code scanning is required for private-core source, move to an eligible GitHub security tier or eligible organization/enterprise setup instead of widening source visibility.

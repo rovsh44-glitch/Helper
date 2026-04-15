@@ -1,5 +1,5 @@
 ﻿{
-  "generatedAtUtc": "2026-04-15T08:37:10.7020949\u002B00:00",
+  "generatedAtUtc": "2026-04-15T15:28:43.7558486\u002B00:00",
   "source": "src/Helper.Api/Backend/Configuration/BackendEnvironmentInventory.cs",
   "definitions": [
     {
@@ -2062,7 +2062,91 @@
       "MinValue": null,
       "MaxValue": null,
       "Consumers": [
-        "src/Helper.Runtime.Knowledge/StructuredDocumentParsers.Textual.cs"
+        "src/Helper.Runtime.Knowledge/StructuredPdfParser.Vision.cs"
+      ],
+      "Notes": null
+    },
+    {
+      "Name": "HELPER_PDF_VISION_GHOSTSCRIPT_DPI",
+      "Category": "Knowledge And Indexing",
+      "Scope": "backend_runtime",
+      "ValueType": "int",
+      "Description": "Ghostscript raster DPI for PDF vision fallback.",
+      "DefaultValue": "200",
+      "ExampleValue": null,
+      "Secret": false,
+      "IncludeInLocalExample": false,
+      "CommentOutInLocalExample": false,
+      "Deprecated": false,
+      "Replacement": null,
+      "AllowedValues": [],
+      "MinValue": "96",
+      "MaxValue": "600",
+      "Consumers": [
+        "src/Helper.Runtime.Knowledge/StructuredPdfParser.Vision.cs"
+      ],
+      "Notes": null
+    },
+    {
+      "Name": "HELPER_PDF_VISION_GHOSTSCRIPT_JPEG_QUALITY",
+      "Category": "Knowledge And Indexing",
+      "Scope": "backend_runtime",
+      "ValueType": "int",
+      "Description": "Ghostscript JPEG quality for PDF vision fallback images.",
+      "DefaultValue": "80",
+      "ExampleValue": null,
+      "Secret": false,
+      "IncludeInLocalExample": false,
+      "CommentOutInLocalExample": false,
+      "Deprecated": false,
+      "Replacement": null,
+      "AllowedValues": [],
+      "MinValue": "40",
+      "MaxValue": "95",
+      "Consumers": [
+        "src/Helper.Runtime.Knowledge/StructuredPdfParser.Vision.cs"
+      ],
+      "Notes": null
+    },
+    {
+      "Name": "HELPER_VISION_OCR_MAX_IMAGE_BYTES",
+      "Category": "Knowledge And Indexing",
+      "Scope": "backend_runtime",
+      "ValueType": "int",
+      "Description": "Maximum encoded image bytes accepted by vision OCR preparation.",
+      "DefaultValue": "12582912",
+      "ExampleValue": null,
+      "Secret": false,
+      "IncludeInLocalExample": false,
+      "CommentOutInLocalExample": false,
+      "Deprecated": false,
+      "Replacement": null,
+      "AllowedValues": [],
+      "MinValue": "1024",
+      "MaxValue": "67108864",
+      "Consumers": [
+        "src/Helper.Runtime.Knowledge/VisionImagePreparation.cs"
+      ],
+      "Notes": null
+    },
+    {
+      "Name": "HELPER_VISION_OCR_TIMEOUT_SEC",
+      "Category": "Knowledge And Indexing",
+      "Scope": "backend_runtime",
+      "ValueType": "int",
+      "Description": "Vision OCR extraction timeout in seconds.",
+      "DefaultValue": "90",
+      "ExampleValue": null,
+      "Secret": false,
+      "IncludeInLocalExample": false,
+      "CommentOutInLocalExample": false,
+      "Deprecated": false,
+      "Replacement": null,
+      "AllowedValues": [],
+      "MinValue": "10",
+      "MaxValue": "600",
+      "Consumers": [
+        "src/Helper.Runtime.Knowledge/StructuredPdfParser.Vision.cs"
       ],
       "Notes": null
     },

@@ -1,6 +1,7 @@
 ﻿# HELPER Current State
 
 Generated on: `2026-03-19`
+Current revalidation addendum: `2026-04-15`
 Source of truth snapshot: `doc/certification/active/CURRENT_GATE_SNAPSHOT.json`
 Implementation baseline: `doc/archive/top_level_history/HELPER_EXECUTION_BOARD_2026-03-16.md`
 
@@ -11,6 +12,17 @@ Implementation baseline: `doc/archive/top_level_history/HELPER_EXECUTION_BOARD_2
 - Certification status: `PRECERT_ACTIVE_DAY01_GREEN_ANCHOR_PENDING`
 - Next executable profile: `precert_2026-03-16/day-02`
 - Release decision: `eligible to open a fresh precert day-01 after freeze`
+
+## 2026-04-15 Current Addendum
+
+- Repository identity: local `main` and `origin/main` are aligned at `c2f38df`.
+- Repository visibility: `Private`.
+- Public visibility policy: private-core repo stays Private; public publication must use a separate curated showcase/proof-bundle repo.
+- Latest deterministic local gate before the security/posture branch: `npm run ci:gate` passed end-to-end.
+- LFL20 proof-bundle status: implemented and green on the final local acceptance run described in `doc/analysis/HELPER_CURRENT_STATUS_AND_REPO_ALIGNMENT_REPORT_2026-04-15.md`.
+- Local-library evidence fusion: implemented and audited with zero public path leaks in the final local acceptance artifact.
+- Active follow-up: push the security/posture remediation branch, run hosted `repo-gate` and `nuget-security-audit`, then merge after both pass.
+- Code scanning status: not an active control for the private-core repo on the current GitHub tier; use repo-owned gates and Dependabot unless the security tier changes.
 
 ## Additional Truth Layers
 

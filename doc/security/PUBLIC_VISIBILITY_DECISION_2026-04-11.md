@@ -34,3 +34,25 @@ Revisit this decision only after all of the following are true:
 3. GitHub Actions protects PRs and `main`
 4. disclosure review for the launch candidate is current
 5. the publication target has its own explicit licensing and security posture
+
+## 2026-04-15 Revalidation
+
+Status: `revalidated`
+
+The full `HELPER` repository is again `Private`. This matches the decision above.
+
+Current conclusion:
+
+1. Do not make the private-core repository public just to unlock GitHub code scanning.
+2. GitHub does not provide a mode where the same repository is public while most source, tests, scripts, and active evidence remain hidden.
+3. The public path remains a separate curated showcase/proof-bundle repository.
+4. The public repository should contain only reviewed surfaces: narrative docs, sanitized proof-bundle inputs, analyzer summaries, reproducibility instructions, and selected public-safe evidence.
+5. Source code, tests, internal scripts, local runtime artifacts, and active operator docs remain private unless separately reviewed and explicitly exported.
+
+The intended public claim is therefore narrow:
+
+`Helper provides an operator-grade research and analysis workflow with evidence discipline, demonstrated by a reproducible LFL20 proof bundle.`
+
+It is not:
+
+`The full Helper private-core source tree is public/open-source.`

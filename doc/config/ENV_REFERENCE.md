@@ -1,6 +1,6 @@
 ﻿# HELPER Environment Reference
 
-Generated: `2026-04-15 08:37:10 UTC`
+Generated: `2026-04-15 15:28:43 UTC`
 Source of truth: `src/Helper.Api/Backend/Configuration/BackendEnvironmentInventory.cs`
 
 This reference covers the governed configuration surface for:
@@ -162,6 +162,10 @@ Unknown names in `.env.local.example` are treated as repo drift. Deprecated name
 | `HELPER_MODEL_CODER` | `string` | none | `backend_runtime` | Optional coder-model route. |
 | `HELPER_MODEL_VISION` | `string` | none | `backend_runtime` | Optional vision-model route. |
 | `HELPER_PDF_VISION_GHOSTSCRIPT_PATH` | `path` | none | `backend_runtime` | Explicit Ghostscript executable for PDF-to-image vision extraction. |
+| `HELPER_PDF_VISION_GHOSTSCRIPT_DPI` | `int` | `200` | `backend_runtime` | Ghostscript raster DPI for PDF vision fallback.; range: `96`..`600` |
+| `HELPER_PDF_VISION_GHOSTSCRIPT_JPEG_QUALITY` | `int` | `80` | `backend_runtime` | Ghostscript JPEG quality for PDF vision fallback images.; range: `40`..`95` |
+| `HELPER_VISION_OCR_MAX_IMAGE_BYTES` | `int` | `12582912` | `backend_runtime` | Maximum encoded image bytes accepted by vision OCR preparation.; range: `1024`..`67108864` |
+| `HELPER_VISION_OCR_TIMEOUT_SEC` | `int` | `90` | `backend_runtime` | Vision OCR extraction timeout in seconds.; range: `10`..`600` |
 | `HELPER_INDEX_PIPELINE_VERSION` | `string` | `v1` | `script_runtime` | Active library indexing pipeline version. |
 | `HELPER_RAG_ALLOW_V1_FALLBACK` | `bool` | `true` | `script_runtime` | Allow retrieval fallback to legacy v1 collections. |
 | `HELPER_INDEX_EXCLUDED_EXTENSIONS` | `csv` | none | `script_runtime` | Extensions excluded from ordered/reset indexing scripts and synthetic learning scans. |

@@ -1,74 +1,21 @@
 using Helper.Runtime.Core;
 using Helper.Runtime.Infrastructure;
-using ImageMagick;
 using DocumentFormatType = Helper.Runtime.Core.DocumentFormat;
 
 namespace Helper.Runtime.Knowledge;
 
 public sealed class StructuredDjvuParser : StructuredDocumentParserBase
 {
-    private readonly AILink _ai;
-    private const string DefaultVisionModel = "qwen2.5vl:7b";
-    private const string VisionPrompt = "Extract only the visible printed text from this academic page. Ignore watermarks, website overlays, logos, stamps, marginal noise, and repeated headers or footers. Preserve headings, lists, tables, formulas, figure captions, map labels, legends, numeric scales, and embedded annotations when visible. Do not describe the image, do not explain what it depicts, and do not add commentary. If there is no readable printed text at all, return an empty string.";
-    private static readonly int VisionTimeoutSeconds = StructuredParserUtilities.ReadBoundedIntEnvironment("HELPER_VISION_OCR_TIMEOUT_SEC", 90, 10, 600);
-
-    public StructuredDjvuParser(AILink ai)
-    {
-        _ai = ai;
-    }
+    public StructuredDjvuParser(AILink ai) { }
 
     public override string ParserVersion => "djvu_v2";
     public override bool CanParse(string extension) => string.Equals(extension, ".djvu", StringComparison.OrdinalIgnoreCase);
 
     public override async Task<DocumentParseResult> ParseStructuredAsync(string filePath, Func<double, Task>? onProgress = null, CancellationToken ct = default)
     {
-        var pages = new List<DocumentPage>();
-        var blocks = new List<DocumentBlock>();
-        var warnings = new List<string>();
-        var readingOrder = 0;
-
-        try
+        if (onProgress is not null)
         {
-            var pageCount = MagickImageInfo.ReadCollection(filePath).Count();
-            using var images = new MagickImageCollection();
-            for (var index = 0; index < pageCount; index++)
-            {
-                ct.ThrowIfCancellationRequested();
-                try
-                {
-                    var settings = new MagickReadSettings { FrameIndex = (uint)index, FrameCount = 1 };
-                    images.Read(filePath, settings);
-                    using var page = (MagickImage)images[0].Clone();
-                    var text = await StructuredParserUtilities.ExtractVisionTextAsync(
-                        _ai,
-                        VisionPrompt,
-                        ResolveVisionModel(),
-                        VisionImagePreparation.PrepareBase64(page),
-                        ct,
-                        VisionTimeoutSeconds);
-                    var pageBlocks = StructuredParserUtilities.SplitPlainTextIntoBlocks(text, index + 1, ref readingOrder);
-                    pages.Add(new DocumentPage(index + 1, text, pageBlocks, $"page-{index + 1}"));
-                    blocks.AddRange(pageBlocks);
-                    images.Clear();
-                    if (onProgress is not null)
-                    {
-                        await onProgress(Math.Clamp((double)(index + 1) / Math.Max(pageCount, 1) * 100d, 0d, 100d));
-                    }
-                }
-                catch (Exception ex)
-                {
-                    warnings.Add($"djvu_page_{index + 1}_failed:{ex.Message}");
-                    images.Clear();
-                    if (onProgress is not null)
-                    {
-                        await onProgress(Math.Clamp((double)(index + 1) / Math.Max(pageCount, 1) * 100d, 0d, 100d));
-                    }
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            warnings.Add($"djvu_open_failed:{ex.Message}");
+            await onProgress(100d);
         }
 
         return StructuredParserUtilities.BuildDocument(
@@ -76,13 +23,10 @@ public sealed class StructuredDjvuParser : StructuredDocumentParserBase
             DocumentFormatType.Djvu,
             ParserVersion,
             Path.GetFileName(filePath),
-            pages,
-            blocks,
-            warnings);
+            Array.Empty<DocumentPage>(),
+            Array.Empty<DocumentBlock>(),
+            new[] { "djvu_ocr_unavailable:Magick.NET rasterizer removed from runtime security boundary" });
     }
-
-    private string ResolveVisionModel()
-        => _ai.GetBestModel("vision") ?? DefaultVisionModel;
 }
 
 public sealed class StructuredChmParser : StructuredDocumentParserBase
