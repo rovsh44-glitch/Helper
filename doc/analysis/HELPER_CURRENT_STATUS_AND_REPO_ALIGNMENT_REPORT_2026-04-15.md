@@ -9,24 +9,23 @@ Functionally, the Helper remediation and proof-bundle work is in a strong local 
 - The analyzer reports no critical proof-bundle issues.
 - The final proof artifacts exist locally.
 
-Repository-wise, the project is not yet aligned with GitHub:
+Repository-wise, the project is now aligned with GitHub:
 
-- Local changes are not committed or pushed.
-- The currently checked-out branch is stale.
-- Local `main` is behind `origin/main`.
-- The current branch contains the pre-squash PR commit, while GitHub `main` contains the squash-merged commit.
+- Local `main` is checked out.
+- Local `main` and `origin/main` both point at `c2f38df`.
+- Divergence is `0 0`.
+- The working tree was clean before the 2026-04-15 security/posture remediation branch.
+- PR `#42` is merged as the GitHub squash commit `c2f38df`.
 
 ## Git State Observed
 
 - Remote repository: `https://github.com/rovsh44-glitch/Helper.git`.
-- GitHub `main`: `33025e2` (`Fix local session bootstrap and planner DI startup (#40)`).
-- Local `main`: `470947b`, behind `origin/main` by one commit.
-- Current branch: `fix-session-bootstrap-chatturnplanner-2026-04-13`.
-- Current branch upstream: deleted (`[gone]`).
-- Current branch head: `3afbbfb` (`Fix local session bootstrap and planner DI startup`).
-- Divergence with `origin/main`: local pre-squash commit versus GitHub squash commit.
+- GitHub `main`: `c2f38df` (`Add LFL20 proof bundle and local library evidence fusion (#42)`).
+- Local `main`: `c2f38df`.
+- Current remediation branch for follow-up work: `security-posture-dependency-isolation-2026-04-15`.
+- Previous stale feature branches remain local-only historical refs unless explicitly pruned.
 
-The current branch should not be committed and pushed as-is. The clean path is to preserve the dirty work, move it onto a new branch based on `origin/main`, then commit and push from that branch.
+The earlier warning about a stale checked-out branch is closed. Current follow-up work must proceed through a normal feature branch and PR because `main` is protected.
 
 ## Work Completed Against Planning Documents
 
@@ -106,17 +105,11 @@ Observed final audit result:
 
 ## Remaining Work
 
-The remaining work is repository hygiene and publication discipline, not core runtime remediation:
+The remaining work after this security/posture branch is hosted verification and merge, not proof-bundle runtime remediation:
 
-1. Preserve the current dirty result safely.
-2. Rebase/apply it onto a new branch from `origin/main`.
-3. Stage only intentional files.
-4. Keep transient runtime artifacts out of git unless explicitly selected for publication.
-5. Run build and targeted tests.
-6. Commit in coherent slices.
-7. Push the feature branch.
-8. Open a PR to `main`.
-9. After merge, fast-forward local `main` to `origin/main`.
-10. Prune or delete stale gone branches only after confirming they have no unique required work.
-
-Dependabot PRs should remain separate from this proof/local-library branch.
+1. Push this branch and open a PR.
+2. Rerun hosted `repo-gate` and `nuget-security-audit`.
+3. Merge after hosted checks pass.
+4. Confirm updated `main` remains aligned locally and remotely.
+5. Keep the private-core repository Private.
+6. Publish only a separate curated public showcase/proof-bundle repo when external publication is needed.

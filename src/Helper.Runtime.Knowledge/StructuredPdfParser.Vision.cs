@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using Helper.Runtime.Infrastructure;
-using ImageMagick;
+using UglyToad.PdfPig;
 using UglyToad.PdfPig.Content;
 
 namespace Helper.Runtime.Knowledge;
@@ -13,9 +13,20 @@ public sealed partial class StructuredPdfParser
     private static readonly Lazy<bool> VisionFallbackAvailable = new(() => !string.IsNullOrWhiteSpace(GhostscriptExecutablePath.Value), LazyThreadSafetyMode.ExecutionAndPublication);
     private static readonly int VisionTimeoutSeconds = StructuredParserUtilities.ReadBoundedIntEnvironment("HELPER_VISION_OCR_TIMEOUT_SEC", 90, 10, 600);
     private static readonly int GhostscriptRasterDpi = StructuredParserUtilities.ReadBoundedIntEnvironment("HELPER_PDF_VISION_GHOSTSCRIPT_DPI", 200, 96, 600);
+    private static readonly int GhostscriptJpegQuality = StructuredParserUtilities.ReadBoundedIntEnvironment("HELPER_PDF_VISION_GHOSTSCRIPT_JPEG_QUALITY", 80, 40, 95);
 
     private static int ResolveVisionOnlyPageCount(string filePath)
-        => Math.Max(MagickImageInfo.ReadCollection(filePath).Count(), 1);
+    {
+        try
+        {
+            using var pdf = PdfDocument.Open(filePath);
+            return Math.Max(pdf.NumberOfPages, 1);
+        }
+        catch
+        {
+            return 1;
+        }
+    }
 
     private async Task<string> ExtractWithGhostscriptVisionAsync(string filePath, int pageNumber, CancellationToken ct)
     {
@@ -32,7 +43,7 @@ public sealed partial class StructuredPdfParser
 
         var tempDir = Path.Combine(Path.GetTempPath(), "helper-gs");
         Directory.CreateDirectory(tempDir);
-        var outputPath = Path.Combine(tempDir, $"{Guid.NewGuid():N}_page_{pageNumber}.png");
+        var outputPath = Path.Combine(tempDir, $"{Guid.NewGuid():N}_page_{pageNumber}.jpg");
 
         try
         {
@@ -49,7 +60,8 @@ public sealed partial class StructuredPdfParser
             startInfo.ArgumentList.Add("-dBATCH");
             startInfo.ArgumentList.Add("-dNOPAUSE");
             startInfo.ArgumentList.Add("-dQUIET");
-            startInfo.ArgumentList.Add("-sDEVICE=pnggray");
+            startInfo.ArgumentList.Add("-sDEVICE=jpeg");
+            startInfo.ArgumentList.Add($"-dJPEGQ={GhostscriptJpegQuality}");
             startInfo.ArgumentList.Add($"-r{GhostscriptRasterDpi}");
             startInfo.ArgumentList.Add($"-dFirstPage={Math.Max(pageNumber, 1)}");
             startInfo.ArgumentList.Add($"-dLastPage={Math.Max(pageNumber, 1)}");
@@ -139,13 +151,7 @@ public sealed partial class StructuredPdfParser
             byte[]? pngBytes = null;
             if (image.TryGetPng(out pngBytes) && pngBytes is { Length: > 0 })
             {
-                if (VisionImagePreparation.TryPrepareBase64(pngBytes!, out base64))
-                {
-                    return true;
-                }
-
-                base64 = Convert.ToBase64String(pngBytes!);
-                return true;
+                return VisionImagePreparation.TryPrepareBase64(pngBytes!, out base64);
             }
         }
         catch
@@ -166,40 +172,12 @@ public sealed partial class StructuredPdfParser
                 return false;
             }
 
-            if (LooksLikeSupportedEncodedImage(rawBytes))
-            {
-                if (VisionImagePreparation.TryPrepareBase64(rawBytes, out base64))
-                {
-                    return true;
-                }
-
-                base64 = Convert.ToBase64String(rawBytes);
-                return true;
-            }
-
             return VisionImagePreparation.TryPrepareBase64(rawBytes, out base64);
         }
         catch
         {
             return false;
         }
-    }
-
-    private static bool LooksLikeSupportedEncodedImage(byte[] bytes)
-    {
-        if (bytes.Length < 12)
-        {
-            return false;
-        }
-
-        var isJpeg = bytes[0] == 0xFF && bytes[1] == 0xD8;
-        var isPng = bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47;
-        var isGif = bytes[0] == 0x47 && bytes[1] == 0x49 && bytes[2] == 0x46;
-        var isBmp = bytes[0] == 0x42 && bytes[1] == 0x4D;
-        var isWebp = bytes[0] == 0x52 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x46
-            && bytes[8] == 0x57 && bytes[9] == 0x45 && bytes[10] == 0x42 && bytes[11] == 0x50;
-
-        return isJpeg || isPng || isGif || isBmp || isWebp;
     }
 
     private static string? ResolveGhostscriptExecutablePath()
@@ -307,22 +285,6 @@ public sealed partial class StructuredPdfParser
                 ? ghostscriptDir
                 : string.Concat(ghostscriptDir, Path.PathSeparator, currentPath);
             Environment.SetEnvironmentVariable("PATH", updatedPath);
-
-            try
-            {
-                MagickNET.SetEnvironmentVariable("PATH", updatedPath);
-            }
-            catch
-            {
-            }
-        }
-
-        try
-        {
-            MagickNET.SetGhostscriptDirectory(ghostscriptDir);
-        }
-        catch
-        {
         }
     }
 }

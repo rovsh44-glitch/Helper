@@ -1,57 +1,36 @@
-using ImageMagick;
-
 namespace Helper.Runtime.Knowledge;
 
 internal static class VisionImagePreparation
 {
-    private static readonly int MaxDimension = StructuredParserUtilities.ReadBoundedIntEnvironment("HELPER_VISION_OCR_MAX_DIM", 1600, 512, 4096);
-    private static readonly int JpegQuality = StructuredParserUtilities.ReadBoundedIntEnvironment("HELPER_VISION_OCR_JPEG_QUALITY", 75, 40, 95);
+    private static readonly int MaxImageBytes = StructuredParserUtilities.ReadBoundedIntEnvironment("HELPER_VISION_OCR_MAX_IMAGE_BYTES", 12 * 1024 * 1024, 1024, 64 * 1024 * 1024);
 
     public static bool TryPrepareBase64(byte[] bytes, out string base64)
     {
         base64 = string.Empty;
-        if (bytes is not { Length: > 0 })
+        if (bytes is not { Length: > 0 } || bytes.Length > MaxImageBytes || !LooksLikeSupportedEncodedImage(bytes))
         {
             return false;
         }
 
-        try
-        {
-            using var image = new MagickImage(bytes);
-            base64 = PrepareBase64(image);
-            return !string.IsNullOrWhiteSpace(base64);
-        }
-        catch
+        base64 = Convert.ToBase64String(bytes);
+        return !string.IsNullOrWhiteSpace(base64);
+    }
+
+    private static bool LooksLikeSupportedEncodedImage(byte[] bytes)
+    {
+        if (bytes.Length < 12)
         {
             return false;
         }
-    }
 
-    public static string PrepareBase64(MagickImage image)
-    {
-        using var clone = (MagickImage)image.Clone();
-        Normalize(clone);
-        return clone.ToBase64();
-    }
+        var isJpeg = bytes[0] == 0xFF && bytes[1] == 0xD8;
+        var isPng = bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47;
+        var isGif = bytes[0] == 0x47 && bytes[1] == 0x49 && bytes[2] == 0x46;
+        var isBmp = bytes[0] == 0x42 && bytes[1] == 0x4D;
+        var isWebp = bytes[0] == 0x52 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x46
+            && bytes[8] == 0x57 && bytes[9] == 0x45 && bytes[10] == 0x42 && bytes[11] == 0x50;
 
-    private static void Normalize(MagickImage image)
-    {
-        image.AutoOrient();
-        image.Strip();
-
-        var width = Math.Max(image.Width, 1);
-        var height = Math.Max(image.Height, 1);
-        var longestSide = Math.Max(width, height);
-        if (longestSide > MaxDimension)
-        {
-            var scale = (double)MaxDimension / longestSide;
-            var targetWidth = (uint)Math.Max((int)Math.Round(width * scale), 1);
-            var targetHeight = (uint)Math.Max((int)Math.Round(height * scale), 1);
-            image.Resize(targetWidth, targetHeight);
-        }
-
-        image.Format = MagickFormat.Jpg;
-        image.Quality = (uint)JpegQuality;
+        return isJpeg || isPng || isGif || isBmp || isWebp;
     }
 }
 
