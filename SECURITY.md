@@ -6,10 +6,10 @@ Use this document for vulnerability reporting and security-boundary expectations
 
 Repository facts:
 
-- runtime data is expected to live outside the repository under `HELPER_DATA_ROOT`;
 - local secrets must not be committed;
-- `searxng/settings.yml` is operator-local and should stay out of normal tracking;
-- auth bootstrap and browser/API boundaries are documented in the canonical docs under `doc/security/` and `doc/adr/`.
+- this public repo is showcase-only and does not contain the full private implementation;
+- implementation-level security details stay in the private core and are not mirrored here;
+- public proof bundles are published separately from this repository.
 
 ## Reporting Rules
 
@@ -34,4 +34,4 @@ Repository facts:
 
 ## Operational Reminder
 
-Before any public release, rerun the repo hygiene and secret-scan gates and perform a manual disclosure review.
+Before any public release, re-check the showcase surface boundary and perform a manual disclosure review so private-core details do not leak into the public branch.

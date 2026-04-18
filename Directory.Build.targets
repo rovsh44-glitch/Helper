@@ -1,9 +1,0 @@
-<Project>
-  <Target
-    Name="_EnsureHelperMsbuildStateDirectories"
-    BeforeTargets="Restore;ResolveReferences"
-    Condition="'$(MSBuildProjectExtension)' == '.csproj' and '$(HelperMsbuildStateRoot)' != ''">
-    <MakeDir Directories="$(BaseIntermediateOutputPath)" Condition="'$(BaseIntermediateOutputPath)' != ''" />
-    <MakeDir Directories="$(MSBuildProjectExtensionsPath)" Condition="'$(MSBuildProjectExtensionsPath)' != ''" />
-  </Target>
-</Project>

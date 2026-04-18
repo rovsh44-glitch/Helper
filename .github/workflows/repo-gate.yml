@@ -10,9 +10,6 @@ on:
 permissions:
   contents: read
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
-
 concurrency:
   group: repo-gate-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -20,105 +17,83 @@ concurrency:
 jobs:
   repo_gate:
     runs-on: windows-latest
-    env:
-      CI: "true"
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 9.0.x
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: package-lock.json
-
-      - name: Install frontend dependencies
+      - name: Validate showcase-only surface contract
         shell: pwsh
-        run: npm ci
+        run: |
+          $allowedDirectories = @(
+            '.github',
+            'docs',
+            'media',
+            'deck',
+            'runtime-review-slice',
+            'generated-artifact-validation-slice',
+            'helper-generation-contracts'
+          )
+          $allowedFiles = @(
+            '.gitignore',
+            'README.md',
+            'LICENSE',
+            'SECURITY.md',
+            'CONTACT.md',
+            'FAQ.md',
+            'CONTRIBUTING.md'
+          )
+          $requiredPaths = @(
+            'README.md',
+            'docs/one-pager.md',
+            'docs/architecture-overview.md',
+            'docs/product-overview.md',
+            'docs/public-release-checklist.md',
+            'docs/repository-scope.md',
+            '.github/ISSUE_TEMPLATE/config.yml',
+            '.github/workflows/repo-gate.yml'
+          )
 
-      - name: Restore solution
-        shell: pwsh
-        run: dotnet restore Helper.sln
+          $entries = Get-ChildItem -Force | Where-Object { $_.Name -ne '.git' }
+          $unexpected = New-Object System.Collections.Generic.List[string]
+          foreach ($entry in $entries) {
+            if ($entry.PSIsContainer) {
+              if ($allowedDirectories -notcontains $entry.Name) {
+                $unexpected.Add($entry.Name)
+              }
+            }
+            elseif ($allowedFiles -notcontains $entry.Name) {
+              $unexpected.Add($entry.Name)
+            }
+          }
 
-      - name: Secret scan
-        shell: pwsh
-        run: ./scripts/secret_scan.ps1 -ScanMode repo
+          if ($unexpected.Count -gt 0) {
+            throw "Unexpected top-level entries in public showcase root: $($unexpected -join ', ')"
+          }
 
-      - name: Root layout
-        shell: pwsh
-        run: ./scripts/check_root_layout.ps1
+          $missing = $requiredPaths | Where-Object { -not (Test-Path -LiteralPath $_) }
+          if ($missing.Count -gt 0) {
+            throw "Missing required public showcase paths: $($missing -join ', ')"
+          }
 
-      - name: Config governance
+      - name: Check for absolute local path leaks
         shell: pwsh
-        run: ./scripts/check_env_governance.ps1
+        run: |
+          $trackedFiles = git ls-files
+          $textExtensions = @('.md', '.txt', '.json', '.yml', '.yaml', '.svg', '.html', '.css')
+          $violations = New-Object System.Collections.Generic.List[string]
 
-      - name: R&D governance
-        shell: pwsh
-        run: ./scripts/check_rd_governance.ps1
+          foreach ($file in $trackedFiles) {
+            $extension = [System.IO.Path]::GetExtension($file)
+            $isTextLike = $textExtensions -contains $extension -or [string]::IsNullOrWhiteSpace($extension)
+            if (-not $isTextLike) {
+              continue
+            }
 
-      - name: Execution step closure
-        shell: pwsh
-        run: ./scripts/check_execution_step_closure.ps1
+            $content = Get-Content -LiteralPath $file -Raw -Encoding UTF8
+            if ($content -match '(?i)\b[A-Z]:\\') {
+              $violations.Add($file)
+            }
+          }
 
-      - name: Docs entrypoints
-        shell: pwsh
-        run: ./scripts/check_docs_entrypoints.ps1
-
-      - name: Trailing-space directories
-        shell: pwsh
-        run: ./scripts/check_trailing_space_dirs.ps1
-
-      - name: UI API consistency
-        shell: pwsh
-        run: ./scripts/check_ui_api_usage.ps1
-
-      - name: Frontend architecture
-        shell: pwsh
-        run: ./scripts/check_frontend_architecture.ps1 -SkipApiBoundary
-
-      - name: Required status contract
-        shell: pwsh
-        run: ./scripts/check_required_status_contract.ps1
-
-      - name: Solution build coverage
-        shell: pwsh
-        run: ./scripts/check_solution_build_coverage.ps1
-
-      - name: Build solution
-        shell: pwsh
-        run: dotnet build Helper.sln -m:1 --no-restore
-
-      - name: Fast runtime lane
-        shell: pwsh
-        run: ./scripts/run_fast_tests.ps1 -Configuration Debug -NoBuild -NoRestore
-
-      - name: Eval gate
-        shell: pwsh
-        run: ./scripts/run_eval_gate.ps1 -NoBuild -NoRestore
-
-      - name: Tool benchmark
-        shell: pwsh
-        run: ./scripts/run_tool_benchmark.ps1 -Configuration Debug -NoBuild -NoRestore
-
-      - name: OpenAPI gate
-        shell: pwsh
-        run: ./scripts/openapi_gate.ps1
-
-      - name: Generated client diff
-        shell: pwsh
-        run: ./scripts/generated_client_diff_gate.ps1
-
-      - name: Monitoring config
-        shell: pwsh
-        run: ./scripts/monitoring_gate.ps1
-
-      - name: Frontend build verification
-        shell: pwsh
-        run: ./scripts/build_frontend_verification.ps1 -RequireRebuild
-
-      - name: Bundle budget
-        shell: pwsh
-        run: ./scripts/check_bundle_budget.ps1
+          if ($violations.Count -gt 0) {
+            throw "Absolute local path leak detected in: $($violations -join ', ')"
+          }

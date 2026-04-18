@@ -18,7 +18,7 @@ No. The counted window has not started yet.
 
 ## Is this repository meant to be pushed public as-is?
 
-Not by default. The recommended model is a private-core repository plus a curated or sanitized public showcase.
+This repository is already the curated public showcase. The private engineering core is separate.
 
 ## Does this repository include a hosted product?
 
@@ -35,12 +35,12 @@ Start with:
 - `README.md`
 - `docs/one-pager.md`
 - `docs/architecture-overview.md`
-- `doc/CURRENT_STATE.md`
+- `docs/repository-scope.md`
 
 ## Where is the honest source of truth for current claims?
 
 Use:
 
-- `doc/CURRENT_STATE.md`
-- `doc/certification/active/CURRENT_CERT_STATE.md`
-- `doc/parity_evidence/active/CURRENT_PARITY_EVIDENCE_BUNDLE.md`
+- `README.md`
+- `docs/repository-scope.md`
+- `https://github.com/rovsh44-glitch/helper-web-reliability-50-proof`

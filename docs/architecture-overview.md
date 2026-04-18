@@ -25,6 +25,21 @@ Main flow:
 - strategic planning and architecture workflow
 - generation and workspace lifecycle
 - runtime telemetry and operator review
+- library indexing and knowledge ingestion
+
+## Product Surfaces
+
+- `Primary Workspace` as the main generation workspace label
+- `Runtime Console`
+- `Strategic Map`
+- `Objectives`
+- `Architecture`
+- `Evolution`
+- `Live Builder`
+- `Library Indexing`
+- `Settings`
+
+`Primary Workspace` in this section refers to a UI surface label, not the backend module name. The public runtime layers are `Helper.Api` and `Helper.Runtime`.
 
 ## Data Boundary
 
@@ -40,8 +55,13 @@ The solution view intentionally includes the full primary runtime graph, and the
 1. production runtime and API stay on `net8.0`
 2. runtime slice and selected verification surfaces stay on `net9.0`
 
-## Canonical Technical References
+## Public Boundary
 
-- `doc/architecture/SYSTEM_OVERVIEW.md`
-- `doc/architecture/RUNTIME_SURFACES.md`
-- `doc/security/REPO_HYGIENE_AND_RUNTIME_ARTIFACT_GOVERNANCE.md`
+This document describes the product architecture at a public overview level.
+
+The private implementation repo contains the full runtime graph, but that code is intentionally outside this public default branch.
+
+For the public repository boundary, use:
+
+- [Repository scope](repository-scope.md)
+- [Public release checklist](public-release-checklist.md)

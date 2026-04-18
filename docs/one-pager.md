@@ -32,4 +32,7 @@ The project is designed to keep runtime state and secrets out of the repository,
 - certification: `GREEN_ANCHOR_PENDING`
 - parity claim: `not proven`
 
-Use `doc/CURRENT_STATE.md` for the current canonical snapshot.
+Use the public proof bundle and the repository-scope note for the current public claim boundary:
+
+- [Repository scope](repository-scope.md)
+- `https://github.com/rovsh44-glitch/helper-web-reliability-50-proof`

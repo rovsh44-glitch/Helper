@@ -1,6 +1,0 @@
-# Keep code navigation focused on the active workspace surface.
-doc/pre_certification/**/probe_runtime/**
-doc/pre_certification/**/files/PROJECTS/**
-doc/archive/**/probe_runtime/**
-doc/archive/**/files/PROJECTS/**
-runtime/root_archive/**
