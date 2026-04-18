@@ -25,6 +25,21 @@ Main flow:
 - strategic planning and architecture workflow
 - generation and workspace lifecycle
 - runtime telemetry and operator review
+- library indexing and knowledge ingestion
+
+## Product Surfaces
+
+- `Primary Workspace` as the main generation workspace label
+- `Runtime Console`
+- `Strategic Map`
+- `Objectives`
+- `Architecture`
+- `Evolution`
+- `Live Builder`
+- `Library Indexing`
+- `Settings`
+
+`Primary Workspace` in this section refers to a UI surface label, not the backend module name. The public runtime layers are `Helper.Api` and `Helper.Runtime`.
 
 ## Data Boundary
 
