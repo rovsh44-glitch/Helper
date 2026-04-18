@@ -1,4 +1,0 @@
-Interfaces ILoggerService.cs
-Configuration/ ConfigurationManager.cs
-../bad.cs
-C:/absolute/bad.cs

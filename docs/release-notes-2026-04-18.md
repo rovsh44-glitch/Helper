@@ -2,7 +2,7 @@
 
 ## Scope
 
-This update refreshes the public showcase surface without exposing private-core implementation details.
+This update refreshes the public showcase surface and narrows the repository toward a showcase-only default branch.
 
 ## Included
 
@@ -10,6 +10,8 @@ This update refreshes the public showcase surface without exposing private-core 
 - new product overview page
 - new public release checklist
 - clarified public-safe showcase boundary
+- removed code-bearing runtime, test, eval, and operator surfaces from the public branch candidate
+- linked the public showcase to a separate sanitized proof repo instead of mixing both concerns
 
 ## Related Public Proof
 

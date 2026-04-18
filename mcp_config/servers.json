@@ -1,5 +1,0 @@
-{
-  "schemaVersion": "helper.mcp.legacy/v1",
-  "status": "deprecated",
-  "message": "Use mcp_config/extensions/*.json manifests plus HELPER_EXTENSION_ENABLED_IDS for activation. This file remains only as a legacy bridge for older tooling."
-}

@@ -5,15 +5,10 @@
       "context": "repo_gate",
       "workflow": ".github/workflows/repo-gate.yml",
       "job": "repo_gate"
-    },
-    {
-      "context": "connected_nuget_audit",
-      "workflow": ".github/workflows/nuget-security-audit.yml",
-      "job": "connected_nuget_audit"
     }
   ],
   "notes": [
     "These contexts must be attached to the GitHub main-branch protection or ruleset.",
-    "The repository enforces the declared contract locally via scripts/check_required_status_contract.ps1."
+    "The public default branch is showcase-only, so the required gate is the showcase surface contract rather than full private-core runtime lanes."
   ]
 }
