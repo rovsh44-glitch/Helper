@@ -56,7 +56,7 @@ Each lane is flag-gated and measured with isolated A/B probes before it is enabl
 
 ## Repository Topology
 
-An interactive isometric map of the codebase (modules, every tracked file as a column, project-reference edges, animated flows) is published on this repository's GitHub Pages; see the README. The private build of the same page overlays live runtime metrics.
+An interactive isometric map of the codebase (modules, every tracked file as a column, project-reference edges, animated flows) is published on this repository's GitHub Pages; see the README. The public build names every code, test, script, frontend and CI file (structural transparency - structure is public, content is not; docs/eval stay anonymous) and carries the file-level import graph, a structural test -> production map and the package manifest. The private build of the same page overlays live runtime metrics.
 
 ## Data Boundary
 
