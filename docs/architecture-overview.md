@@ -41,6 +41,23 @@ Main flow:
 
 `Primary Workspace` in this section refers to a UI surface label, not the backend module name. The public runtime layers are `Helper.Api` and `Helper.Runtime`.
 
+## Knowledge Layer (public overview)
+
+The local library is the primary evidence surface. It is organised as subject domains (science, medicine, humanities, engineering, Russian and English reference works; about 33 domains, on the order of 900k indexed passages) stored in a local vector store, with per-format parsers (PDF, EPUB, FB2, DOCX, Markdown, CHM, HTML; OCR/vision for scans) and an encyclopedia-aware chunker for reference works.
+
+Retrieval lanes:
+
+- **definitional** - subject domain + general and subject encyclopedias (additive reference layers, curated references preferred over Wikipedia on ties)
+- **local lookup / analytical report** - reasoning-support retrieval with sub-query fan-out, analytical grounded synthesis (causal chains, competing explanations, calibrated confidence), quote gate, verifier, traceable synthesis outcome
+- **research** - local + live-web evidence fusion in one citation space, semantic contradiction ladder, log-odds confidence
+- **ingest / evolution** - indexing pipeline with per-domain chunking strategies and resumable queue
+
+Each lane is flag-gated and measured with isolated A/B probes before it is enabled.
+
+## Repository Topology
+
+An interactive isometric map of the codebase (modules, every tracked file as a column, project-reference edges, animated flows) is published on this repository's GitHub Pages; see the README. The private build of the same page overlays live runtime metrics.
+
 ## Data Boundary
 
 Code and canonical docs stay in the repository. Runtime data, auth material, logs, projects, templates, and library roots are expected outside the repository.
