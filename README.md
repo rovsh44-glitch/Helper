@@ -38,6 +38,8 @@ Start here:
 - [Use cases](docs/use-cases.md)
 - [Repository scope](docs/repository-scope.md)
 - [Public release checklist](docs/public-release-checklist.md)
+- [Release notes 2026-08-19](docs/release-notes-2026-08-19.md)
+- [Public status 2026-08-19](docs/public/HELPER_PUBLIC_STATUS_2026-08-19.md)
 - [Release notes 2026-04-18](docs/release-notes-2026-04-18.md)
 
 Trust and contact:
