@@ -1,5 +1,10 @@
 # HELPER
 
+<a href="https://rovsh44-glitch.github.io/Helper/topology/"><img src="media/topology_preview.png" alt="HELPER runtime topology — isometric code city of the repository: 36 modules, 2 916 tracked files as columns, real project-reference edges and animated flows" width="100%"></a>
+
+**[Open the interactive topology →](https://rovsh44-glitch.github.io/Helper/topology/)** — an isometric map of the whole HELPER codebase: every module (16 .NET projects, React UI, tests, scripts, docs, eval) as a block, every tracked file as a column (height = size, colour = type), the real `ProjectReference` graph between projects, and animated payload flows along the real chains (chat turn → API → runtime → knowledge, local retrieval, web research, ingest, eval harness). Click a module to drill down. File names are intentionally hidden in this public build (private-core boundary); the same page inside a running HELPER instance overlays live metrics (requests, turn stages, retrieval, model pool, persistence).
+
+
 HELPER public repository is a curated showcase surface for the product, not the private engineering core.
 
 ## What This Repository Is
