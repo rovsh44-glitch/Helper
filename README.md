@@ -19,12 +19,11 @@ This repository exists to provide a public-facing view of:
 
 ## What This Repository Is Not
 
-This repository intentionally does **not** contain the full code-bearing core:
+This repository intentionally does **not** contain the code-bearing core:
 
-- no full `src/`
-- no full `test/`
-- no operator `scripts/`
+- no source **content**: no `src/`, `test/` or operator `scripts/` code (their file **names**, sizes and dependency graphs ARE published on the topology page — structural transparency; see `docs/repository-scope.md`)
 - no eval corpora or live runtime artifacts
+- no internal analysis or engineering history (those file names stay anonymous on the topology page too)
 
 Implementation, internal tooling, and engineering history remain outside the public default branch.
 
