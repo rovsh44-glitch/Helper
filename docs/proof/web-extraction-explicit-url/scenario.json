@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1.0",
+  "id": "web-extraction-explicit-url",
+  "chain": "extraction from an explicit external URL: explicit-target-read route, no analysis-template hijack",
+  "capturedAt": "2026-08-25 06:50 UTC",
+  "apiSurface": "POST /api/chat (conversation surface, prod build)",
+  "invariants": [
+    {
+      "name": "grounded",
+      "verdict": "PASS"
+    },
+    {
+      "name": "extraction_bypass_trace",
+      "verdict": "PASS"
+    },
+    {
+      "name": "web_source_cited",
+      "verdict": "PASS"
+    }
+  ],
+  "overall": "PASS",
+  "reproduce": "Send input.json/message to a running HELPER instance (POST /api/chat) with the current prod flags; compare the response shape and searchTrace against observed-output.json / trace.json and re-check the invariants."
+}

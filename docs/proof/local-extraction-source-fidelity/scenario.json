@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0",
+  "id": "local-extraction-source-fidelity",
+  "chain": "extraction pinned to a NAMED local tome: article lead + full source excerpt, fabrication-guarded",
+  "capturedAt": "2026-08-25 06:50 UTC",
+  "apiSurface": "POST /api/chat (conversation surface, prod build)",
+  "invariants": [
+    {
+      "name": "grounded",
+      "verdict": "PASS"
+    },
+    {
+      "name": "named_tome_is_cited",
+      "verdict": "PASS"
+    },
+    {
+      "name": "article_lead_delivered",
+      "verdict": "PASS"
+    },
+    {
+      "name": "no_cjk_leak",
+      "verdict": "PASS"
+    }
+  ],
+  "overall": "PASS",
+  "reproduce": "Send input.json/message to a running HELPER instance (POST /api/chat) with the current prod flags; compare the response shape and searchTrace against observed-output.json / trace.json and re-check the invariants."
+}

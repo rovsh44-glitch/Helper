@@ -1,0 +1,19 @@
+{
+  "seconds": 3.0,
+  "grounding": "grounded",
+  "citationCoverage": 0.8888888888888888,
+  "sources": [
+    "https://blog.skillbox.by/kod/nosql-chto-jeto-za-baza-dannyh-i-kak-s-nej-rabotat-skillbox-media",
+    "https://cyberleninka.ru/article/n/bazy-dannyh-sql-i-nosql",
+    "https://habr.com/ru/articles/955358",
+    "https://habr.com/ru/companies/otus/articles/949468",
+    "https://itlogia.ru/article/sql_i_nosql_v_chem_raznica1",
+    "Huyen_ML_Systems_Design_RU.pdf (pdf) | page:81 | chunk:199",
+    "Kleppmann_Data_Intensive_Apps.pdf (pdf) | page:51 | section:Martin KleppmannDesigning Data-Intensive ApplicationsTHE BIG IDEAS BEHIND RELIABLE, SCALABLE, AND MAINTAINABLE SYSTEMS | chunk:101",
+    "Kleppmann_Data_Intensive_Apps.pdf (pdf) | page:71 | section:Martin KleppmannDesigning Data-Intensive ApplicationsTHE BIG IDEAS BEHIND RELIABLE, SCALABLE, AND MAINTAINABLE SYSTEMS | chunk:150",
+    "ML_Systems_Design.pdf (pdf) | page:66 | chunk:107",
+    "ML_Systems_Design.pdf (pdf) | page:76 | chunk:120",
+    "Скит Дж. - С# для профессионалов - тонкости программирования, 3-е издание - 2014.pdf (pdf) | page:366 | chunk:1003"
+  ],
+  "answer": "Kleppmann_Data_Intensive_Apps.pdf [5] посвящён следующему: (англ.) Martin Kleppmann Designing Data-Intensive Applications THE BIG IDEAS BEHIND RELIABLE, SCALABLE, AND MAINTAINABLE SYSTEMS - more.The Birth of No SQLNow, in the 2…; ML_Systems_Design.pdf [6] — о другом аспекте: (англ.) No SQL models. We’ll go over examples to showthe types of problems each model is suited for.Relational Model Relational models are among the most persistent ide…. SQL или NoSQL? Кто есть кто и с чем их едят [2] добавляет: Научная группа из Московского Энергетического Института сделала обзор основных преимуществ баз данных SQL или NoSQL. Итак, в чем разница между данными базами данных, и какую базу данных выбрать в том... [2:p1] SQL или NoSQL? Кто есть кто и с чем их едят / Хабр Научна — это расширяет картину, не заменяя первые два источника. [2:p1] В сумме [1] и [2] дают основное сравнение, а [3] добавляет более узкий практический ракурс. [2:p2]\r\nИсточники:\r\n- web: https://cyberleninka.ru/article/n/bazy-dannyh-sql-i-nosql\r\n- web: https://habr.com/ru/articles/955358\r\n- web: https://habr.com/ru/companies/otus/articles/949468\r\n- web: https://blog.skillbox.by/kod/nosql-chto-jeto-za-baza-dannyh-i-kak-s-nej-rabotat-skillbox-media\r\n- local: Kleppmann_Data_Intensive_Apps.pdf (pdf) | page:51 | section:Martin KleppmannDesigning Data-Intensive ApplicationsTHE BIG IDEAS BEHIND RELIABLE, SCALABLE, AND MAINTAINABLE SYSTEMS | chunk:101\r\n- local: ML_Systems_Design.pdf (pdf) | page:66 | chunk:107\r\n- local: Huyen_ML_Systems_Design_RU.pdf (pdf) | page:81 | chunk:199\r\n- local: Kleppmann_Data_Intensive_Apps.pdf (pdf) | page:71 | section:Martin KleppmannDesigning Data-Intensive ApplicationsTHE BIG IDEAS BEHIND RELIABLE, SCALABLE, AND MAINTAINABLE SYSTEMS | chunk:150\r\n\r\nСледующий шаг:\r\nМогу собрать по этим источникам decision-ready summary или отдельно перепроверить один спорный пункт."
+}
