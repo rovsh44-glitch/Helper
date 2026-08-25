@@ -1,0 +1,169 @@
+{
+  "schemaVersion": "1.0",
+  "previous": {
+    "commit": "9669cc5ac796103b8b827c4255f6233797c8edf2",
+    "generatedAt": "2026-08-20 05:21 UTC",
+    "files": 2917
+  },
+  "current": {
+    "commit": "a4a90b65e7e915e0eff057fccc8855131d05a093",
+    "generatedAt": "2026-08-25 08:56 UTC",
+    "files": 2969
+  },
+  "files": {
+    "added": [
+      "scripts/run_parity_daily.ps1",
+      "scripts/showcase/build_proof_bundles.ps1",
+      "scripts/topology/build_topology_diff.ps1",
+      "src/Helper.Api/Conversation/Analysis/AnalysisExtractionShapePolicy.cs",
+      "src/Helper.Runtime.Core/ExtractionRequestCues.cs",
+      "src/Helper.Runtime.Core/LocalLibraryWorkCatalogPin.cs",
+      "src/Helper.Runtime.Core/OpinionRequestCues.cs",
+      "src/Helper.Runtime.Core/SourcePinnedQueryCues.cs",
+      "src/Helper.Runtime.Knowledge/Retrieval/SectionLeadFetchService.cs",
+      "src/Helper.Runtime/LocalHitTopicalFilter.cs",
+      "src/Helper.Runtime/LocalLibrarySourceFidelityGate.cs",
+      "src/Helper.Runtime/WebHitLanguageFitPolicy.cs",
+      "test/Helper.Runtime.Tests/AnalysisExtractionShapePolicyTests.cs",
+      "test/Helper.Runtime.Tests/ExhaustiveAggregationTests.cs",
+      "test/Helper.Runtime.Tests/ExtractionCompletenessTests.cs",
+      "test/Helper.Runtime.Tests/HeadwordNeighborRescueTests.cs",
+      "test/Helper.Runtime.Tests/LiveProbeDefectLeverTests.cs",
+      "test/Helper.Runtime.Tests/MSeriesLeverTests.cs",
+      "test/Helper.Runtime.Tests/NegationCitationGuardTests.cs",
+      "test/Helper.Runtime.Tests/ParityDayOneLeverTests.cs",
+      "test/Helper.Runtime.Tests/RenderPolishLeverTests.cs",
+      "test/Helper.Runtime.Tests/SectionLeadPreferenceTests.cs",
+      "test/Helper.Runtime.Tests/SourceFidelityGateTests.cs",
+      "test/Helper.Runtime.Tests/WebHitLanguageFitTests.cs",
+      "test/Helper.Runtime.Tests/WorkCatalogPinTests.cs"
+    ],
+    "removed": [],
+    "netCount": 52,
+    "topSizeDeltas": [
+      {
+        "file": "src/Helper.Api/Backend/Configuration/BackendEnvironmentInventory.cs",
+        "delta": 21867
+      },
+      {
+        "file": "src/Helper.Api/Conversation/ResponseComposerSections.cs",
+        "delta": 17797
+      },
+      {
+        "file": "src/Helper.Runtime/LocalLibraryEvidenceCoverage.cs",
+        "delta": 8575
+      },
+      {
+        "file": "test/Helper.Runtime.Tests/ChatTurnPlanningStepTests.cs",
+        "delta": 7311
+      },
+      {
+        "file": "src/Helper.Runtime/ResearchSynthesisSupport.Prompts.cs",
+        "delta": 5621
+      },
+      {
+        "file": "scripts/ingest/convert_publib_scanpdf_to_md.ps1",
+        "delta": 5010
+      },
+      {
+        "file": "src/Helper.Runtime/LocalLibraryGroundingSupport.cs",
+        "delta": 4568
+      },
+      {
+        "file": "src/Helper.Api/Conversation/Planning/TurnAmbiguityResolutionStep.cs",
+        "delta": 3907
+      },
+      {
+        "file": "scripts/topology/generate_topology_page.ps1",
+        "delta": 3772
+      },
+      {
+        "file": "src/Helper.Runtime/ResearchSynthesisSupport.Synthesis.cs",
+        "delta": 3402
+      },
+      {
+        "file": "src/Helper.Runtime/LocalLibrarySentenceSelector.cs",
+        "delta": 3204
+      },
+      {
+        "file": "src/Helper.Api/Conversation/LocalLibrarySynchronousQualityPolicy.cs",
+        "delta": 2724
+      },
+      {
+        "file": "src/Helper.Api/Conversation/LocalLibraryLookupIntentPolicy.cs",
+        "delta": 2295
+      },
+      {
+        "file": "src/Helper.Api/Conversation/AnalyticalInferenceCoveragePolicy.cs",
+        "delta": 2189
+      },
+      {
+        "file": "src/Helper.Api/Conversation/Analysis/AnalysisSourceResolver.cs",
+        "delta": 1992
+      },
+      {
+        "file": "src/Helper.Api/Conversation/LiveWebRequirementPolicy.cs",
+        "delta": 1965
+      },
+      {
+        "file": "src/Helper.Runtime/SupportingImplementations.cs",
+        "delta": 1744
+      },
+      {
+        "file": "src/Helper.Runtime/LocalLibraryTaskSignals.cs",
+        "delta": 1733
+      },
+      {
+        "file": "src/Helper.Api/Conversation/CitationGroundingService.cs",
+        "delta": 1546
+      },
+      {
+        "file": "src/Helper.Api/Conversation/AssistantUserFacingTextPolicy.cs",
+        "delta": 1523
+      }
+    ]
+  },
+  "projectEdges": {
+    "added": [],
+    "removed": []
+  },
+  "fileGraph": {
+    "prevEdges": 7955,
+    "currEdges": 8075,
+    "delta": 120
+  },
+  "moduleShifts": [
+    {
+      "module": "doc",
+      "delta": 26
+    },
+    {
+      "module": "test/Helper.Runtime.Tests",
+      "delta": 13
+    },
+    {
+      "module": "src/Helper.Runtime.Core",
+      "delta": 4
+    },
+    {
+      "module": "scripts",
+      "delta": 3
+    },
+    {
+      "module": "src/Helper.Runtime",
+      "delta": 3
+    },
+    {
+      "module": "eval",
+      "delta": 1
+    },
+    {
+      "module": "src/Helper.Api",
+      "delta": 1
+    },
+    {
+      "module": "src/Helper.Runtime.Knowledge",
+      "delta": 1
+    }
+  ]
+}
