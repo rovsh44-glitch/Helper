@@ -1,0 +1,17 @@
+{
+  "seconds": 45.5,
+  "grounding": "degraded",
+  "citationCoverage": 0,
+  "sources": [
+    "https://ru.wikipedia.org/wiki/%D0%98%D0%BC%D0%BF%D1%80%D0%B5%D1%81%D1%81%D0%B8%D0%BE%D0%BD%D0%B8%D0%B7%D0%BC",
+    "https://ru.wikipedia.org/wiki/%D0%A0%D1%83%D1%81%D1%81%D0%BA%D0%B8%D0%B9_%D0%B8%D0%BC%D0%BF%D1%80%D0%B5%D1%81%D1%81%D0%B8%D0%BE%D0%BD%D0%B8%D0%B7%D0%BC",
+    "https://veryimportantlot.com/en/news/blog/impressionism--what-where-when",
+    "E. H. Gombrich - The Story of Art.pdf (pdf) | page:333 | section:202 Titian: 203. Madonna and Child. Detail of Fig. | chunk:646",
+    "E. H. Gombrich - The Story of Art.pdf (pdf) | page:405 | section:325. MANET: Monet working in his boat. Painted in 1874. Munich, Neue Pinakothek | chunk:789",
+    "E. H. Gombrich - The Story of Art.pdf (pdf) | page:423 | section:339. VAN GOGH: The Sun rising behind Mont Majour. Drawing made in 1888. Wintertur, Oscar Reinhardt Collection | chunk:826",
+    "Frederick Copleston. - A History Of Philosophy, Volume 5..pdf (pdf) | page:265 | section:A HISTORYOF PHILOSOPHY | chunk:750",
+    "Frederick Copleston. - A History Of Philosophy, Volume 5..pdf (pdf) | page:331 | section:A HISTORYOF PHILOSOPHY | chunk:941",
+    "Frederick Copleston. - A History Of Philosophy, Volume 9..pdf (pdf) | page:437 | section:A HISTORYOF PHILOSOPHY | chunk:1245"
+  ],
+  "answer": "Research request: влияние импрессионизма на живопись XX века локальной библиотеке и интернету и дай о его историческом значении\r\n\r\nFrederick Copleston. - A History Of Philosophy, Volume 5..pdf [3] посвящён следующему: (англ.) A HISTORYOF PHILOSOPHY - philosophy have exercised much influence. It was the empiricist element which was most influential. Hume, as will be seen in the follow…; Frederick Copleston. - A History Of Philosophy, Volume 9..pdf [5] — о другом аспекте: (англ.) A HISTORYOF PHILOSOPHY - exploring how [insert specific factor here influences outcomes within [insert context here].] influences outcomes within [insert contex….\r\nE. H. Gombrich - The Story of Art.pdf [4] добавляет: (англ.) 202 Titian: 203. Madonna and Child. Detail of Fig. - poem, so that we may appreciate his interpremusical tation. In same the way, painter painting a 1 a biblica… — это расширяет картину, не заменяя первые два источника.\r\nВ сумме [1] и [2] дают основное сравнение, а [3] добавляет более узкий практический ракурс."
+}

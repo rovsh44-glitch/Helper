@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0",
+  "id": "web-local-fusion-research",
+  "chain": "analytical research over fused local library + live web, with an explicit opinion section",
+  "capturedAt": "2026-08-25 06:50 UTC",
+  "apiSurface": "POST /api/chat (conversation surface, prod build)",
+  "invariants": [
+    {
+      "name": "sources_total>=8",
+      "verdict": "PASS"
+    },
+    {
+      "name": "web_and_local_layers",
+      "verdict": "PASS"
+    },
+    {
+      "name": "grounding_not_degraded",
+      "verdict": "PASS"
+    },
+    {
+      "name": "opinion_section_present",
+      "verdict": "PASS"
+    },
+    {
+      "name": "no_cjk_leak",
+      "verdict": "PASS"
+    }
+  ],
+  "overall": "PASS",
+  "reproduce": "Send input.json/message to a running HELPER instance (POST /api/chat) with the current prod flags; compare the response shape and searchTrace against observed-output.json / trace.json and re-check the invariants."
+}
