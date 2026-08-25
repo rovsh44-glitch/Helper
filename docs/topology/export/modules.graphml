@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns"><graph id="helper_modules" edgedefault="directed">
+  <node id="Helper.Api"/>
+  <node id="Helper.Conversation.Application"/>
+  <node id="Helper.Conversation.Contracts"/>
+  <node id="Helper.Conversation.Engine.Contracts"/>
+  <node id="Helper.Runtime"/>
+  <node id="Helper.Runtime.Api.Tests"/>
+  <node id="Helper.Runtime.Browser.Tests"/>
+  <node id="Helper.Runtime.Calibration"/>
+  <node id="Helper.Runtime.Certification.Compile.Tests"/>
+  <node id="Helper.Runtime.Certification.Tests"/>
+  <node id="Helper.Runtime.Cli"/>
+  <node id="Helper.Runtime.CompilePath.Tests"/>
+  <node id="Helper.Runtime.Core"/>
+  <node id="Helper.Runtime.Eval.Tests"/>
+  <node id="Helper.Runtime.Evolution"/>
+  <node id="Helper.Runtime.Integration.Tests"/>
+  <node id="Helper.Runtime.Knowledge"/>
+  <node id="Helper.Runtime.Tests"/>
+  <node id="Helper.Runtime.WebResearch"/>
+  <node id="Helper.Runtime.WebResearch.Browser"/>
+  <node id="Helper.RuntimeLogSemantics"/>
+  <node id="Helper.RuntimeSlice.Api"/>
+  <node id="Helper.RuntimeSlice.Api.Tests"/>
+  <node id="Helper.RuntimeSlice.Contracts"/>
+  <node id="Helper.Testing"/>
+  <node id="Helper.Testing.WebResearch"/>
+  <edge id="e0" source="Helper.Runtime" target="Helper.Runtime.Core"/>
+  <edge id="e1" source="Helper.Runtime" target="Helper.Runtime.WebResearch"/>
+  <edge id="e2" source="Helper.Runtime" target="Helper.Runtime.Calibration"/>
+  <edge id="e3" source="Helper.RuntimeSlice.Api" target="Helper.RuntimeLogSemantics"/>
+  <edge id="e4" source="Helper.RuntimeSlice.Api" target="Helper.RuntimeSlice.Contracts"/>
+  <edge id="e5" source="Helper.Runtime.Cli" target="Helper.Runtime"/>
+  <edge id="e6" source="Helper.Runtime.Cli" target="Helper.Runtime.Knowledge"/>
+  <edge id="e7" source="Helper.Runtime.Cli" target="Helper.Runtime.Evolution"/>
+  <edge id="e8" source="Helper.Runtime.Knowledge" target="Helper.Runtime.Core"/>
+  <edge id="e9" source="Helper.Runtime.WebResearch" target="Helper.Runtime.Core"/>
+  <edge id="e10" source="Helper.Runtime.WebResearch.Browser" target="Helper.Runtime.WebResearch"/>
+  <edge id="e11" source="Helper.Conversation.Application" target="Helper.Conversation.Contracts"/>
+  <edge id="e12" source="Helper.Runtime.Evolution" target="Helper.Runtime"/>
+  <edge id="e13" source="Helper.Runtime.Evolution" target="Helper.Runtime.Knowledge"/>
+  <edge id="e14" source="Helper.Conversation.Engine.Contracts" target="Helper.Runtime.Core"/>
+  <edge id="e15" source="Helper.Conversation.Engine.Contracts" target="Helper.Conversation.Contracts"/>
+  <edge id="e16" source="Helper.Api" target="Helper.Conversation.Contracts"/>
+  <edge id="e17" source="Helper.Api" target="Helper.Conversation.Engine.Contracts"/>
+  <edge id="e18" source="Helper.Api" target="Helper.Conversation.Application"/>
+  <edge id="e19" source="Helper.Api" target="Helper.RuntimeLogSemantics"/>
+  <edge id="e20" source="Helper.Api" target="Helper.Runtime"/>
+  <edge id="e21" source="Helper.Api" target="Helper.Runtime.WebResearch"/>
+  <edge id="e22" source="Helper.Api" target="Helper.Runtime.WebResearch.Browser"/>
+  <edge id="e23" source="Helper.Api" target="Helper.Runtime.Knowledge"/>
+  <edge id="e24" source="Helper.Api" target="Helper.Runtime.Evolution"/>
+  <edge id="e25" source="Helper.Runtime.CompilePath.Tests" target="Helper.Runtime"/>
+  <edge id="e26" source="Helper.Runtime.CompilePath.Tests" target="Helper.Runtime.Knowledge"/>
+  <edge id="e27" source="Helper.Runtime.CompilePath.Tests" target="Helper.Runtime.Evolution"/>
+  <edge id="e28" source="Helper.Runtime.CompilePath.Tests" target="Helper.Api"/>
+  <edge id="e29" source="Helper.Runtime.Eval.Tests" target="Helper.Runtime"/>
+  <edge id="e30" source="Helper.Runtime.Eval.Tests" target="Helper.Runtime.Knowledge"/>
+  <edge id="e31" source="Helper.Runtime.Eval.Tests" target="Helper.Runtime.Evolution"/>
+  <edge id="e32" source="Helper.Runtime.Eval.Tests" target="Helper.Api"/>
+  <edge id="e33" source="Helper.Runtime.Integration.Tests" target="Helper.Testing"/>
+  <edge id="e34" source="Helper.Runtime.Integration.Tests" target="Helper.Testing.WebResearch"/>
+  <edge id="e35" source="Helper.Runtime.Integration.Tests" target="Helper.Runtime"/>
+  <edge id="e36" source="Helper.Runtime.Integration.Tests" target="Helper.Runtime.Knowledge"/>
+  <edge id="e37" source="Helper.Runtime.Integration.Tests" target="Helper.Runtime.Evolution"/>
+  <edge id="e38" source="Helper.Runtime.Integration.Tests" target="Helper.Api"/>
+  <edge id="e39" source="Helper.Runtime.Browser.Tests" target="Helper.Testing.WebResearch"/>
+  <edge id="e40" source="Helper.Runtime.Browser.Tests" target="Helper.Runtime.WebResearch"/>
+  <edge id="e41" source="Helper.Runtime.Browser.Tests" target="Helper.Runtime.WebResearch.Browser"/>
+  <edge id="e42" source="Helper.Runtime.Certification.Compile.Tests" target="Helper.Runtime"/>
+  <edge id="e43" source="Helper.Runtime.Certification.Compile.Tests" target="Helper.Runtime.Knowledge"/>
+  <edge id="e44" source="Helper.Runtime.Certification.Compile.Tests" target="Helper.Runtime.Evolution"/>
+  <edge id="e45" source="Helper.Runtime.Certification.Compile.Tests" target="Helper.Api"/>
+  <edge id="e46" source="Helper.Runtime.Api.Tests" target="Helper.Runtime"/>
+  <edge id="e47" source="Helper.Runtime.Api.Tests" target="Helper.Runtime.Knowledge"/>
+  <edge id="e48" source="Helper.Runtime.Api.Tests" target="Helper.Runtime.Evolution"/>
+  <edge id="e49" source="Helper.Runtime.Api.Tests" target="Helper.Api"/>
+  <edge id="e50" source="Helper.Runtime.Certification.Tests" target="Helper.Runtime"/>
+  <edge id="e51" source="Helper.Runtime.Certification.Tests" target="Helper.Runtime.Knowledge"/>
+  <edge id="e52" source="Helper.Runtime.Certification.Tests" target="Helper.Runtime.Evolution"/>
+  <edge id="e53" source="Helper.Runtime.Certification.Tests" target="Helper.Api"/>
+  <edge id="e54" source="Helper.RuntimeSlice.Api.Tests" target="Helper.RuntimeLogSemantics"/>
+  <edge id="e55" source="Helper.RuntimeSlice.Api.Tests" target="Helper.RuntimeSlice.Api"/>
+  <edge id="e56" source="Helper.RuntimeSlice.Api.Tests" target="Helper.RuntimeSlice.Contracts"/>
+  <edge id="e57" source="Helper.Runtime.Tests" target="Helper.Testing"/>
+  <edge id="e58" source="Helper.Runtime.Tests" target="Helper.Runtime"/>
+  <edge id="e59" source="Helper.Runtime.Tests" target="Helper.Runtime.Knowledge"/>
+  <edge id="e60" source="Helper.Runtime.Tests" target="Helper.Runtime.Evolution"/>
+  <edge id="e61" source="Helper.Runtime.Tests" target="Helper.Api"/>
+  <edge id="e62" source="Helper.Runtime.Tests" target="Helper.Runtime.Cli"/>
+</graph></graphml>
