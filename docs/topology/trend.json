@@ -1,5 +1,5 @@
 {
- "generated": "2026-08-27 14:40 UTC",
+ "generated": "2026-08-27 15:35 UTC",
  "snapshots": [
   {
    "commit": "9669cc5ac796",
@@ -24,6 +24,16 @@
   {
    "commit": "be26bacf06fb",
    "generatedAt": "2026-08-27 14:40 UTC",
+   "files": 2978,
+   "projectEdges": 63,
+   "fileEdges": 8137,
+   "sccGroups": 18,
+   "largestScc": 317,
+   "filesInCycles": 369
+  },
+  {
+   "commit": "86b2be3aff52",
+   "generatedAt": "2026-08-27 15:35 UTC",
    "files": 2978,
    "projectEdges": 63,
    "fileEdges": 8137,

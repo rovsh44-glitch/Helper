@@ -1,103 +1,23 @@
 {
   "schemaVersion": "1.0",
   "previous": {
-    "commit": "a4a90b65e7e915e0eff057fccc8855131d05a093",
-    "generatedAt": "2026-08-25 08:56 UTC",
-    "files": 2969
-  },
-  "current": {
     "commit": "be26bacf06fb7fc01ba05cd3f5f900436d087e6d",
     "generatedAt": "2026-08-27 14:40 UTC",
     "files": 2978
   },
+  "current": {
+    "commit": "86b2be3aff52dc4bb90c53350e9510b0363d7607",
+    "generatedAt": "2026-08-27 15:35 UTC",
+    "files": 2978
+  },
   "files": {
-    "added": [
-      "scripts/topology/compute_topology_trend.mjs",
-      "test/Helper.Runtime.Tests/KSeriesLeverTests.cs",
-      "test/Helper.Runtime.Tests/TurnInterlocutorProfileTests.cs"
-    ],
+    "added": [],
     "removed": [],
-    "netCount": 9,
+    "netCount": 0,
     "topSizeDeltas": [
       {
-        "file": "src/Helper.Api/Backend/Configuration/BackendEnvironmentInventory.cs",
-        "delta": 17738
-      },
-      {
-        "file": "src/Helper.Api/Conversation/LocalLibraryLookupIntentPolicy.cs",
-        "delta": 8969
-      },
-      {
-        "file": "src/Helper.Runtime.Core/ExtractionRequestCues.cs",
-        "delta": 8278
-      },
-      {
-        "file": "src/Helper.Conversation.Engine.Contracts/ChatTurnContext.cs",
-        "delta": 4849
-      },
-      {
-        "file": "src/Helper.Runtime.Knowledge/StructuredIndexQualityGate.cs",
-        "delta": 3936
-      },
-      {
-        "file": "src/Helper.Api/Conversation/ClaimGroundingVerificationPolicy.cs",
-        "delta": 3611
-      },
-      {
-        "file": "test/Helper.Runtime.Tests/BiologyRuDomainTests.cs",
-        "delta": 3538
-      },
-      {
-        "file": "scripts/topology/generate_topology_page.ps1",
-        "delta": 3374
-      },
-      {
-        "file": "test/Helper.Runtime.Tests/StructuredIndexQualityGateTests.cs",
-        "delta": 3011
-      },
-      {
-        "file": "src/Helper.Runtime.Knowledge/Retrieval/RetrievalCollectionRouter.cs",
-        "delta": 2969
-      },
-      {
-        "file": "src/Helper.Runtime/ResearchSynthesisSupport.Synthesis.cs",
-        "delta": 2453
-      },
-      {
-        "file": "src/Helper.Api/Conversation/AmbiguityDetection.cs",
-        "delta": 2198
-      },
-      {
-        "file": "src/Helper.Api/Conversation/Analysis/AnalysisSourceResolver.cs",
-        "delta": 2109
-      },
-      {
-        "file": "src/Helper.Api/Conversation/ResponseComposerSections.cs",
-        "delta": 2101
-      },
-      {
-        "file": "src/Helper.Api/Conversation/Routing/AssistantRouteDecisionProjector.cs",
-        "delta": 1825
-      },
-      {
-        "file": "test/Helper.Runtime.Tests/HeadwordNeighborRescueTests.cs",
-        "delta": 1748
-      },
-      {
-        "file": "src/Helper.Runtime/LocalBaselineAnswerService.cs",
-        "delta": 1702
-      },
-      {
-        "file": "src/Helper.Api/Conversation/Epistemic/EpistemicAnswerModeRenderer.cs",
-        "delta": 1600
-      },
-      {
-        "file": "src/Helper.Api/Conversation/ChatTurnImmediateService.cs",
-        "delta": 1381
-      },
-      {
-        "file": "src/Helper.Runtime.Knowledge/Retrieval/SectionLeadFetchService.cs",
-        "delta": 1278
+        "file": "scripts/topology/topology_template.html",
+        "delta": -8
       }
     ]
   },
@@ -106,22 +26,9 @@
     "removed": []
   },
   "fileGraph": {
-    "prevEdges": 8075,
+    "prevEdges": 8137,
     "currEdges": 8137,
-    "delta": 62
+    "delta": 0
   },
-  "moduleShifts": [
-    {
-      "module": "doc",
-      "delta": 6
-    },
-    {
-      "module": "test/Helper.Runtime.Tests",
-      "delta": 2
-    },
-    {
-      "module": "scripts",
-      "delta": 1
-    }
-  ]
+  "moduleShifts": []
 }
