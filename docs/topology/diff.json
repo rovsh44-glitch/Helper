@@ -1,23 +1,115 @@
 {
   "schemaVersion": "1.0",
   "previous": {
-    "commit": "be26bacf06fb7fc01ba05cd3f5f900436d087e6d",
-    "generatedAt": "2026-08-27 14:40 UTC",
-    "files": 2978
-  },
-  "current": {
     "commit": "86b2be3aff52dc4bb90c53350e9510b0363d7607",
     "generatedAt": "2026-08-27 15:35 UTC",
     "files": 2978
   },
+  "current": {
+    "commit": "06c479a30f0768c300da893f6750f1cef7c1b7d3",
+    "generatedAt": "2026-08-31 06:31 UTC",
+    "files": 3005
+  },
   "files": {
-    "added": [],
+    "added": [
+      "src/Helper.Api/Conversation/PastDialogueRecallRenderer.cs",
+      "src/Helper.Api/Hosting/ProbeTurnMetricsExemption.cs",
+      "src/Helper.Runtime.Core/ClarifyAnswerCues.cs",
+      "src/Helper.Runtime.Core/PastDialogueRecallCues.cs",
+      "src/Helper.Runtime.Core/PreparationTaskCues.cs",
+      "test/Helper.Runtime.Tests/AspectAnchorCoherenceTests.cs",
+      "test/Helper.Runtime.Tests/ClarifyInheritAndHistoryBudgetTests.cs",
+      "test/Helper.Runtime.Tests/LookupWhitespaceNormalizeTests.cs",
+      "test/Helper.Runtime.Tests/NoSourcesDirectFallbackTests.cs",
+      "test/Helper.Runtime.Tests/NoSourcesFallbackPreambleSurvivalTests.cs",
+      "test/Helper.Runtime.Tests/ParametricFallbackCoveragePolicyTests.cs",
+      "test/Helper.Runtime.Tests/PastDialogueRecallTests.cs",
+      "test/Helper.Runtime.Tests/PreparationGoalTests.cs",
+      "test/Helper.Runtime.Tests/ProbeTurnMetricsExemptionTests.cs",
+      "test/Helper.Runtime.Tests/TopicalMultilineCorpusTests.cs"
+    ],
     "removed": [],
-    "netCount": 0,
+    "netCount": 27,
     "topSizeDeltas": [
       {
+        "file": "src/Helper.Api/Backend/Configuration/BackendEnvironmentInventory.cs",
+        "delta": 12227
+      },
+      {
+        "file": "src/Helper.Runtime/ResearchSynthesisSupport.Synthesis.cs",
+        "delta": 5873
+      },
+      {
+        "file": "src/Helper.Api/Conversation/LocalLibraryLookupIntentPolicy.cs",
+        "delta": 4142
+      },
+      {
+        "file": "src/Helper.Api/Conversation/LocalLibrarySynchronousQualityPolicy.cs",
+        "delta": 2687
+      },
+      {
+        "file": "src/Helper.Api/Conversation/ChatTurnExecutionSupport.cs",
+        "delta": 2457
+      },
+      {
+        "file": "src/Helper.Api/Conversation/BenchmarkComposedResponseGroundingRefresher.cs",
+        "delta": 2438
+      },
+      {
+        "file": "src/Helper.Api/Conversation/AnalyticalInferenceCoveragePolicy.cs",
+        "delta": 2390
+      },
+      {
+        "file": "src/Helper.Conversation.Engine.Contracts/ChatTurnContext.cs",
+        "delta": 2178
+      },
+      {
+        "file": "src/Helper.Runtime/LocalBaselineAnswerService.cs",
+        "delta": 1884
+      },
+      {
         "file": "scripts/topology/topology_template.html",
-        "delta": -8
+        "delta": 1871
+      },
+      {
+        "file": "src/Helper.Api/Conversation/ChatTurnImmediateService.cs",
+        "delta": 1591
+      },
+      {
+        "file": "scripts/run_parity_daily.ps1",
+        "delta": 1396
+      },
+      {
+        "file": "src/Helper.Api/Conversation/Epistemic/EpistemicAnswerModePolicy.cs",
+        "delta": 1146
+      },
+      {
+        "file": "src/Helper.Runtime/LocalLibraryEvidenceCoverage.cs",
+        "delta": 1136
+      },
+      {
+        "file": "src/Helper.Runtime.Core/LookupTextNormalization.cs",
+        "delta": 1064
+      },
+      {
+        "file": "src/Helper.Api/Conversation/Planning/TurnAmbiguityResolutionStep.cs",
+        "delta": 1062
+      },
+      {
+        "file": "src/Helper.Api/Conversation/LatencyBudgetPolicy.cs",
+        "delta": 1055
+      },
+      {
+        "file": "src/Helper.Runtime/WebHitTopicalFilter.cs",
+        "delta": 955
+      },
+      {
+        "file": "src/Helper.Api/Conversation/ResponseComposerSections.cs",
+        "delta": 816
+      },
+      {
+        "file": "src/Helper.Api/Hosting/EndpointRegistrationExtensions.Conversation.ChatAndStreaming.cs",
+        "delta": 786
       }
     ]
   },
@@ -27,8 +119,25 @@
   },
   "fileGraph": {
     "prevEdges": 8137,
-    "currEdges": 8137,
-    "delta": 0
+    "currEdges": 8210,
+    "delta": 73
   },
-  "moduleShifts": []
+  "moduleShifts": [
+    {
+      "module": "doc",
+      "delta": 12
+    },
+    {
+      "module": "test/Helper.Runtime.Tests",
+      "delta": 10
+    },
+    {
+      "module": "src/Helper.Runtime.Core",
+      "delta": 3
+    },
+    {
+      "module": "src/Helper.Api",
+      "delta": 2
+    }
+  ]
 }
