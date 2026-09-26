@@ -1,115 +1,119 @@
 {
   "schemaVersion": "1.0",
   "previous": {
-    "commit": "86b2be3aff52dc4bb90c53350e9510b0363d7607",
-    "generatedAt": "2026-08-27 15:35 UTC",
-    "files": 2978
-  },
-  "current": {
     "commit": "06c479a30f0768c300da893f6750f1cef7c1b7d3",
     "generatedAt": "2026-08-31 06:31 UTC",
     "files": 3005
   },
+  "current": {
+    "commit": "a1219247eee7c03f692151a47945e655d956a8c6",
+    "generatedAt": "2026-09-26 15:12 UTC",
+    "files": 3043
+  },
   "files": {
     "added": [
-      "src/Helper.Api/Conversation/PastDialogueRecallRenderer.cs",
-      "src/Helper.Api/Hosting/ProbeTurnMetricsExemption.cs",
-      "src/Helper.Runtime.Core/ClarifyAnswerCues.cs",
-      "src/Helper.Runtime.Core/PastDialogueRecallCues.cs",
-      "src/Helper.Runtime.Core/PreparationTaskCues.cs",
-      "test/Helper.Runtime.Tests/AspectAnchorCoherenceTests.cs",
-      "test/Helper.Runtime.Tests/ClarifyInheritAndHistoryBudgetTests.cs",
-      "test/Helper.Runtime.Tests/LookupWhitespaceNormalizeTests.cs",
-      "test/Helper.Runtime.Tests/NoSourcesDirectFallbackTests.cs",
-      "test/Helper.Runtime.Tests/NoSourcesFallbackPreambleSurvivalTests.cs",
-      "test/Helper.Runtime.Tests/ParametricFallbackCoveragePolicyTests.cs",
-      "test/Helper.Runtime.Tests/PastDialogueRecallTests.cs",
-      "test/Helper.Runtime.Tests/PreparationGoalTests.cs",
-      "test/Helper.Runtime.Tests/ProbeTurnMetricsExemptionTests.cs",
-      "test/Helper.Runtime.Tests/TopicalMultilineCorpusTests.cs"
+      "CLAUDE.md",
+      "scripts/common/TraceabilityGate.ps1",
+      "scripts/config/flag_consolidation_exclusions.json",
+      "scripts/config/prod_config_suite_baseline.json",
+      "scripts/development/build_development_delta.ps1",
+      "scripts/evolution/build_evolution_proposals.ps1",
+      "scripts/governance/run_suite_prod_config.ps1",
+      "scripts/knowledge/build_critic_digest.ps1",
+      "scripts/knowledge/build_knowledge_gap_queue.ps1",
+      "scripts/knowledge/build_real_traffic_drift.ps1",
+      "scripts/knowledge/run_knowledge_gap_weekly.ps1",
+      "scripts/ops/prod_supervisor.ps1",
+      "src/Helper.Api/Conversation/Analysis/RepoMetadataFabricationGuard.cs",
+      "src/Helper.Api/Conversation/KnowledgeGapLedger.cs",
+      "src/Helper.Runtime.Core/EstablishmentRecommendationCues.cs",
+      "test/Helper.Runtime.Tests/ArchitectureFitnessTests.ResponseStateMachine.cs",
+      "test/Helper.Runtime.Tests/EstablishmentRecommendationCuesTests.cs",
+      "test/Helper.Runtime.Tests/KnowledgeGapLedgerTests.cs",
+      "test/Helper.Runtime.Tests/RepoMetadataFabricationGuardTests.cs"
     ],
     "removed": [],
-    "netCount": 27,
+    "netCount": 38,
     "topSizeDeltas": [
       {
         "file": "src/Helper.Api/Backend/Configuration/BackendEnvironmentInventory.cs",
-        "delta": 12227
-      },
-      {
-        "file": "src/Helper.Runtime/ResearchSynthesisSupport.Synthesis.cs",
-        "delta": 5873
-      },
-      {
-        "file": "src/Helper.Api/Conversation/LocalLibraryLookupIntentPolicy.cs",
-        "delta": 4142
-      },
-      {
-        "file": "src/Helper.Api/Conversation/LocalLibrarySynchronousQualityPolicy.cs",
-        "delta": 2687
-      },
-      {
-        "file": "src/Helper.Api/Conversation/ChatTurnExecutionSupport.cs",
-        "delta": 2457
-      },
-      {
-        "file": "src/Helper.Api/Conversation/BenchmarkComposedResponseGroundingRefresher.cs",
-        "delta": 2438
-      },
-      {
-        "file": "src/Helper.Api/Conversation/AnalyticalInferenceCoveragePolicy.cs",
-        "delta": 2390
-      },
-      {
-        "file": "src/Helper.Conversation.Engine.Contracts/ChatTurnContext.cs",
-        "delta": 2178
-      },
-      {
-        "file": "src/Helper.Runtime/LocalBaselineAnswerService.cs",
-        "delta": 1884
-      },
-      {
-        "file": "scripts/topology/topology_template.html",
-        "delta": 1871
-      },
-      {
-        "file": "src/Helper.Api/Conversation/ChatTurnImmediateService.cs",
-        "delta": 1591
+        "delta": -17563
       },
       {
         "file": "scripts/run_parity_daily.ps1",
-        "delta": 1396
+        "delta": 5093
       },
       {
-        "file": "src/Helper.Api/Conversation/Epistemic/EpistemicAnswerModePolicy.cs",
-        "delta": 1146
+        "file": "src/Helper.Api/Conversation/NoSourceFactualHedgePolicy.cs",
+        "delta": 3412
       },
       {
-        "file": "src/Helper.Runtime/LocalLibraryEvidenceCoverage.cs",
-        "delta": 1136
+        "file": "test/Helper.Runtime.Tests/SemantikaPostMortemLayersTests.cs",
+        "delta": -2306
       },
       {
-        "file": "src/Helper.Runtime.Core/LookupTextNormalization.cs",
-        "delta": 1064
+        "file": "test/Helper.Runtime.Tests/WebSearchOrchestratorTests.cs",
+        "delta": 2163
       },
       {
-        "file": "src/Helper.Api/Conversation/Planning/TurnAmbiguityResolutionStep.cs",
-        "delta": 1062
+        "file": "test/Helper.Runtime.Tests/SynthesisTailCautionPostGateTests.cs",
+        "delta": -2007
       },
       {
-        "file": "src/Helper.Api/Conversation/LatencyBudgetPolicy.cs",
-        "delta": 1055
+        "file": "test/Helper.Runtime.Tests/LanguageLockL5ObservabilityTests.cs",
+        "delta": -1892
       },
       {
-        "file": "src/Helper.Runtime/WebHitTopicalFilter.cs",
-        "delta": 955
+        "file": "test/Helper.Runtime.Tests/ParityDayOneLeverTests.cs",
+        "delta": -1887
       },
       {
-        "file": "src/Helper.Api/Conversation/ResponseComposerSections.cs",
-        "delta": 816
+        "file": "test/Helper.Runtime.Tests/RetrievalPipelineTests.DomainFanout.cs",
+        "delta": -1578
       },
       {
-        "file": "src/Helper.Api/Hosting/EndpointRegistrationExtensions.Conversation.ChatAndStreaming.cs",
-        "delta": 786
+        "file": "test/Helper.Runtime.Tests/ChatTurnPlanningStepTests.cs",
+        "delta": -1563
+      },
+      {
+        "file": "test/Helper.Runtime.Tests/LocalExactQuoteLookupTests.cs",
+        "delta": 1563
+      },
+      {
+        "file": "src/Helper.Api/Conversation/AnalysisReportPreservationPolicy.cs",
+        "delta": -1551
+      },
+      {
+        "file": "test/Helper.Runtime.Tests/AnalyticalInferenceCoverageTests.cs",
+        "delta": -1537
+      },
+      {
+        "file": "test/Helper.Runtime.Tests/ReferenceLayerOrderingTests.cs",
+        "delta": -1325
+      },
+      {
+        "file": "test/Helper.Runtime.Tests/ConversationRuntimeTests.ResponseComposerAndFinalizer.cs",
+        "delta": 1311
+      },
+      {
+        "file": "test/Helper.Runtime.Tests/AnalysisReportComposerTests.cs",
+        "delta": -1275
+      },
+      {
+        "file": "scripts/config/scripts_inventory.json",
+        "delta": 1180
+      },
+      {
+        "file": "test/Helper.Runtime.Tests/EvidenceLayerFusionTests.cs",
+        "delta": -1174
+      },
+      {
+        "file": "test/Helper.Runtime.Tests/LocalBaselineDefinitionalParametricFallbackTests.cs",
+        "delta": -1120
+      },
+      {
+        "file": "src/Helper.Api/Conversation/LiveWebRequirementPolicy.cs",
+        "delta": 1002
       }
     ]
   },
@@ -118,26 +122,38 @@
     "removed": []
   },
   "fileGraph": {
-    "prevEdges": 8137,
-    "currEdges": 8210,
-    "delta": 73
+    "prevEdges": 8210,
+    "currEdges": 8206,
+    "delta": -4
   },
   "moduleShifts": [
     {
-      "module": "doc",
-      "delta": 12
+      "module": "scripts",
+      "delta": 11
     },
     {
-      "module": "test/Helper.Runtime.Tests",
+      "module": "doc",
       "delta": 10
     },
     {
-      "module": "src/Helper.Runtime.Core",
-      "delta": 3
+      "module": "eval",
+      "delta": 9
+    },
+    {
+      "module": "test/Helper.Runtime.Tests",
+      "delta": 4
     },
     {
       "module": "src/Helper.Api",
       "delta": 2
+    },
+    {
+      "module": "src/Helper.Runtime.Core",
+      "delta": 1
+    },
+    {
+      "module": "(root)",
+      "delta": 1
     }
   ]
 }
