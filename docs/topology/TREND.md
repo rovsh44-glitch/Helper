@@ -11,5 +11,6 @@ where the absolute count differs slightly from the on-page figure.
 | 2026-08-25 08:56 UTC | `a4a90b65e7e9` | 2969 | 63 | 8075 | 18 | 316 | 368 |
 | 2026-08-27 15:35 UTC | `86b2be3aff52` | 2978 | 63 | 8137 | 18 | 317 | 369 |
 | 2026-08-31 06:31 UTC | `06c479a30f07` | 3005 | 63 | 8210 | 19 | 318 | 372 |
+| 2026-10-09 10:54 UTC | `2c1c6bd062df` | 3088 | 63 | 8437 | 20 | 285 | 341 |
 
-Latest vs first: files 2917 -> 3005, SCC groups 18 -> 19, files in cycles 359 -> 372.
+Latest vs first: files 2917 -> 3088, SCC groups 18 -> 20, files in cycles 359 -> 341.
