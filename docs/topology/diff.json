@@ -1,115 +1,180 @@
 {
   "schemaVersion": "1.0",
   "previous": {
-    "commit": "86b2be3aff52dc4bb90c53350e9510b0363d7607",
-    "generatedAt": "2026-08-27 15:35 UTC",
-    "files": 2978
-  },
-  "current": {
     "commit": "06c479a30f0768c300da893f6750f1cef7c1b7d3",
     "generatedAt": "2026-08-31 06:31 UTC",
     "files": 3005
   },
+  "current": {
+    "commit": "d9954c608b93cd39423dde90a4eae6783a806db6",
+    "generatedAt": "2026-10-24 06:31 UTC",
+    "files": 3109
+  },
   "files": {
     "added": [
-      "src/Helper.Api/Conversation/PastDialogueRecallRenderer.cs",
-      "src/Helper.Api/Hosting/ProbeTurnMetricsExemption.cs",
-      "src/Helper.Runtime.Core/ClarifyAnswerCues.cs",
-      "src/Helper.Runtime.Core/PastDialogueRecallCues.cs",
-      "src/Helper.Runtime.Core/PreparationTaskCues.cs",
-      "test/Helper.Runtime.Tests/AspectAnchorCoherenceTests.cs",
-      "test/Helper.Runtime.Tests/ClarifyInheritAndHistoryBudgetTests.cs",
-      "test/Helper.Runtime.Tests/LookupWhitespaceNormalizeTests.cs",
-      "test/Helper.Runtime.Tests/NoSourcesDirectFallbackTests.cs",
-      "test/Helper.Runtime.Tests/NoSourcesFallbackPreambleSurvivalTests.cs",
-      "test/Helper.Runtime.Tests/ParametricFallbackCoveragePolicyTests.cs",
-      "test/Helper.Runtime.Tests/PastDialogueRecallTests.cs",
-      "test/Helper.Runtime.Tests/PreparationGoalTests.cs",
-      "test/Helper.Runtime.Tests/ProbeTurnMetricsExemptionTests.cs",
-      "test/Helper.Runtime.Tests/TopicalMultilineCorpusTests.cs"
+      "CLAUDE.md",
+      "scripts/check_selfhosted_lane_order.ps1",
+      "scripts/ci/ephemeral_runner_loop.ps1",
+      "scripts/common/TraceabilityGate.ps1",
+      "scripts/config/flag_consolidation_exclusions.json",
+      "scripts/config/prod_config_suite_baseline.json",
+      "scripts/development/build_development_delta.ps1",
+      "scripts/evolution/build_evolution_proposals.ps1",
+      "scripts/governance/run_suite_prod_config.ps1",
+      "scripts/knowledge/build_critic_digest.ps1",
+      "scripts/knowledge/build_knowledge_gap_queue.ps1",
+      "scripts/knowledge/build_real_traffic_drift.ps1",
+      "scripts/knowledge/run_knowledge_gap_weekly.ps1",
+      "scripts/ops/prod_supervisor.ps1",
+      "scripts/sanitize_section_noise_payload.ps1",
+      "scripts/stop_workspace_processes.ps1",
+      "src/Helper.Api/Conversation/Analysis/RepoMetadataFabricationGuard.cs",
+      "src/Helper.Api/Conversation/KnowledgeGapLedger.cs",
+      "src/Helper.Api/Conversation/PlainCitationRenderPolicy.cs",
+      "src/Helper.Api/Conversation/ShipGateBaselineFallthrough.cs",
+      "src/Helper.Api/Conversation/TerminalDisplayPasses.cs",
+      "src/Helper.Api/Conversation/UnderspecifiedStarterDirective.cs",
+      "src/Helper.Api/Hosting/AtomicFileReplace.cs",
+      "src/Helper.Api/Hosting/ModelPlaneResyncPolicy.cs",
+      "src/Helper.Api/Hosting/RequestBudgetPolicy.cs",
+      "src/Helper.Runtime.Core/AdSourceCues.cs",
+      "src/Helper.Runtime.Core/EstablishmentRecommendationCues.cs",
+      "src/Helper.Runtime.Core/EvidenceRequestCues.cs",
+      "src/Helper.Runtime.Core/LocatorWhitespaceSanitizer.cs",
+      "src/Helper.Runtime.Core/SectionNoiseSanitizer.cs",
+      "src/Helper.Runtime.Core/UnderspecifiedPromptCues.cs",
+      "src/Helper.Runtime/AbsoluteGuaranteeQualifierPolicy.cs",
+      "src/Helper.Runtime/BaselineKnowledgePrompt.cs",
+      "src/Helper.Runtime/DeterministicClarifyAskPolicy.cs",
+      "src/Helper.Runtime/Generation/MetricsArtifactPathPolicy.cs",
+      "src/Helper.Runtime/ProseCoherencePolicy.cs",
+      "src/Helper.Runtime/RenderedLinkLivenessPolicy.cs",
+      "src/Helper.Runtime/RenderStubSweepPolicy.cs",
+      "src/Helper.Runtime/ResearchFragmentBodyGuard.cs",
+      "src/Helper.Runtime/SourcesFooterOnTopicRenderPolicy.cs",
+      "src/Helper.Runtime/SynthesisInputAnchorFilter.cs",
+      "src/Helper.Runtime/VersionCurrencyHorizonPolicy.cs",
+      "src/Helper.Runtime/VersionSensitiveHedgePolicy.cs",
+      "test/Helper.Runtime.Tests/ArchitectureFitnessTests.ResponseStateMachine.cs",
+      "test/Helper.Runtime.Tests/AtomicFileReplaceTests.cs",
+      "test/Helper.Runtime.Tests/BlindRound2LeverTests.cs",
+      "test/Helper.Runtime.Tests/ClarifyBlockingQuestionTests.cs",
+      "test/Helper.Runtime.Tests/EstablishmentRecommendationCuesTests.cs",
+      "test/Helper.Runtime.Tests/HumanLevelRenderWaveTests.cs",
+      "test/Helper.Runtime.Tests/KnowledgeGapLedgerTests.cs",
+      "test/Helper.Runtime.Tests/MetricsArtifactPathPolicyTests.cs",
+      "test/Helper.Runtime.Tests/ModelPlaneIncidentTests.cs",
+      "test/Helper.Runtime.Tests/RecallStage1Tests.cs",
+      "test/Helper.Runtime.Tests/RepoMetadataFabricationGuardTests.cs",
+      "test/Helper.Runtime.Tests/RequestBudgetWaveTests.cs",
+      "test/Helper.Runtime.Tests/Round10LeverTests.cs",
+      "test/Helper.Runtime.Tests/Round11LeverTests.cs",
+      "test/Helper.Runtime.Tests/Round12LeverTests.cs",
+      "test/Helper.Runtime.Tests/Round13LeverTests.cs",
+      "test/Helper.Runtime.Tests/Round14LeverTests.cs",
+      "test/Helper.Runtime.Tests/Round15LeverTests.cs",
+      "test/Helper.Runtime.Tests/Round16LeverTests.cs",
+      "test/Helper.Runtime.Tests/Round17LeverTests.cs",
+      "test/Helper.Runtime.Tests/Round18AnalysisLaneTests.cs",
+      "test/Helper.Runtime.Tests/Round19LeverTests.cs",
+      "test/Helper.Runtime.Tests/Round20LeverTests.cs",
+      "test/Helper.Runtime.Tests/Round21LeverTests.cs",
+      "test/Helper.Runtime.Tests/Round22LeverTests.cs",
+      "test/Helper.Runtime.Tests/Round4ResearchLeverTests.cs",
+      "test/Helper.Runtime.Tests/Round5LeverTests.cs",
+      "test/Helper.Runtime.Tests/Round6LeverTests.cs",
+      "test/Helper.Runtime.Tests/Round7LeverTests.cs",
+      "test/Helper.Runtime.Tests/Round8LeverTests.cs",
+      "test/Helper.Runtime.Tests/Round9LeverTests.cs",
+      "test/Helper.Runtime.Tests/Stage3BoundaryRepairTests.cs",
+      "test/Helper.Runtime.Tests/Stage4DialogResidualTests.cs",
+      "test/Helper.Runtime.Tests/SynthesisStage2Tests.cs",
+      "test/Helper.Runtime.Tests/UnderspecifiedWaveTests.cs",
+      "test/sessionRetryPolicy.test.ts",
+      "vite.harness.config.mjs"
     ],
     "removed": [],
-    "netCount": 27,
+    "netCount": 104,
     "topSizeDeltas": [
       {
         "file": "src/Helper.Api/Backend/Configuration/BackendEnvironmentInventory.cs",
-        "delta": 12227
+        "delta": 55506
+      },
+      {
+        "file": "package-lock.json",
+        "delta": -10021
       },
       {
         "file": "src/Helper.Runtime/ResearchSynthesisSupport.Synthesis.cs",
-        "delta": 5873
+        "delta": 9838
       },
       {
-        "file": "src/Helper.Api/Conversation/LocalLibraryLookupIntentPolicy.cs",
-        "delta": 4142
+        "file": "src/Helper.Runtime/ResearchSynthesisSupport.Prompts.cs",
+        "delta": 9381
       },
       {
-        "file": "src/Helper.Api/Conversation/LocalLibrarySynchronousQualityPolicy.cs",
-        "delta": 2687
+        "file": "src/Helper.Runtime/SupportingImplementations.cs",
+        "delta": 9186
       },
       {
-        "file": "src/Helper.Api/Conversation/ChatTurnExecutionSupport.cs",
-        "delta": 2457
+        "file": "src/Helper.Api/Conversation/ConversationSourceClassifier.cs",
+        "delta": 5930
       },
       {
-        "file": "src/Helper.Api/Conversation/BenchmarkComposedResponseGroundingRefresher.cs",
-        "delta": 2438
+        "file": "src/Helper.Api/Conversation/ResearchResponseQualityGuard.cs",
+        "delta": 5740
       },
       {
-        "file": "src/Helper.Api/Conversation/AnalyticalInferenceCoveragePolicy.cs",
-        "delta": 2390
-      },
-      {
-        "file": "src/Helper.Conversation.Engine.Contracts/ChatTurnContext.cs",
-        "delta": 2178
-      },
-      {
-        "file": "src/Helper.Runtime/LocalBaselineAnswerService.cs",
-        "delta": 1884
-      },
-      {
-        "file": "scripts/topology/topology_template.html",
-        "delta": 1871
-      },
-      {
-        "file": "src/Helper.Api/Conversation/ChatTurnImmediateService.cs",
-        "delta": 1591
+        "file": "src/Helper.Runtime/LocalLibraryEvidenceFormatter.cs",
+        "delta": 5168
       },
       {
         "file": "scripts/run_parity_daily.ps1",
-        "delta": 1396
+        "delta": 5093
       },
       {
-        "file": "src/Helper.Api/Conversation/Epistemic/EpistemicAnswerModePolicy.cs",
-        "delta": 1146
+        "file": ".github/workflows/runtime-test-lanes.yml",
+        "delta": 5046
       },
       {
-        "file": "src/Helper.Runtime/LocalLibraryEvidenceCoverage.cs",
-        "delta": 1136
+        "file": "src/Helper.Api/Conversation/ChatTurnExecutionSupport.cs",
+        "delta": 4943
       },
       {
-        "file": "src/Helper.Runtime.Core/LookupTextNormalization.cs",
-        "delta": 1064
+        "file": "src/Helper.Api/Conversation/NoSourceFactualHedgePolicy.cs",
+        "delta": 4362
       },
       {
-        "file": "src/Helper.Api/Conversation/Planning/TurnAmbiguityResolutionStep.cs",
-        "delta": 1062
+        "file": "src/Helper.Api/Conversation/Analysis/AnalysisCouncilAugmenter.cs",
+        "delta": 4243
       },
       {
-        "file": "src/Helper.Api/Conversation/LatencyBudgetPolicy.cs",
-        "delta": 1055
+        "file": "src/Helper.Runtime/Web/ComparativeQueryDecomposer.cs",
+        "delta": 4021
       },
       {
-        "file": "src/Helper.Runtime/WebHitTopicalFilter.cs",
-        "delta": 955
+        "file": "src/Helper.Api/Conversation/ChatTurnImmediateService.cs",
+        "delta": 3922
       },
       {
-        "file": "src/Helper.Api/Conversation/ResponseComposerSections.cs",
-        "delta": 816
+        "file": "src/Helper.Runtime/LocalHitTopicalFilter.cs",
+        "delta": 3897
       },
       {
-        "file": "src/Helper.Api/Hosting/EndpointRegistrationExtensions.Conversation.ChatAndStreaming.cs",
-        "delta": 786
+        "file": "src/Helper.Api/Conversation/Analysis/AnalysisReportTemplates.cs",
+        "delta": 3713
+      },
+      {
+        "file": "scripts/npm_audit_allowlist.json",
+        "delta": -3686
+      },
+      {
+        "file": "src/Helper.Runtime/WebHitSenseDisambiguator.cs",
+        "delta": 3309
+      },
+      {
+        "file": "src/Helper.Api/Conversation/Analysis/AnalysisLibraryContextEvidence.cs",
+        "delta": 3208
       }
     ]
   },
@@ -118,26 +183,46 @@
     "removed": []
   },
   "fileGraph": {
-    "prevEdges": 8137,
-    "currEdges": 8210,
-    "delta": 73
+    "prevEdges": 8210,
+    "currEdges": 8513,
+    "delta": 303
   },
   "moduleShifts": [
     {
+      "module": "test/Helper.Runtime.Tests",
+      "delta": 35
+    },
+    {
+      "module": "scripts",
+      "delta": 15
+    },
+    {
       "module": "doc",
+      "delta": 14
+    },
+    {
+      "module": "src/Helper.Runtime",
       "delta": 12
     },
     {
-      "module": "test/Helper.Runtime.Tests",
+      "module": "eval",
       "delta": 10
     },
     {
-      "module": "src/Helper.Runtime.Core",
-      "delta": 3
+      "module": "src/Helper.Api",
+      "delta": 9
     },
     {
-      "module": "src/Helper.Api",
+      "module": "src/Helper.Runtime.Core",
+      "delta": 6
+    },
+    {
+      "module": "(root)",
       "delta": 2
+    },
+    {
+      "module": "test",
+      "delta": 1
     }
   ]
 }
