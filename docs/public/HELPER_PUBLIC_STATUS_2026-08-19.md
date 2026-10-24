@@ -41,4 +41,4 @@ All numbers below come from isolated A/B probes on the private core (one flag fl
 
 ## Disclosure Boundary
 
-Do not publish private paths, raw runtime logs, local-library source text, secrets, private artifacts, prompt-specific smoke logs, or unsanitized internal audit records. The showcase topology page is a sanitized build: module names, file counts, sizes and project-reference edges only; file names are hidden.
+Do not publish private paths, raw runtime logs, local-library source text, secrets, private artifacts, prompt-specific smoke logs, or unsanitized internal audit records. The showcase topology page is a sanitized build: module names, file counts, sizes and project-reference edges; real file names for code, tests, scripts, frontend and CI are published since this release (structural transparency — structure is public, content is not; docs/eval names stay anonymous). [Correction 2026-10-24: the original sentence here still said "file names are hidden", which contradicted this same release's naming policy; the wording above is what the release actually shipped.]
