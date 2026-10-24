@@ -74,6 +74,21 @@ jobs:
             throw "Missing required public showcase paths: $($missing -join ', ')"
           }
 
+      - name: Check for source-code files anywhere in the tree
+        shell: pwsh
+        run: |
+          # The top-level contract above only constrains ROOT entries, so a code file nested under an allowed
+          # directory (docs/, media/, ...) would pass unnoticed. This step closes that hole: the showcase ships
+          # structure and documents, never source code, at ANY depth. Extend the list, not the exceptions, if a
+          # new code-shaped format appears.
+          $bannedExtensions = @('.cs', '.csproj', '.sln', '.ps1', '.psm1', '.psd1', '.ts', '.tsx', '.js', '.mjs', '.cjs', '.jsx', '.py', '.sh', '.bat', '.cmd')
+          $violations = git ls-files | Where-Object {
+            $bannedExtensions -contains [System.IO.Path]::GetExtension($_).ToLowerInvariant()
+          }
+          if ($violations) {
+            throw "Source-code files are out of scope for the public showcase at any depth: $($violations -join ', ')"
+          }
+
       - name: Check for absolute local path leaks
         shell: pwsh
         run: |
